@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FinForecast Pro — Complete Financial Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#f5f2ee;--bg2:#ffffff;--bg3:#f0ece6;--bg4:#e8e2da;--bg5:#ddd7cd;
+  --border:rgba(60,50,40,0.09);--border2:rgba(60,50,40,0.16);--border3:rgba(60,50,40,0.26);
+  --text:#1c1814;--text2:#5a5047;--text3:#9a8e82;--text4:#c4b8ac;
+  --accent:#1a6b4a;--accent2:#14543a;--accent-l:#e8f4ef;--accent-m:rgba(26,107,74,0.12);
+  --blue:#1a4a7a;--blue-l:#e8eef6;--blue-m:rgba(26,74,122,0.10);
+  --amber:#8a5a00;--amber-l:#fdf4e3;--amber-m:rgba(138,90,0,0.10);
+  --red:#8a2020;--red-l:#fdeaea;--red-m:rgba(138,32,32,0.08);
+  --purple:#5a2a8a;--purple-l:#f0eaf8;
+  --teal:#0d6b6b;--teal-l:#e6f4f4;
+  --pink:#8a2060;--pink-l:#faeaf4;
+  --orange:#7a3a00;--orange-l:#fdf0e3;
+  --radius:12px;--radius-sm:7px;
+  --shadow:0 2px 8px rgba(60,40,20,0.09),0 6px 24px rgba(60,40,20,0.06);
+  --shadow-sm:0 1px 3px rgba(60,40,20,0.07),0 2px 8px rgba(60,40,20,0.04);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;min-height:100vh;line-height:1.6}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg3)}
+::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:3px}
+
+/* LAYOUT */
+.app{display:flex;min-height:100vh}
+.sidebar{width:235px;min-height:100vh;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;z-index:100;box-shadow:2px 0 12px rgba(60,40,20,0.04)}
+.main{margin-left:235px;flex:1;min-height:100vh}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 26px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 8px rgba(60,40,20,0.05)}
+.content{padding:24px}
+
+/* SIDEBAR */
+.logo{padding:20px 18px 14px;border-bottom:1px solid var(--border)}
+.logo-mark{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--accent);letter-spacing:-0.3px}
+.logo-pro{display:inline-block;font-size:9px;background:var(--accent);color:#fff;padding:1px 6px;border-radius:4px;margin-left:5px;vertical-align:middle;letter-spacing:0.5px;font-family:'IBM Plex Sans',sans-serif;font-weight:600}
+.logo-sub{font-size:10px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-top:3px;font-family:'IBM Plex Mono',monospace}
+.nav{padding:12px 8px;flex:1;overflow-y:auto}
+.nav-section{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text4);padding:12px 12px 5px;font-weight:600}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--radius-sm);cursor:pointer;font-size:12.5px;color:var(--text2);transition:all .15s;margin-bottom:1px}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--accent-l);color:var(--accent);font-weight:500}
+.nav-icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--bg3);flex-shrink:0}
+.nav-item.active .nav-icon{background:rgba(26,107,74,0.15)}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);font-size:10px;color:var(--text4);font-family:'IBM Plex Mono',monospace}
+
+/* TOPBAR */
+.page-eyebrow{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);font-family:'IBM Plex Mono',monospace;margin-bottom:1px}
+.page-title{font-family:'Playfair Display',serif;font-size:19px;font-weight:600;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.total-pill{font-size:11px;padding:5px 12px;border-radius:20px;background:var(--accent-l);color:var(--accent);border:1px solid rgba(26,107,74,0.2);font-family:'IBM Plex Mono',monospace;font-weight:500}
+.save-btn{padding:6px 14px;border-radius:var(--radius-sm);background:var(--accent);color:#fff;border:none;font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s}
+.save-btn:hover{background:var(--accent2)}
+
+/* SECTIONS */
+.section{display:none}
+.section.active{display:block;animation:fadeUp .2s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-sm)}
+.card+.card{margin-top:0}
+.card-title{font-family:'Playfair Display',serif;font-size:14px;font-weight:600;color:var(--text);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.card-title-left{display:flex;align-items:center;gap:8px}
+.pip{width:4px;height:16px;border-radius:3px;flex-shrink:0}
+
+/* METRICS */
+.metric-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.metric{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.metric::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px}
+.metric.green::after{background:var(--accent)}.metric.blue::after{background:var(--blue)}
+.metric.amber::after{background:#c47a00}.metric.red::after{background:var(--red)}
+.metric.purple::after{background:var(--purple)}.metric.teal::after{background:var(--teal)}
+.metric-label{font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--text3);margin-bottom:5px;font-weight:600}
+.metric-value{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--text);line-height:1}
+.metric.green .metric-value{color:var(--accent)}.metric.blue .metric-value{color:var(--blue)}
+.metric.amber .metric-value{color:var(--amber)}.metric.red .metric-value{color:var(--red)}
+.metric.purple .metric-value{color:var(--purple)}.metric.teal .metric-value{color:var(--teal)}
+.metric-sub{font-size:10px;color:var(--text3);margin-top:4px}
+.metric-delta{font-size:10px;margin-top:3px;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.delta-up{color:var(--accent)}.delta-down{color:var(--red)}
+
+/* GRIDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;letter-spacing:0.2px}
+.badge-green{background:var(--accent-l);color:var(--accent);border:1px solid rgba(26,107,74,0.2)}
+.badge-blue{background:var(--blue-l);color:var(--blue);border:1px solid rgba(26,74,122,0.2)}
+.badge-amber{background:var(--amber-l);color:var(--amber);border:1px solid rgba(138,90,0,0.2)}
+.badge-red{background:var(--red-l);color:var(--red);border:1px solid rgba(138,32,32,0.2)}
+.badge-purple{background:var(--purple-l);color:var(--purple);border:1px solid rgba(90,42,138,0.2)}
+.badge-teal{background:var(--teal-l);color:var(--teal);border:1px solid rgba(13,107,107,0.2)}
+.badge-neutral{background:var(--bg3);color:var(--text2);border:1px solid var(--border2)}
+
+/* DIVIDER */
+hr.div{border:none;border-top:1px solid var(--border);margin:14px 0}
+
+/* TIP */
+.tip{background:var(--bg3);border-radius:var(--radius-sm);border-left:3px solid var(--accent);padding:10px 13px;font-size:11px;color:var(--text2);line-height:1.6;margin-top:10px}
+.tip.warn{border-left-color:#c47a00;background:var(--amber-l)}
+.tip.danger{border-left-color:var(--red);background:var(--red-l)}
+.tip.info{border-left-color:var(--blue);background:var(--blue-l)}
+
+/* FORMS */
+.field-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.field-label{font-size:11.5px;color:var(--text2);min-width:130px;line-height:1.3}
+.field-input{flex:1}
+input[type=text],input[type=number],input[type=date]{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);
+  color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:7px 10px;outline:none;transition:border .15s,box-shadow .15s
+}
+input:hover{border-color:var(--border3)}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-m);background:var(--bg2)}
+select{background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:12px;padding:7px 10px;outline:none;cursor:pointer;transition:border .15s;width:100%}
+select:focus{border-color:var(--accent)}
+textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);color:var(--text);font-family:'IBM Plex Sans',sans-serif;font-size:12px;padding:7px 10px;outline:none;resize:vertical;min-height:56px;transition:border .15s}
+textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-m)}
+
+/* BUTTONS */
+.btn{padding:6px 13px;border-radius:var(--radius-sm);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;border:none;display:inline-flex;align-items:center;gap:5px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent2)}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border2)}.btn-outline:hover{background:var(--bg3)}
+.btn-danger{background:var(--red-l);color:var(--red);border:1px solid rgba(138,32,32,0.2)}.btn-danger:hover{background:var(--red-m)}
+.btn-blue{background:var(--blue-l);color:var(--blue);border:1px solid rgba(26,74,122,0.2)}.btn-blue:hover{background:var(--blue-m)}
+.btn-sm{padding:4px 9px;font-size:11px}
+.btn-icon{width:26px;height:26px;padding:0;justify-content:center;border-radius:6px}
+
+/* WALLET CARDS */
+.wallet-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:18px}
+.wallet-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;transition:box-shadow .2s,transform .2s}
+.wallet-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.wc-stripe{position:absolute;top:0;left:0;right:0;height:4px;border-radius:var(--radius) var(--radius) 0 0}
+.wc-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:10px}
+.wc-name{font-family:'Playfair Display',serif;font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px}
+.wc-type{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.wc-balance{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:500;color:var(--text);line-height:1}
+.wc-avail{font-size:11px;color:var(--text3);margin-top:3px}
+.wc-actions{display:flex;gap:5px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border)}
+.add-wallet-card{background:var(--bg3);border:2px dashed var(--border2);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;min-height:170px;color:var(--text3);gap:6px}
+.add-wallet-card:hover{border-color:var(--accent);background:var(--accent-l);color:var(--accent)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(28,24,20,0.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.open{display:flex;animation:modalIn .18s ease}
+@keyframes modalIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg2);border-radius:var(--radius);padding:24px;width:100%;max-width:460px;box-shadow:0 8px 40px rgba(60,40,20,0.18);position:relative;max-height:92vh;overflow-y:auto}
+.modal-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--text);margin-bottom:18px}
+.modal-close{position:absolute;top:16px;right:16px;width:26px;height:26px;border-radius:6px;background:var(--bg3);border:none;cursor:pointer;font-size:15px;color:var(--text2);display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--bg4)}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+
+/* ALLOC CARD */
+.alloc-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm);position:relative}
+.alloc-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+.alloc-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;margin-right:9px;flex-shrink:0}
+.alloc-name{font-family:'Playfair Display',serif;font-size:13px;font-weight:600;color:var(--text)}
+.alloc-source{font-size:10px;color:var(--text3);margin-top:1px}
+
+/* PAYMENT ITEM */
+.payment-list{display:flex;flex-direction:column;gap:8px}
+.payment-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:grid;grid-template-columns:auto 1fr auto auto auto;align-items:center;gap:12px;box-shadow:var(--shadow-sm);transition:all .15s}
+.payment-item:hover{border-color:var(--border2);box-shadow:var(--shadow)}
+.pay-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.pi-name{font-size:13px;font-weight:600;color:var(--text)}
+.pi-detail{font-size:10px;color:var(--text3);margin-top:1px}
+
+/* EXPENSE ITEM */
+.expense-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:grid;grid-template-columns:auto 1fr auto auto auto auto;align-items:center;gap:10px;box-shadow:var(--shadow-sm);margin-bottom:7px;transition:border .15s}
+.expense-item:hover{border-color:var(--border2)}
+.exp-icon{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+
+/* INVESTMENT CARD */
+.inv-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;transition:all .2s;cursor:pointer}
+.inv-card:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow)}
+.inv-card .ic-stripe{position:absolute;top:0;left:0;right:0;height:3px}
+.ic-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+.ic-name{font-family:'Playfair Display',serif;font-size:13px;font-weight:600;color:var(--text);line-height:1.3}
+.ic-ret{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:500;line-height:1}
+.ic-ret span{font-size:10px;color:var(--text3)}
+.ic-desc{font-size:11px;color:var(--text3);line-height:1.5;margin:6px 0}
+.ic-ret-bar{height:3px;background:var(--bg4);border-radius:2px;margin:7px 0}
+.ic-ret-fill{height:100%;border-radius:2px;transition:width .4s}
+.ic-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);padding-top:7px;border-top:1px solid var(--border)}
+.inv-portfolio-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:grid;grid-template-columns:auto 1fr auto auto auto auto;align-items:center;gap:12px;margin-bottom:8px;box-shadow:var(--shadow-sm);transition:border .15s}
+.inv-portfolio-item:hover{border-color:var(--border2)}
+
+/* PERF CHART WRAPPER */
+.chart-wrap{position:relative;width:100%}
+
+/* SECTION HEADER */
+.exp-section-header{display:flex;align-items:center;justify-content:space-between;margin:18px 0 8px}
+.exp-section-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);font-weight:600}
+
+/* BAR ROW */
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.bar-label{font-size:11px;color:var(--text2);min-width:90px}
+.bar-wrap{flex:1;height:7px;background:var(--bg4);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s}
+.bar-val{font-size:11px;color:var(--text2);min-width:70px;text-align:right;font-family:'IBM Plex Mono',monospace}
+
+/* PROG */
+.prog-wrap{background:var(--bg4);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+/* RUNWAY */
+.runway-item{margin-bottom:12px}
+.runway-bar{height:20px;background:var(--bg4);border-radius:4px;overflow:hidden}
+.runway-fill{height:100%;display:flex;align-items:center;padding:0 8px;font-size:10px;font-weight:600;font-family:'IBM Plex Mono',monospace;transition:width .5s;white-space:nowrap;overflow:hidden}
+
+/* TABLE */
+.sum-table{width:100%;border-collapse:collapse;font-size:12px}
+.sum-table th{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:7px 10px;text-align:left;border-bottom:2px solid var(--border2);font-weight:600;background:var(--bg3)}
+.sum-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2)}
+.sum-table tbody tr:hover td{background:var(--bg3)}
+.sum-table td.num{text-align:right;font-family:'IBM Plex Mono',monospace}
+.sum-table td.pos{color:var(--accent);font-weight:500}.sum-table td.neg{color:var(--red);font-weight:500}
+.sum-table td.bold{color:var(--text);font-weight:600}.sum-table td.warn{color:var(--amber)}
+
+/* COLOR / ICON PICKER */
+.color-picker{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.color-opt{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:border .15s;flex-shrink:0}
+.color-opt.sel{border-color:var(--text)}
+.icon-picker{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.icon-opt{width:30px;height:30px;border-radius:6px;cursor:pointer;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:15px;background:var(--bg3);transition:all .15s}
+.icon-opt:hover,.icon-opt.sel{border-color:var(--accent);background:var(--accent-l)}
+
+/* DONUT */
+.donut-wrap{position:relative;width:140px;height:140px;flex-shrink:0}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--text);color:#fff;padding:9px 16px;border-radius:var(--radius-sm);font-size:12px;z-index:2000;opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:var(--shadow)}
+.toast.show{opacity:1}
+
+/* FORECAST BUDGET specific */
+.budget-month-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;transition:border .15s}
+.budget-month-card:hover{border-color:var(--border2)}
+.budget-month-label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:10px}
+.budget-item-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px;border-bottom:1px dashed var(--border)}
+.budget-item-row:last-child{border:none}
+.bur-label{color:var(--text2)}
+.bur-val{font-family:'IBM Plex Mono',monospace;font-weight:500}
+.bur-val.up{color:var(--red)}.bur-val.same{color:var(--text3)}.bur-val.down{color:var(--accent)}
+.trend-badge{font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px;font-family:'IBM Plex Mono',monospace}
+
+/* PERF TABS */
+.perf-tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:12px}
+.perf-tab{padding:5px 12px;border-radius:var(--radius-sm);font-size:12px;cursor:pointer;color:var(--text3);transition:all .15s;border:1px solid transparent}
+.perf-tab.active{background:var(--accent-l);color:var(--accent);border-color:rgba(26,107,74,0.2);font-weight:500}
+.perf-tab:hover:not(.active){background:var(--bg3);color:var(--text2)}
+
+/* Responsive */
+@media(max-width:960px){
+  .sidebar{width:52px}
+  .sidebar .logo-sub,.sidebar .nav-item span,.sidebar .nav-section,.sidebar-footer,.logo-pro{display:none}
+  .sidebar .logo-mark{font-size:13px}
+  .sidebar .nav-item{padding:9px;justify-content:center}
+  .main{margin-left:52px}
+  .metric-row{grid-template-columns:1fr 1fr}
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .payment-item{grid-template-columns:auto 1fr auto}
+  .payment-item .payment-due,.payment-item .payment-actions{display:none}
+  .expense-item{grid-template-columns:auto 1fr auto auto}
+  .inv-portfolio-item{grid-template-columns:auto 1fr auto auto}
+}
+@media(max-width:560px){.content{padding:12px}.metric-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ════ SIDEBAR ════ -->
+<aside class="sidebar">
+  <div class="logo">
+    <div><div class="logo-mark">FinForecast<span class="logo-pro">PRO</span></div></div>
+    <div class="logo-sub">PH Edition · v2.0</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-section">Wallets</div>
+    <div class="nav-item active" onclick="switchTab('wallets')" id="nav-wallets"><span class="nav-icon">🏦</span><span>My Wallets</span></div>
+    <div class="nav-section">Allocations</div>
+    <div class="nav-item" onclick="switchTab('future')" id="nav-future"><span class="nav-icon">🎯</span><span>Future Plans</span></div>
+    <div class="nav-item" onclick="switchTab('payments')" id="nav-payments"><span class="nav-icon">📆</span><span>Termed Payments</span></div>
+    <div class="nav-item" onclick="switchTab('recurring')" id="nav-recurring"><span class="nav-icon">🔁</span><span>Recurring Expenses</span></div>
+    <div class="nav-section">Investments</div>
+    <div class="nav-item" onclick="switchTab('investments')" id="nav-investments"><span class="nav-icon">📈</span><span>My Portfolio</span></div>
+    <div class="nav-item" onclick="switchTab('explore')" id="nav-explore"><span class="nav-icon">🔍</span><span>Explore Markets</span></div>
+    <div class="nav-section">Analytics</div>
+    <div class="nav-item" onclick="switchTab('budget')" id="nav-budget"><span class="nav-icon">📊</span><span>Budget Forecast</span></div>
+    <div class="nav-item" onclick="switchTab('performance')" id="nav-performance"><span class="nav-icon">⚡</span><span>Performance</span></div>
+    <div class="nav-item" onclick="switchTab('overview')" id="nav-overview"><span class="nav-icon">🗺</span><span>Fund Overview</span></div>
+  </nav>
+  <div class="sidebar-footer">🔒 Stored locally · No data sent</div>
+</aside>
+
+<!-- ════ MAIN ════ -->
+<div class="main">
+<div class="topbar">
+  <div>
+    <div class="page-eyebrow" id="page-eyebrow">WALLETS</div>
+    <div class="page-title" id="page-title">My Wallets</div>
+  </div>
+  <div class="topbar-right">
+    <span class="total-pill" id="total-pill">Total: ₱0</span>
+    <button class="save-btn" onclick="saveData()">💾 Save</button>
+  </div>
+</div>
+<div class="content">
+
+<!-- ══════════════ WALLETS ══════════════ -->
+<div id="tab-wallets" class="section active">
+  <div class="metric-row">
+    <div class="metric green"><div class="metric-label">Total Balance</div><div class="metric-value" id="wm-total">₱0</div><div class="metric-sub" id="wm-count">0 wallets</div></div>
+    <div class="metric blue"><div class="metric-label">Available Funds</div><div class="metric-value" id="wm-avail">₱0</div><div class="metric-sub">After allocations</div></div>
+    <div class="metric amber"><div class="metric-label">Allocated Funds</div><div class="metric-value" id="wm-alloc">₱0</div><div class="metric-sub">Plans + payments</div></div>
+    <div class="metric red"><div class="metric-label">Monthly Outflow</div><div class="metric-value" id="wm-commit">₱0</div><div class="metric-sub">All obligations</div></div>
+  </div>
+  <div class="wallet-grid" id="wallet-grid"></div>
+  <div class="g2" style="margin-top:16px">
+    <div class="card"><div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--accent)"></div>Balance Distribution</div></div><div id="wallet-bar-breakdown"></div></div>
+    <div class="card"><div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--blue)"></div>Wallet Mix</div></div>
+      <div style="display:flex;gap:14px;align-items:center"><div class="donut-wrap"><canvas id="wallet-donut"></canvas></div><div style="flex:1" id="wallet-legend"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ FUTURE PLANS ══════════════ -->
+<div id="tab-future" class="section">
+  <div class="metric-row">
+    <div class="metric green"><div class="metric-label">Total Goal</div><div class="metric-value" id="fp-total-goal">₱0</div></div>
+    <div class="metric blue"><div class="metric-label">Total Saved</div><div class="metric-value" id="fp-total-saved">₱0</div></div>
+    <div class="metric amber"><div class="metric-label">Still Needed</div><div class="metric-value" id="fp-total-gap">₱0</div></div>
+    <div class="metric red"><div class="metric-label">Active Plans</div><div class="metric-value" id="fp-count">0</div></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-primary" onclick="openModal('future')">＋ Add Plan</button></div>
+  <div id="future-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px"></div>
+  <div id="future-empty" class="tip info" style="display:none">No future plans yet. Add a savings goal to get started.</div>
+</div>
+
+<!-- ══════════════ TERMED PAYMENTS ══════════════ -->
+<div id="tab-payments" class="section">
+  <div class="metric-row">
+    <div class="metric blue"><div class="metric-label">Total Balance</div><div class="metric-value" id="tp-total">₱0</div></div>
+    <div class="metric amber"><div class="metric-label">Monthly Payment</div><div class="metric-value" id="tp-monthly">₱0</div></div>
+    <div class="metric red"><div class="metric-label">Due in 30 Days</div><div class="metric-value" id="tp-due">₱0</div></div>
+    <div class="metric green"><div class="metric-label">Active Terms</div><div class="metric-value" id="tp-count">0</div></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn btn-primary" onclick="openModal('payment')">＋ Add Payment</button></div>
+  <div class="payment-list" id="payment-list"></div>
+  <div id="payment-empty" class="tip info" style="display:none">No termed payments. Track loans, installments, mortgages.</div>
+  <div class="card" style="margin-top:16px">
+    <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--amber)"></div>Payment Schedule — Next 6 Months</div></div>
+    <table class="sum-table"><thead><tr><th>Month</th><th>Payments</th><th class="num">Amount Due</th><th class="num">Cumulative</th></tr></thead><tbody id="payment-schedule"></tbody></table>
+  </div>
+</div>
+
+<!-- ══════════════ RECURRING EXPENSES ══════════════ -->
+<div id="tab-recurring" class="section">
+  <div class="metric-row">
+    <div class="metric red"><div class="metric-label">Monthly Equiv.</div><div class="metric-value" id="re-monthly">₱0</div></div>
+    <div class="metric amber"><div class="metric-label">Annual Total</div><div class="metric-value" id="re-yearly">₱0</div></div>
+    <div class="metric blue"><div class="metric-label">Due This Month</div><div class="metric-value" id="re-this-month">₱0</div></div>
+    <div class="metric green"><div class="metric-label">Active Expenses</div><div class="metric-value" id="re-count">0</div></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button class="btn btn-primary" onclick="openModal('expense')">＋ Add Expense</button></div>
+  <div class="exp-section-header"><span class="exp-section-title">Monthly</span></div>
+  <div id="exp-monthly-list"></div><div id="exp-monthly-empty" class="tip" style="display:none">No monthly expenses.</div>
+  <div class="exp-section-header"><span class="exp-section-title">Quarterly / Semi-Annual</span></div>
+  <div id="exp-quarterly-list"></div><div id="exp-quarterly-empty" class="tip" style="display:none">No quarterly expenses.</div>
+  <div class="exp-section-header"><span class="exp-section-title">Annual / Yearly</span></div>
+  <div id="exp-annual-list"></div><div id="exp-annual-empty" class="tip" style="display:none">No annual expenses.</div>
+  <div class="card" style="margin-top:16px">
+    <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--red)"></div>Category Breakdown</div></div>
+    <div id="exp-category-bars"></div>
+  </div>
+</div>
+
+<!-- ══════════════ MY INVESTMENT PORTFOLIO ══════════════ -->
+<div id="tab-investments" class="section">
+  <div class="metric-row">
+    <div class="metric green"><div class="metric-label">Portfolio Value</div><div class="metric-value" id="ip-total">₱0</div><div class="metric-delta" id="ip-gain-delta"></div></div>
+    <div class="metric blue"><div class="metric-label">Total Invested</div><div class="metric-value" id="ip-cost">₱0</div></div>
+    <div class="metric amber"><div class="metric-label">Unrealized Gain</div><div class="metric-value" id="ip-gain">₱0</div></div>
+    <div class="metric teal"><div class="metric-label">Blended Return</div><div class="metric-value" id="ip-blended">0%</div></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:12px;gap:8px">
+    <button class="btn btn-blue" onclick="openModal('invest-explore')">🔍 Browse Markets</button>
+    <button class="btn btn-primary" onclick="openModal('invest')">＋ Add Position</button>
+  </div>
+  <div id="invest-portfolio-list"></div>
+  <div id="invest-empty" class="tip info" style="display:none">No investments added. Add stocks, funds, crypto, bonds, or any position you hold.</div>
+  <div class="g2" style="margin-top:16px">
+    <div class="card">
+      <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--teal)"></div>Allocation by Type</div></div>
+      <div style="display:flex;gap:14px;align-items:center"><div class="donut-wrap"><canvas id="invest-donut"></canvas></div><div style="flex:1" id="invest-legend"></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--accent)"></div>12-Month Projection</div></div>
+      <div class="chart-wrap" style="height:160px"><canvas id="invest-proj-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ EXPLORE MARKETS ══════════════ -->
+<div id="tab-explore" class="section">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+    <select id="mkt-class" onchange="renderMarkets()" style="flex:1;min-width:120px">
+      <option value="all">All asset classes</option>
+      <option value="stocks">Stocks / Equity</option>
+      <option value="bonds">Bonds / Fixed Income</option>
+      <option value="funds">Funds / ETF</option>
+      <option value="crypto">Crypto / Digital</option>
+      <option value="forex">Forex / Currency</option>
+      <option value="commodities">Commodities</option>
+      <option value="realestate">Real Estate</option>
+      <option value="alternative">Alternative</option>
+    </select>
+    <select id="mkt-risk" onchange="renderMarkets()" style="flex:1;min-width:110px">
+      <option value="all">All risk levels</option>
+      <option value="low">Low risk</option>
+      <option value="medium">Medium risk</option>
+      <option value="high">High risk</option>
+      <option value="very-high">Very high risk</option>
+    </select>
+    <select id="mkt-sort" onchange="renderMarkets()" style="flex:1;min-width:130px">
+      <option value="ret-desc">Highest return</option>
+      <option value="ret-asc">Lowest return</option>
+      <option value="risk-asc">Safest first</option>
+      <option value="min-asc">Lowest entry</option>
+    </select>
+  </div>
+  <div style="font-size:11px;color:var(--text3);margin-bottom:14px;font-family:'IBM Plex Mono',monospace" id="mkt-count"></div>
+  <div id="market-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:12px"></div>
+</div>
+
+<!-- ══════════════ BUDGET FORECAST ══════════════ -->
+<div id="tab-budget" class="section">
+  <div class="metric-row">
+    <div class="metric amber"><div class="metric-label">Avg Monthly Expense</div><div class="metric-value" id="bf-avg">₱0</div><div class="metric-sub">3-month average</div></div>
+    <div class="metric red"><div class="metric-label">Projected Next Month</div><div class="metric-value" id="bf-next">₱0</div><div class="metric-sub" id="bf-trend-sub">—</div></div>
+    <div class="metric blue"><div class="metric-label">Budget Surplus</div><div class="metric-value" id="bf-surplus">₱0</div><div class="metric-sub">Income minus forecast</div></div>
+    <div class="metric green"><div class="metric-label">Recommended Reserve</div><div class="metric-value" id="bf-reserve">₱0</div><div class="metric-sub">10% budget buffer</div></div>
+  </div>
+  <div class="g2" style="margin-bottom:16px">
+    <div class="card">
+      <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--amber)"></div>3-Month Expense History</div></div>
+      <div class="field-row" style="margin-bottom:12px"><span class="field-label">Monthly income (₱)</span><div class="field-input"><input type="number" id="bf-income" value="85000" oninput="renderBudget()"></div></div>
+      <div id="bf-history"></div>
+      <div class="tip info" style="margin-top:12px">Enter or adjust monthly totals for each category below. The forecast projects Month 4 using weighted 3-month trend analysis.</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--red)"></div>Expense Trend Chart</div></div>
+      <div class="chart-wrap" style="height:200px"><canvas id="budget-trend-chart"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--purple)"></div>Category-Level Budget Forecast</div></div>
+    <table class="sum-table">
+      <thead><tr><th>Category</th><th class="num">Month 1</th><th class="num">Month 2</th><th class="num">Month 3</th><th class="num">Forecast M4</th><th class="num">Trend</th><th class="num">Recommended Budget</th></tr></thead>
+      <tbody id="budget-table"></tbody>
+    </table>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--teal)"></div>6-Month Budget Projection</div></div>
+    <div class="chart-wrap" style="height:220px"><canvas id="budget-6mo-chart"></canvas></div>
+  </div>
+</div>
+
+<!-- ══════════════ PERFORMANCE ══════════════ -->
+<div id="tab-performance" class="section">
+  <div class="metric-row">
+    <div class="metric green"><div class="metric-label">Net Worth</div><div class="metric-value" id="pf-networth">₱0</div><div class="metric-delta" id="pf-nw-delta"></div></div>
+    <div class="metric teal"><div class="metric-label">Investment Returns</div><div class="metric-value" id="pf-inv-ret">₱0</div></div>
+    <div class="metric red"><div class="metric-label">Total Liabilities</div><div class="metric-value" id="pf-liab">₱0</div></div>
+    <div class="metric blue"><div class="metric-label">Debt-to-Asset Ratio</div><div class="metric-value" id="pf-dta">0%</div></div>
+  </div>
+  <div class="perf-tabs">
+    <div class="perf-tab active" onclick="switchPerfTab('assets')">Asset Performance</div>
+    <div class="perf-tab" onclick="switchPerfTab('expenses')">Expense Performance</div>
+    <div class="perf-tab" onclick="switchPerfTab('investments')">Investment Forecast</div>
+    <div class="perf-tab" onclick="switchPerfTab('networth')">Net Worth Forecast</div>
+  </div>
+  <div id="perf-assets" class="perf-pane">
+    <div class="g2">
+      <div class="card"><div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--accent)"></div>Asset Composition</div></div><div id="pf-asset-bars"></div></div>
+      <div class="card"><div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--blue)"></div>Asset vs Liability Trend</div></div><div class="chart-wrap" style="height:180px"><canvas id="pf-asset-chart"></canvas></div></div>
+    </div>
+  </div>
+  <div id="perf-expenses" class="perf-pane" style="display:none">
+    <div class="g2">
+      <div class="card"><div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--red)"></div>Monthly Expense Breakdown</div></div><div id="pf-exp-bars"></div></div>
+      <div class="card"><div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--amber)"></div>Expense 6-Month Forecast</div></div><div class="chart-wrap" style="height:180px"><canvas id="pf-exp-chart"></canvas></div></div>
+    </div>
+  </div>
+  <div id="perf-investments" class="perf-pane" style="display:none">
+    <div class="g2">
+      <div class="card"><div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--teal)"></div>Portfolio Returns by Asset</div></div><div id="pf-inv-bars"></div></div>
+      <div class="card"><div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--accent)"></div>12-Month Portfolio Value</div></div><div class="chart-wrap" style="height:180px"><canvas id="pf-inv-chart"></canvas></div></div>
+    </div>
+  </div>
+  <div id="perf-networth" class="perf-pane" style="display:none">
+    <div class="card">
+      <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--purple)"></div>Net Worth 24-Month Forecast</div></div>
+      <div class="chart-wrap" style="height:240px"><canvas id="pf-nw-chart"></canvas></div>
+      <div id="pf-nw-table" style="margin-top:14px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ OVERVIEW ══════════════ -->
+<div id="tab-overview" class="section">
+  <div class="metric-row">
+    <div class="metric green"><div class="metric-label">Total Assets</div><div class="metric-value" id="ov-assets">₱0</div></div>
+    <div class="metric red"><div class="metric-label">Total Commitments</div><div class="metric-value" id="ov-commit">₱0</div></div>
+    <div class="metric blue"><div class="metric-label">Free Cash</div><div class="metric-value" id="ov-free">₱0</div></div>
+    <div class="metric amber"><div class="metric-label">Allocation Rate</div><div class="metric-value" id="ov-rate">0%</div></div>
+  </div>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card"><div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--accent)"></div>Fund Flow Summary</div></div><table class="sum-table"><thead><tr><th>Category</th><th class="num">Amount</th><th class="num">% of Total</th></tr></thead><tbody id="ov-flow-table"></tbody></table></div>
+    <div class="card"><div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--blue)"></div>Allocation Donut</div></div>
+      <div style="display:flex;gap:14px;align-items:center"><div class="donut-wrap"><canvas id="ov-donut"></canvas></div><div style="flex:1" id="ov-legend"></div></div>
+    </div>
+  </div>
+  <div class="card"><div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--purple)"></div>Monthly Obligation Calendar</div></div><div id="ov-calendar"></div></div>
+</div>
+
+</div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ════ MODALS ════ -->
+<div class="modal-bg" id="modal-wallet">
+  <div class="modal"><div class="modal-title" id="mw-title">Add Wallet</div><button class="modal-close" onclick="closeModal('wallet')">✕</button><input type="hidden" id="mw-id">
+    <div class="field-row"><span class="field-label">Wallet name</span><div class="field-input"><input type="text" id="mw-name" placeholder="e.g. BDO Savings"></div></div>
+    <div class="field-row"><span class="field-label">Type</span><div class="field-input"><select id="mw-type"><option value="savings">Savings Account</option><option value="current">Current / Checking</option><option value="digital">Digital Wallet</option><option value="cash">Cash on Hand</option><option value="investment">Investment Account</option><option value="credit">Credit Line</option></select></div></div>
+    <div class="field-row"><span class="field-label">Current balance (₱)</span><div class="field-input"><input type="number" id="mw-balance" placeholder="0.00"></div></div>
+    <div class="field-row"><span class="field-label">Bank / Institution</span><div class="field-input"><input type="text" id="mw-bank" placeholder="e.g. BDO Unibank"></div></div>
+    <div class="field-row"><span class="field-label">Note</span><div class="field-input"><textarea id="mw-note" placeholder="Optional note..."></textarea></div></div>
+    <div style="margin-top:8px"><div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:500">Color theme</div><div class="color-picker" id="mw-colors"></div></div>
+    <div style="margin-top:10px"><div style="font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:500">Icon</div><div class="icon-picker" id="mw-icons"></div></div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('wallet')">Cancel</button><button class="btn btn-primary" onclick="saveWallet()">Save Wallet</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-future">
+  <div class="modal"><div class="modal-title" id="mf-title">Add Future Plan</div><button class="modal-close" onclick="closeModal('future')">✕</button><input type="hidden" id="mf-id">
+    <div class="field-row"><span class="field-label">Plan name</span><div class="field-input"><input type="text" id="mf-name" placeholder="e.g. Japan Vacation"></div></div>
+    <div class="field-row"><span class="field-label">Category</span><div class="field-input"><select id="mf-category"><option value="vacation">✈️ Vacation</option><option value="emergency">🛡 Emergency Buffer</option><option value="home">🏠 Home / Property</option><option value="education">🎓 Education</option><option value="vehicle">🚗 Vehicle</option><option value="gadget">💻 Gadget / Tech</option><option value="wedding">💍 Wedding</option><option value="business">🏪 Business</option><option value="retirement">🌅 Retirement</option><option value="other">📦 Other</option></select></div></div>
+    <div class="field-row"><span class="field-label">Target amount (₱)</span><div class="field-input"><input type="number" id="mf-target" placeholder="0"></div></div>
+    <div class="field-row"><span class="field-label">Already saved (₱)</span><div class="field-input"><input type="number" id="mf-saved" placeholder="0"></div></div>
+    <div class="field-row"><span class="field-label">Monthly contribution (₱)</span><div class="field-input"><input type="number" id="mf-monthly" placeholder="0"></div></div>
+    <div class="field-row"><span class="field-label">Source wallet</span><div class="field-input"><select id="mf-wallet"></select></div></div>
+    <div class="field-row"><span class="field-label">Target date</span><div class="field-input"><input type="date" id="mf-date"></div></div>
+    <div class="field-row"><span class="field-label">Note</span><div class="field-input"><textarea id="mf-note" placeholder="Optional..."></textarea></div></div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('future')">Cancel</button><button class="btn btn-primary" onclick="saveFuturePlan()">Save Plan</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-payment">
+  <div class="modal"><div class="modal-title" id="mp-title">Add Termed Payment</div><button class="modal-close" onclick="closeModal('payment')">✕</button><input type="hidden" id="mp-id">
+    <div class="field-row"><span class="field-label">Payment name</span><div class="field-input"><input type="text" id="mp-name" placeholder="e.g. BDO Car Loan"></div></div>
+    <div class="field-row"><span class="field-label">Type</span><div class="field-input"><select id="mp-type"><option value="loan">🏦 Bank Loan</option><option value="mortgage">🏠 Mortgage</option><option value="car">🚗 Car Loan</option><option value="credit">💳 Credit Card</option><option value="appliance">📺 Appliance</option><option value="personal">👤 Personal Loan</option><option value="sss">🏛 SSS Loan</option><option value="pagibig">🏛 Pag-IBIG Loan</option><option value="other">📋 Other</option></select></div></div>
+    <div class="field-row"><span class="field-label">Total balance (₱)</span><div class="field-input"><input type="number" id="mp-balance" placeholder="0"></div></div>
+    <div class="field-row"><span class="field-label">Monthly payment (₱)</span><div class="field-input"><input type="number" id="mp-monthly" placeholder="0"></div></div>
+    <div class="field-row"><span class="field-label">Months remaining</span><div class="field-input"><input type="number" id="mp-months" placeholder="0"></div></div>
+    <div class="field-row"><span class="field-label">Next due date</span><div class="field-input"><input type="date" id="mp-due"></div></div>
+    <div class="field-row"><span class="field-label">From wallet</span><div class="field-input"><select id="mp-wallet"></select></div></div>
+    <div class="field-row"><span class="field-label">Interest rate (%/yr)</span><div class="field-input"><input type="number" id="mp-interest" placeholder="0"></div></div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('payment')">Cancel</button><button class="btn btn-primary" onclick="savePayment()">Save Payment</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-expense">
+  <div class="modal"><div class="modal-title" id="me-title">Add Recurring Expense</div><button class="modal-close" onclick="closeModal('expense')">✕</button><input type="hidden" id="me-id">
+    <div class="field-row"><span class="field-label">Expense name</span><div class="field-input"><input type="text" id="me-name" placeholder="e.g. Sun Life VUL"></div></div>
+    <div class="field-row"><span class="field-label">Category</span><div class="field-input"><select id="me-category"><option value="insurance">🛡 Insurance (Life/Health)</option><option value="car-insurance">🚗 Car Insurance</option><option value="property">🏠 Property Insurance</option><option value="subscription">📱 Subscriptions</option><option value="utilities">💡 Utilities</option><option value="education">🎓 Education / Tuition</option><option value="hmo">🏥 HMO / Medicard</option><option value="sss">🏛 SSS</option><option value="philhealth">🏥 PhilHealth</option><option value="pagibig">🏛 Pag-IBIG</option><option value="membership">🤝 Membership</option><option value="other">📋 Other</option></select></div></div>
+    <div class="field-row"><span class="field-label">Amount (₱)</span><div class="field-input"><input type="number" id="me-amount" placeholder="0"></div></div>
+    <div class="field-row"><span class="field-label">Frequency</span><div class="field-input"><select id="me-frequency"><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="semi-annual">Semi-Annual</option><option value="annual">Annual</option></select></div></div>
+    <div class="field-row"><span class="field-label">Next due date</span><div class="field-input"><input type="date" id="me-due"></div></div>
+    <div class="field-row"><span class="field-label">Provider</span><div class="field-input"><input type="text" id="me-provider" placeholder="e.g. Sun Life Financial"></div></div>
+    <div class="field-row"><span class="field-label">From wallet</span><div class="field-input"><select id="me-wallet"></select></div></div>
+    <div class="field-row"><span class="field-label">Note</span><div class="field-input"><textarea id="me-note" placeholder="Policy no., plan type..."></textarea></div></div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('expense')">Cancel</button><button class="btn btn-primary" onclick="saveExpense()">Save Expense</button></div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modal-invest">
+  <div class="modal"><div class="modal-title" id="mi-title">Add Investment Position</div><button class="modal-close" onclick="closeModal('invest')">✕</button><input type="hidden" id="mi-id">
+    <div class="field-row"><span class="field-label">Investment name</span><div class="field-input"><input type="text" id="mi-name" placeholder="e.g. FMETF / BTC / RTB"></div></div>
+    <div class="field-row"><span class="field-label">Asset class</span><div class="field-input"><select id="mi-class"><option value="stocks">📈 Stocks / Equity</option><option value="funds">🏦 Mutual Fund / UITF</option><option value="etf">📊 ETF</option><option value="bonds">📜 Bonds / Fixed Income</option><option value="crypto">🔶 Crypto</option><option value="forex">💱 Forex</option><option value="realestate">🏠 Real Estate / REIT</option><option value="commodities">🥇 Commodities</option><option value="mp2">🏛 MP2 / Pag-IBIG</option><option value="vul">🛡 VUL / Insurance-linked</option><option value="p2p">🤝 P2P Lending</option><option value="other">📦 Other</option></select></div></div>
+    <div class="field-row"><span class="field-label">Amount invested (₱)</span><div class="field-input"><input type="number" id="mi-cost" placeholder="0"></div></div>
+    <div class="field-row"><span class="field-label">Current value (₱)</span><div class="field-input"><input type="number" id="mi-value" placeholder="0"></div></div>
+    <div class="field-row"><span class="field-label">Annual return (%)</span><div class="field-input"><input type="number" id="mi-return" placeholder="e.g. 10"></div></div>
+    <div class="field-row"><span class="field-label">Monthly addition (₱)</span><div class="field-input"><input type="number" id="mi-monthly" placeholder="0"></div></div>
+    <div class="field-row"><span class="field-label">Platform / Broker</span><div class="field-input"><input type="text" id="mi-platform" placeholder="e.g. COL Financial"></div></div>
+    <div class="field-row"><span class="field-label">Note</span><div class="field-input"><textarea id="mi-note" placeholder="Optional..."></textarea></div></div>
+    <div class="modal-footer"><button class="btn btn-outline" onclick="closeModal('invest')">Cancel</button><button class="btn btn-primary" onclick="saveInvestment()">Save Position</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// MARKET CATALOG — comprehensive investment options
+// ═══════════════════════════════════════════════════════════
+const MARKETS = [
+  // STOCKS / EQUITY
+  {name:'PSEi Blue Chips',cls:'stocks',risk:'medium',ret:12,min:5000,horizon:'3-5 yrs',desc:'BDO, SM, Ayala, Metrobank, PLDT. Dividend income + capital appreciation.',platform:'COL Financial, BDO Nomura',mkt:'PSE'},
+  {name:'Growth Stocks (PSE)',cls:'stocks',risk:'high',ret:18,min:5000,horizon:'3-7 yrs',desc:'Smaller-cap growth companies on the PSE with higher upside potential.',platform:'COL Financial, First Metro',mkt:'PSE'},
+  {name:'US Stocks (NYSE/NASDAQ)',cls:'stocks',risk:'high',ret:14,min:10000,horizon:'5+ yrs',desc:'Apple, NVIDIA, S&P 500 components. Dollar-denominated exposure.',platform:'COL, IKBR, Gotrade',mkt:'NYSE/NASDAQ'},
+  {name:'US Dividend Stocks',cls:'stocks',risk:'medium',ret:10,min:10000,horizon:'5+ yrs',desc:'High-dividend yielders like REITs, utilities, consumer staples.',platform:'Interactive Brokers, Gotrade',mkt:'NYSE'},
+  {name:'Philippine REITs',cls:'realestate',risk:'medium',ret:9,min:1300,horizon:'3+ yrs',desc:'AREIT, MREIT, CREIT, DDMPR. 90% income distributed as dividends.',platform:'COL Financial, BDO',mkt:'PSE'},
+  {name:'Asian Market Stocks',cls:'stocks',risk:'high',ret:13,min:15000,horizon:'5+ yrs',desc:'HK, Japan, Singapore equities via ETFs or direct brokerage.',platform:'Interactive Brokers',mkt:'Regional'},
+  // BONDS / FIXED INCOME
+  {name:'Retail Treasury Bonds (RTB)',cls:'bonds',risk:'low',ret:6.5,min:5000,horizon:'2-10 yrs',desc:'Philippine government bonds. Zero default risk. Fixed coupon payments.',platform:'BSP, Landbank, DBP',mkt:'Local'},
+  {name:'Corporate Bonds',cls:'bonds',risk:'low',ret:7.5,min:50000,horizon:'2-5 yrs',desc:'SM, Ayala, JG Summit, Megaworld bonds. Higher yield than RTBs.',platform:'COL Financial, PNB',mkt:'Local'},
+  {name:'US Treasury Bonds',cls:'bonds',risk:'low',ret:5.0,min:10000,horizon:'1-30 yrs',desc:'T-Bills, T-Notes, T-Bonds. Dollar-denominated government securities.',platform:'Interactive Brokers',mkt:'US'},
+  {name:'Time Deposit',cls:'bonds',risk:'low',ret:4.5,min:10000,horizon:'30-360d',desc:'Bank-guaranteed savings. Safe, predictable, no market risk.',platform:'Any bank',mkt:'Local'},
+  {name:'Digital Bank Savings (5-6%)',cls:'bonds',risk:'low',ret:5.5,min:0,horizon:'Flexible',desc:'Maya, Seabank, GoTyme. No lock-in, 5-6x traditional bank rates.',platform:'Maya, Seabank, GoTyme',mkt:'Local'},
+  {name:'MP2 (Pag-IBIG)',cls:'mp2',risk:'low',ret:7.2,min:500,horizon:'5 yrs',desc:'Modified Pag-IBIG II. Government-guaranteed, tax-free dividends.',platform:'Pag-IBIG Fund',mkt:'Local'},
+  // FUNDS / ETF
+  {name:'UITF Equity Fund',cls:'funds',risk:'medium',ret:10,min:1000,horizon:'3+ yrs',desc:'Professionally managed stock portfolios via BDO, BPI, Metrobank.',platform:'BDO, BPI, Metrobank, RCBC',mkt:'Local'},
+  {name:'UITF Bond Fund',cls:'funds',risk:'low',ret:5.5,min:1000,horizon:'1-3 yrs',desc:'Diversified bond funds with lower volatility than equity funds.',platform:'BDO, BPI, Metrobank',mkt:'Local'},
+  {name:'UITF Balanced Fund',cls:'funds',risk:'medium',ret:8,min:1000,horizon:'2-5 yrs',desc:'Mix of stocks and bonds. Moderate risk and return profile.',platform:'BDO, BPI, Metrobank',mkt:'Local'},
+  {name:'ETF — FMETF (PSEi)',cls:'etf',risk:'medium',ret:11,min:2600,horizon:'3-5 yrs',desc:'First Metro ETF tracking the PSEi. Low cost, exchange-traded.',platform:'COL Financial, First Metro',mkt:'PSE'},
+  {name:'ETF — S&P 500 (VOO/SPY)',cls:'etf',risk:'medium',ret:12,min:10000,horizon:'5+ yrs',desc:'Vanguard/iShares S&P 500 ETFs. Broad US market exposure, low fees.',platform:'Interactive Brokers, Gotrade',mkt:'NYSE'},
+  {name:'ETF — NASDAQ-100 (QQQ)',cls:'etf',risk:'high',ret:16,min:10000,horizon:'5+ yrs',desc:'Tech-heavy NASDAQ-100 tracking ETF. Higher volatility, higher returns.',platform:'Interactive Brokers',mkt:'NASDAQ'},
+  {name:'ETF — Emerging Markets',cls:'etf',risk:'high',ret:11,min:10000,horizon:'5+ yrs',desc:'VWO, EEM — broad EM exposure including SE Asia, India, China.',platform:'Interactive Brokers',mkt:'Global'},
+  {name:'COL EIP (Peso Cost Avg)',cls:'funds',risk:'medium',ret:11,min:1000,horizon:'5+ yrs',desc:'Systematic stock accumulation. Reduces timing risk. Beginner-friendly.',platform:'COL Financial',mkt:'PSE'},
+  // CRYPTO
+  {name:'Bitcoin (BTC)',cls:'crypto',risk:'very-high',ret:40,min:500,horizon:'Variable',desc:'Leading cryptocurrency. Store of value narrative. Highly volatile.',platform:'Binance PH, PDAX, Coins.ph',mkt:'Global'},
+  {name:'Ethereum (ETH)',cls:'crypto',risk:'very-high',ret:45,min:500,horizon:'Variable',desc:'Smart contract platform. DeFi, NFT, and dApp ecosystem.',platform:'Binance PH, PDAX',mkt:'Global'},
+  {name:'Stablecoins (USDC/USDT)',cls:'crypto',risk:'medium',ret:8,min:500,horizon:'Flexible',desc:'Dollar-pegged tokens. Earn yield via DeFi or CeFi platforms.',platform:'Binance, Coins.ph',mkt:'Global'},
+  {name:'Altcoins / DeFi Tokens',cls:'crypto',risk:'very-high',ret:60,min:500,horizon:'Speculative',desc:'SOL, ADA, DOT, BNB and others. Very high risk, high reward potential.',platform:'Binance PH, PDAX',mkt:'Global'},
+  {name:'Crypto Staking',cls:'crypto',risk:'high',ret:12,min:1000,horizon:'6-12 mo',desc:'Earn yield by locking tokens in proof-of-stake networks.',platform:'Binance, Coinbase',mkt:'Global'},
+  // FOREX
+  {name:'Forex — Major Pairs (USD/EUR)',cls:'forex',risk:'high',ret:20,min:5000,horizon:'Short-term',desc:'USD/PHP, EUR/USD, GBP/USD. Leveraged currency trading.',platform:'IC Markets, XM, Pepperstone',mkt:'Global'},
+  {name:'Forex — Carry Trade',cls:'forex',risk:'high',ret:15,min:10000,horizon:'Medium',desc:'Borrow low-interest currencies, invest in high-yield ones.',platform:'IC Markets, OANDA',mkt:'Global'},
+  {name:'Forex — Minor & Exotic Pairs',cls:'forex',risk:'very-high',ret:25,min:5000,horizon:'Short-term',desc:'AUD/JPY, NZD/USD, USD/PHP. Higher spreads, more volatile.',platform:'XM, Pepperstone',mkt:'Global'},
+  // COMMODITIES
+  {name:'Gold (Physical / ETF)',cls:'commodities',risk:'low',ret:8,min:3000,horizon:'5+ yrs',desc:'Gold coins, bars, or gold ETFs (GLD, IAU). Inflation hedge.',platform:'BDO, Local dealers, IBKR',mkt:'Global'},
+  {name:'Silver',cls:'commodities',risk:'medium',ret:10,min:2000,horizon:'3+ yrs',desc:'Industrial and investment metal. More volatile than gold.',platform:'Local dealers, IBKR',mkt:'Global'},
+  {name:'Crude Oil / Energy ETF',cls:'commodities',risk:'high',ret:15,min:10000,horizon:'1-3 yrs',desc:'USO, XLE — energy commodity exposure. Highly cyclical.',platform:'Interactive Brokers',mkt:'Global'},
+  {name:'Agricultural Commodities',cls:'commodities',risk:'high',ret:12,min:10000,horizon:'Variable',desc:'Corn, wheat, soybeans via futures or ETFs. Weather-dependent.',platform:'Interactive Brokers',mkt:'Global'},
+  // REAL ESTATE
+  {name:'Crowdfunded Real Estate',cls:'realestate',risk:'medium',ret:10,min:5000,horizon:'2-5 yrs',desc:'Fractional property ownership. Lower barrier than direct purchase.',platform:'Cropital, RealBnkrs',mkt:'Local'},
+  {name:'Rental Property',cls:'realestate',risk:'medium',ret:8,min:500000,horizon:'10+ yrs',desc:'Direct property investment with rental income and capital gains.',platform:'Direct / Broker',mkt:'Local'},
+  // ALTERNATIVE
+  {name:'P2P Lending (MSME)',cls:'alternative',risk:'high',ret:14,min:1000,horizon:'6-18 mo',desc:'Lend to small businesses. Higher yield with default risk.',platform:'Blend PH, SeedIn PH',mkt:'Local'},
+  {name:'VUL / Variable Life',cls:'vul',risk:'medium',ret:8,min:2000,horizon:'10+ yrs',desc:'Insurance + investment. Tax-advantaged. Long-term commitment.',platform:'Sun Life, AXA, Pru Life',mkt:'Local'},
+  {name:'Private Equity / Angel',cls:'alternative',risk:'very-high',ret:25,min:100000,horizon:'5-10 yrs',desc:'Invest in private companies. Illiquid, high-risk, high-return.',platform:'Direct / Networks',mkt:'Local'},
+  {name:'Art & Collectibles',cls:'alternative',risk:'high',ret:10,min:20000,horizon:'5+ yrs',desc:'Paintings, rare items, collectibles. Illiquid alternative asset.',platform:'Direct / Auction',mkt:'Local'},
+];
+
+// ═══════════════════════════════════════════════════════════
+// STATE & CONSTANTS
+// ═══════════════════════════════════════════════════════════
+let state = { wallets:[], futurePlans:[], payments:[], expenses:[], investments:[], budgetHistory:[] };
+
+const WALLET_COLORS = ['#1a6b4a','#1a4a7a','#8a5a00','#5a2a8a','#0d6b6b','#8a2060','#6b7280','#8a2020'];
+const WALLET_ICONS  = ['🏦','💳','📱','💵','🏧','💰','🏪','💼','🌐','🏠'];
+const CATEGORY_ICONS= {vacation:'✈️',emergency:'🛡',home:'🏠',education:'🎓',vehicle:'🚗',gadget:'💻',wedding:'💍',business:'🏪',retirement:'🌅',other:'📦'};
+const PAYMENT_ICONS = {loan:'🏦',mortgage:'🏠',car:'🚗',credit:'💳',appliance:'📺',personal:'👤',sss:'🏛',pagibig:'🏛',other:'📋'};
+const EXPENSE_ICONS = {insurance:'🛡','car-insurance':'🚗',property:'🏠',subscription:'📱',utilities:'💡',education:'🎓',hmo:'🏥',sss:'🏛',philhealth:'🏥',pagibig:'🏛',membership:'🤝',other:'📋'};
+const INV_ICONS     = {stocks:'📈',funds:'🏦',etf:'📊',bonds:'📜',crypto:'🔶',forex:'💱',realestate:'🏠',commodities:'🥇',mp2:'🏛',vul:'🛡',p2p:'🤝',other:'📦'};
+const INV_COLORS    = {stocks:'#1a6b4a',funds:'#1a4a7a',etf:'#0d6b6b',bonds:'#8a5a00',crypto:'#f97316',forex:'#5a2a8a',realestate:'#8a2060',commodities:'#c47a00',mp2:'#1a6b4a',vul:'#8a5a00',p2p:'#0d6b6b',other:'#6b7280'};
+const FREQ_MONTHS   = {monthly:1,quarterly:3,'semi-annual':6,annual:12};
+const FREQ_LABELS   = {monthly:'Monthly',quarterly:'Quarterly','semi-annual':'Semi-Annual',annual:'Annual'};
+const RISK_COLORS   = {low:'#1a6b4a',medium:'#8a5a00',high:'#8a2020','very-high':'#5a2a8a'};
+const BUDGET_CATS   = ['insurance','hmo','subscriptions','utilities','education','transport','food','other'];
+
+let walletDonut=null, ovDonut=null, investDonut=null, investProjChart=null;
+let budgetTrendChart=null, budget6moChart=null;
+let pfAssetChart=null, pfExpChart=null, pfInvChart=null, pfNwChart=null;
+let editingColor=WALLET_COLORS[0], editingIcon=WALLET_ICONS[0];
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+const fmt   = v => '₱' + Math.round(v).toLocaleString('en-PH');
+const fmtD  = v => (v>=0?'+':'')+Math.round(v).toLocaleString('en-PH');
+const pct   = v => (Math.round(v*10)/10)+'%';
+const uid   = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const today = () => new Date().toISOString().split('T')[0];
+const g     = id => parseFloat(document.getElementById(id)?.value)||0;
+const addMonths = (d,n) => { const dt=new Date(d); dt.setMonth(dt.getMonth()+n); return dt; };
+const fmtDate   = d => { try{ return new Date(d+'T00:00:00').toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}); }catch(e){return d;} };
+const daysUntil = d => Math.ceil((new Date(d+'T00:00:00')-new Date())/86400000);
+const toMonthly = e => e.amount/FREQ_MONTHS[e.frequency];
+const destroyChart = c => { if(c){try{c.destroy();}catch(e){}} return null; };
+
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
+function saveData(){ try{ localStorage.setItem('finforecast_pro',JSON.stringify(state)); showToast('✓ Data saved successfully'); }catch(e){ showToast('⚠ Save failed — localStorage unavailable'); } }
+function loadData(){ try{ const d=localStorage.getItem('finforecast_pro'); if(d) state=JSON.parse(d); }catch(e){} }
+
+// ═══════════════════════════════════════════════════════════
+// NAV
+// ═══════════════════════════════════════════════════════════
+const pageMeta={
+  wallets:{eyebrow:'WALLETS',title:'My Wallets'},
+  future:{eyebrow:'ALLOCATIONS',title:'Future Plans'},
+  payments:{eyebrow:'ALLOCATIONS',title:'Termed Payments'},
+  recurring:{eyebrow:'ALLOCATIONS',title:'Recurring Expenses'},
+  investments:{eyebrow:'INVESTMENTS',title:'My Portfolio'},
+  explore:{eyebrow:'INVESTMENTS',title:'Explore Markets'},
+  budget:{eyebrow:'ANALYTICS',title:'Budget Forecast'},
+  performance:{eyebrow:'ANALYTICS',title:'Performance Dashboard'},
+  overview:{eyebrow:'SUMMARY',title:'Fund Overview'},
+};
+function switchTab(t){
+  document.querySelectorAll('.nav-item').forEach(el=>el.classList.remove('active'));
+  document.getElementById('nav-'+t).classList.add('active');
+  document.querySelectorAll('.section').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+t).classList.add('active');
+  document.getElementById('page-eyebrow').textContent=pageMeta[t].eyebrow;
+  document.getElementById('page-title').textContent=pageMeta[t].title;
+  const renders={wallets:renderWallets,future:renderFuturePlans,payments:renderPayments,recurring:renderExpenses,investments:renderInvestments,explore:renderMarkets,budget:renderBudget,performance:renderPerformance,overview:renderOverview};
+  if(renders[t]) renders[t]();
+}
+function switchPerfTab(tab){
+  document.querySelectorAll('.perf-tab').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.perf-pane').forEach(el=>el.style.display='none');
+  event.target.classList.add('active');
+  document.getElementById('perf-'+tab).style.display='block';
+  renderPerformancePane(tab);
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════════
+function populateWalletSelects(){
+  const opts='<option value="">— Not linked —</option>'+state.wallets.map(w=>`<option value="${w.id}">${w.icon||'🏦'} ${w.name}</option>`).join('');
+  ['mf-wallet','mp-wallet','me-wallet'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=opts; });
+}
+function buildColorPicker(){ document.getElementById('mw-colors').innerHTML=WALLET_COLORS.map(c=>`<div class="color-opt${c===editingColor?' sel':''}" style="background:${c}" onclick="editingColor='${c}';buildColorPicker()"></div>`).join(''); }
+function buildIconPicker(){  document.getElementById('mw-icons').innerHTML=WALLET_ICONS.map(i=>`<div class="icon-opt${i===editingIcon?' sel':''}" onclick="editingIcon='${i}';buildIconPicker()">${i}</div>`).join(''); }
+
+function openModal(type,editId=null){
+  populateWalletSelects();
+  if(type==='wallet'){
+    editingColor=WALLET_COLORS[0]; editingIcon=WALLET_ICONS[0];
+    if(editId){ const w=state.wallets.find(x=>x.id===editId); if(w){document.getElementById('mw-id').value=w.id;document.getElementById('mw-name').value=w.name;document.getElementById('mw-type').value=w.type;document.getElementById('mw-balance').value=w.balance;document.getElementById('mw-bank').value=w.bank||'';document.getElementById('mw-note').value=w.note||'';editingColor=w.color||WALLET_COLORS[0];editingIcon=w.icon||WALLET_ICONS[0];document.getElementById('mw-title').textContent='Edit Wallet';} }
+    else{ ['mw-id','mw-name','mw-balance','mw-bank','mw-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('mw-type').value='savings';document.getElementById('mw-title').textContent='Add Wallet'; }
+    buildColorPicker(); buildIconPicker();
+    document.getElementById('modal-wallet').classList.add('open');
+  } else if(type==='future'){
+    if(editId){ const p=state.futurePlans.find(x=>x.id===editId); if(p){document.getElementById('mf-id').value=p.id;document.getElementById('mf-name').value=p.name;document.getElementById('mf-category').value=p.category;document.getElementById('mf-target').value=p.target;document.getElementById('mf-saved').value=p.saved;document.getElementById('mf-monthly').value=p.monthly;document.getElementById('mf-wallet').value=p.walletId||'';document.getElementById('mf-date').value=p.date||'';document.getElementById('mf-note').value=p.note||'';document.getElementById('mf-title').textContent='Edit Plan';} }
+    else{ ['mf-id','mf-name','mf-target','mf-saved','mf-monthly','mf-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('mf-category').value='vacation';document.getElementById('mf-date').value='';document.getElementById('mf-title').textContent='Add Future Plan'; }
+    document.getElementById('modal-future').classList.add('open');
+  } else if(type==='payment'){
+    if(editId){ const p=state.payments.find(x=>x.id===editId); if(p){document.getElementById('mp-id').value=p.id;document.getElementById('mp-name').value=p.name;document.getElementById('mp-type').value=p.type;document.getElementById('mp-balance').value=p.balance;document.getElementById('mp-monthly').value=p.monthly;document.getElementById('mp-months').value=p.months;document.getElementById('mp-due').value=p.due||'';document.getElementById('mp-wallet').value=p.walletId||'';document.getElementById('mp-interest').value=p.interest||'';document.getElementById('mp-title').textContent='Edit Payment';} }
+    else{ ['mp-id','mp-name','mp-balance','mp-monthly','mp-months','mp-interest'].forEach(id=>document.getElementById(id).value='');document.getElementById('mp-type').value='loan';document.getElementById('mp-due').value=today();document.getElementById('mp-title').textContent='Add Termed Payment'; }
+    document.getElementById('modal-payment').classList.add('open');
+  } else if(type==='expense'){
+    if(editId){ const e=state.expenses.find(x=>x.id===editId); if(e){document.getElementById('me-id').value=e.id;document.getElementById('me-name').value=e.name;document.getElementById('me-category').value=e.category;document.getElementById('me-amount').value=e.amount;document.getElementById('me-frequency').value=e.frequency;document.getElementById('me-due').value=e.due||'';document.getElementById('me-provider').value=e.provider||'';document.getElementById('me-wallet').value=e.walletId||'';document.getElementById('me-note').value=e.note||'';document.getElementById('me-title').textContent='Edit Expense';} }
+    else{ ['me-id','me-name','me-amount','me-provider','me-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('me-category').value='insurance';document.getElementById('me-frequency').value='monthly';document.getElementById('me-due').value=today();document.getElementById('me-title').textContent='Add Recurring Expense'; }
+    document.getElementById('modal-expense').classList.add('open');
+  } else if(type==='invest'){
+    if(editId){ const i=state.investments.find(x=>x.id===editId); if(i){document.getElementById('mi-id').value=i.id;document.getElementById('mi-name').value=i.name;document.getElementById('mi-class').value=i.cls;document.getElementById('mi-cost').value=i.cost;document.getElementById('mi-value').value=i.value;document.getElementById('mi-return').value=i.annualReturn;document.getElementById('mi-monthly').value=i.monthly||0;document.getElementById('mi-platform').value=i.platform||'';document.getElementById('mi-note').value=i.note||'';document.getElementById('mi-title').textContent='Edit Position';} }
+    else{ ['mi-id','mi-name','mi-cost','mi-value','mi-return','mi-monthly','mi-platform','mi-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('mi-class').value='stocks';document.getElementById('mi-title').textContent='Add Investment Position'; }
+    document.getElementById('modal-invest').classList.add('open');
+  } else if(type==='invest-explore'){
+    switchTab('explore');
+  }
+}
+function closeModal(t){ document.getElementById('modal-'+t).classList.remove('open'); }
+
+// ═══════════════════════════════════════════════════════════
+// SAVE ACTIONS
+// ═══════════════════════════════════════════════════════════
+function saveWallet(){
+  const name=document.getElementById('mw-name').value.trim(); if(!name){showToast('⚠ Enter a wallet name');return;}
+  const id=document.getElementById('mw-id').value||uid();
+  const obj={id,name,type:document.getElementById('mw-type').value,balance:parseFloat(document.getElementById('mw-balance').value)||0,bank:document.getElementById('mw-bank').value.trim(),note:document.getElementById('mw-note').value.trim(),color:editingColor,icon:editingIcon};
+  const idx=state.wallets.findIndex(x=>x.id===id); if(idx>=0) state.wallets[idx]=obj; else state.wallets.push(obj);
+  closeModal('wallet'); renderWallets(); updateTopPill(); showToast('✓ Wallet saved');
+}
+function saveFuturePlan(){
+  const name=document.getElementById('mf-name').value.trim(); if(!name){showToast('⚠ Enter a plan name');return;}
+  const id=document.getElementById('mf-id').value||uid();
+  const obj={id,name,category:document.getElementById('mf-category').value,target:parseFloat(document.getElementById('mf-target').value)||0,saved:parseFloat(document.getElementById('mf-saved').value)||0,monthly:parseFloat(document.getElementById('mf-monthly').value)||0,walletId:document.getElementById('mf-wallet').value,date:document.getElementById('mf-date').value,note:document.getElementById('mf-note').value.trim()};
+  const idx=state.futurePlans.findIndex(x=>x.id===id); if(idx>=0) state.futurePlans[idx]=obj; else state.futurePlans.push(obj);
+  closeModal('future'); renderFuturePlans(); showToast('✓ Plan saved');
+}
+function savePayment(){
+  const name=document.getElementById('mp-name').value.trim(); if(!name){showToast('⚠ Enter a payment name');return;}
+  const id=document.getElementById('mp-id').value||uid();
+  const obj={id,name,type:document.getElementById('mp-type').value,balance:parseFloat(document.getElementById('mp-balance').value)||0,monthly:parseFloat(document.getElementById('mp-monthly').value)||0,months:parseInt(document.getElementById('mp-months').value)||0,due:document.getElementById('mp-due').value,walletId:document.getElementById('mp-wallet').value,interest:parseFloat(document.getElementById('mp-interest').value)||0};
+  const idx=state.payments.findIndex(x=>x.id===id); if(idx>=0) state.payments[idx]=obj; else state.payments.push(obj);
+  closeModal('payment'); renderPayments(); showToast('✓ Payment saved');
+}
+function saveExpense(){
+  const name=document.getElementById('me-name').value.trim(); if(!name){showToast('⚠ Enter an expense name');return;}
+  const id=document.getElementById('me-id').value||uid();
+  const obj={id,name,category:document.getElementById('me-category').value,amount:parseFloat(document.getElementById('me-amount').value)||0,frequency:document.getElementById('me-frequency').value,due:document.getElementById('me-due').value,provider:document.getElementById('me-provider').value.trim(),walletId:document.getElementById('me-wallet').value,note:document.getElementById('me-note').value.trim()};
+  const idx=state.expenses.findIndex(x=>x.id===id); if(idx>=0) state.expenses[idx]=obj; else state.expenses.push(obj);
+  closeModal('expense'); renderExpenses(); showToast('✓ Expense saved');
+}
+function saveInvestment(){
+  const name=document.getElementById('mi-name').value.trim(); if(!name){showToast('⚠ Enter an investment name');return;}
+  const id=document.getElementById('mi-id').value||uid();
+  const cost=parseFloat(document.getElementById('mi-cost').value)||0;
+  const value=parseFloat(document.getElementById('mi-value').value)||cost;
+  const obj={id,name,cls:document.getElementById('mi-class').value,cost,value,annualReturn:parseFloat(document.getElementById('mi-return').value)||0,monthly:parseFloat(document.getElementById('mi-monthly').value)||0,platform:document.getElementById('mi-platform').value.trim(),note:document.getElementById('mi-note').value.trim()};
+  const idx=state.investments.findIndex(x=>x.id===id); if(idx>=0) state.investments[idx]=obj; else state.investments.push(obj);
+  closeModal('invest'); renderInvestments(); showToast('✓ Investment saved');
+}
+function deleteItem(col,id,fn){ if(!confirm('Delete this item?')) return; state[col]=state[col].filter(x=>x.id!==id); fn(); showToast('✓ Deleted'); }
+
+// ═══════════════════════════════════════════════════════════
+// RENDER — WALLETS
+// ═══════════════════════════════════════════════════════════
+function renderWallets(){
+  const totalBal=state.wallets.reduce((s,w)=>s+w.balance,0);
+  const totalAlloc=state.futurePlans.reduce((s,p)=>s+p.saved,0)+state.payments.reduce((s,p)=>s+p.balance,0);
+  const totalMonthly=state.expenses.reduce((s,e)=>s+toMonthly(e),0)+state.payments.reduce((s,p)=>s+p.monthly,0);
+  document.getElementById('wm-total').textContent=fmt(totalBal);
+  document.getElementById('wm-count').textContent=state.wallets.length+' wallet'+(state.wallets.length!==1?'s':'');
+  document.getElementById('wm-avail').textContent=fmt(Math.max(totalBal-totalAlloc,0));
+  document.getElementById('wm-alloc').textContent=fmt(totalAlloc);
+  document.getElementById('wm-commit').textContent=fmt(totalMonthly);
+  updateTopPill();
+  const typeLabels={savings:'Savings',current:'Current/Checking',digital:'Digital Wallet',cash:'Cash',investment:'Investment',credit:'Credit Line'};
+  document.getElementById('wallet-grid').innerHTML=state.wallets.map(w=>`
+    <div class="wallet-card">
+      <div class="wc-stripe" style="background:${w.color||'#1a6b4a'}"></div>
+      <div class="wc-icon" style="background:${w.color||'#1a6b4a'}1a">${w.icon||'🏦'}</div>
+      <div class="wc-name">${w.name}</div>
+      <div class="wc-type">${typeLabels[w.type]||w.type}${w.bank?' · '+w.bank:''}</div>
+      <div class="wc-balance">${fmt(w.balance)}</div>
+      <div class="wc-avail">${w.note?'<span>'+w.note+'</span>':''}</div>
+      <div class="wc-actions">
+        <button class="btn btn-outline btn-sm" onclick="openModal('wallet','${w.id}')">✏ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem('wallets','${w.id}',renderWallets)">✕</button>
+      </div>
+    </div>`).join('')+`<div class="add-wallet-card" onclick="openModal('wallet')"><div style="font-size:24px">＋</div><div style="font-size:12px;font-weight:500">Add Wallet</div></div>`;
+  const tot=totalBal||1;
+  document.getElementById('wallet-bar-breakdown').innerHTML=state.wallets.length?state.wallets.map(w=>`<div class="bar-row"><span class="bar-label">${w.icon||'🏦'} ${w.name}</span><div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(w.balance/tot*100)}%;background:${w.color||'#1a6b4a'}"></div></div><span class="bar-val">${fmt(w.balance)}</span></div>`).join(''):'<div class="tip">No wallets added.</div>';
+  walletDonut=destroyChart(walletDonut);
+  const canvas=document.getElementById('wallet-donut');
+  if(state.wallets.length&&canvas){ walletDonut=new Chart(canvas,{type:'doughnut',data:{labels:state.wallets.map(w=>w.name),datasets:[{data:state.wallets.map(w=>w.balance),backgroundColor:state.wallets.map(w=>w.color||'#1a6b4a'),borderWidth:2,borderColor:'#fff',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:true,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+fmt(c.raw)}}}}}); }
+  document.getElementById('wallet-legend').innerHTML=state.wallets.map(w=>`<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border)"><div style="width:9px;height:9px;border-radius:2px;background:${w.color||'#1a6b4a'};flex-shrink:0"></div><span style="flex:1;font-size:12px;color:var(--text2)">${w.name}</span><span style="font-size:11px;font-family:'IBM Plex Mono',monospace">${fmt(w.balance)}</span></div>`).join('')||'<div style="font-size:12px;color:var(--text3)">No wallets</div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER — FUTURE PLANS
+// ═══════════════════════════════════════════════════════════
+function renderFuturePlans(){
+  const plans=state.futurePlans;
+  document.getElementById('fp-total-goal').textContent=fmt(plans.reduce((s,p)=>s+p.target,0));
+  document.getElementById('fp-total-saved').textContent=fmt(plans.reduce((s,p)=>s+p.saved,0));
+  document.getElementById('fp-total-gap').textContent=fmt(Math.max(plans.reduce((s,p)=>s+p.target-p.saved,0),0));
+  document.getElementById('fp-count').textContent=plans.length;
+  const colors=['#1a6b4a','#1a4a7a','#8a5a00','#5a2a8a','#0d6b6b','#8a2060'];
+  const grid=document.getElementById('future-grid'),empty=document.getElementById('future-empty');
+  if(!plans.length){grid.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  grid.innerHTML=plans.map((p,i)=>{
+    const prog=p.target>0?Math.min(p.saved/p.target*100,100):0;
+    const gap=Math.max(p.target-p.saved,0);
+    const mo=p.monthly>0?Math.ceil(gap/p.monthly):null;
+    const color=colors[i%colors.length];
+    const w=state.wallets.find(x=>x.id===p.walletId);
+    const dueDays=p.date?daysUntil(p.date):null;
+    return `<div class="alloc-card" style="padding-top:18px">
+      <div style="position:absolute;top:0;left:0;right:0;height:3px;background:${color};border-radius:var(--radius) var(--radius) 0 0"></div>
+      <div class="alloc-header">
+        <div style="display:flex;align-items:flex-start;gap:9px"><div class="alloc-icon" style="background:${color}18">${CATEGORY_ICONS[p.category]||'📦'}</div><div><div class="alloc-name">${p.name}</div><div class="alloc-source">${w?w.icon+' '+w.name:'No wallet'}</div></div></div>
+        <div style="display:flex;gap:4px"><button class="btn btn-outline btn-sm btn-icon" onclick="openModal('future','${p.id}')">✏</button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('futurePlans','${p.id}',renderFuturePlans)">✕</button></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:500">${fmt(p.saved)} <span style="font-size:12px;color:var(--text3)">/ ${fmt(p.target)}</span></span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:${color}">${Math.round(prog)}%</span>
+      </div>
+      <div class="prog-wrap" style="height:7px;margin-bottom:6px"><div class="prog-fill" style="width:${prog}%;background:${color}"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3)">
+        <span>${gap>0?'Need '+fmt(gap):'✓ Goal reached!'}</span><span>${mo?mo+' mo left':p.date?fmtDate(p.date):''}</span>
+      </div>
+      ${p.monthly>0?'<div style="margin-top:7px;font-size:11px;color:var(--text3)">Monthly: <strong style="color:var(--text2)">'+fmt(p.monthly)+'</strong></div>':''}
+      ${p.date&&dueDays!==null?'<div style="margin-top:6px"><span class="badge '+(dueDays<30?'badge-red':dueDays<90?'badge-amber':'badge-green')+'">'+fmtDate(p.date)+(dueDays>=0?' · '+dueDays+'d':' · Overdue')+'</span></div>':''}
+      ${p.note?'<div style="margin-top:5px;font-size:11px;color:var(--text3)">'+p.note+'</div>':''}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER — PAYMENTS
+// ═══════════════════════════════════════════════════════════
+function renderPayments(){
+  const payments=state.payments;
+  const now=new Date(), in30=new Date(); in30.setDate(in30.getDate()+30);
+  document.getElementById('tp-total').textContent=fmt(payments.reduce((s,p)=>s+p.balance,0));
+  document.getElementById('tp-monthly').textContent=fmt(payments.reduce((s,p)=>s+p.monthly,0));
+  document.getElementById('tp-due').textContent=fmt(payments.filter(p=>{ if(!p.due) return false; const d=new Date(p.due+'T00:00:00'); return d>=now&&d<=in30; }).reduce((s,p)=>s+p.monthly,0));
+  document.getElementById('tp-count').textContent=payments.length;
+  const typeC={loan:'#1a4a7a',mortgage:'#5a2a8a',car:'#1a6b4a',credit:'#8a2020',appliance:'#8a5a00',personal:'#0d6b6b',sss:'#6b7280',pagibig:'#6b7280',other:'#6b7280'};
+  const list=document.getElementById('payment-list'),empty=document.getElementById('payment-empty');
+  if(!payments.length){list.innerHTML='';empty.style.display='block';}
+  else{
+    empty.style.display='none';
+    list.innerHTML=payments.map(p=>{
+      const days=p.due?daysUntil(p.due):null;
+      const u=days!==null&&days<=7?'badge-red':days!==null&&days<=30?'badge-amber':'badge-green';
+      const w=state.wallets.find(x=>x.id===p.walletId);
+      const color=typeC[p.type]||'#6b7280';
+      return `<div class="payment-item">
+        <div class="pay-icon" style="background:${color}18">${PAYMENT_ICONS[p.type]||'📋'}</div>
+        <div><div class="pi-name">${p.name}</div><div class="pi-detail">${p.months} mo remaining${w?' · '+w.icon+' '+w.name:''}${p.interest?' · '+p.interest+'% p.a.':''}</div></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;text-align:right">${fmt(p.monthly)}<div style="font-size:10px;color:var(--text3)">/month</div></div>
+        <div style="text-align:right"><div style="font-size:10px;color:var(--text3)">Balance</div><div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500">${fmt(p.balance)}</div>${p.due?'<div style="margin-top:3px"><span class="badge '+u+'">Due '+fmtDate(p.due)+'</span></div>':''}</div>
+        <div style="display:flex;gap:4px"><button class="btn btn-outline btn-sm btn-icon" onclick="openModal('payment','${p.id}')">✏</button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('payments','${p.id}',renderPayments)">✕</button></div>
+      </div>`;
+    }).join('');
+  }
+  let running=0,rows='';
+  for(let i=0;i<6;i++){
+    const d=addMonths(new Date(),i+1);
+    const label=d.toLocaleString('default',{month:'long',year:'numeric'});
+    const due=payments.filter(p=>p.months>i).reduce((s,p)=>s+p.monthly,0);
+    running+=due;
+    const names=payments.filter(p=>p.months>i).map(p=>p.name).join(', ')||'—';
+    rows+=`<tr><td>${label}</td><td style="font-size:11px;color:var(--text3)">${names}</td><td class="num">${fmt(due)}</td><td class="num bold">${fmt(running)}</td></tr>`;
+  }
+  document.getElementById('payment-schedule').innerHTML=rows||'<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:14px">No payments scheduled</td></tr>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER — EXPENSES
+// ═══════════════════════════════════════════════════════════
+function renderExpenses(){
+  const expenses=state.expenses;
+  const totalMonthly=expenses.reduce((s,e)=>s+toMonthly(e),0);
+  document.getElementById('re-monthly').textContent=fmt(totalMonthly);
+  document.getElementById('re-yearly').textContent=fmt(totalMonthly*12);
+  document.getElementById('re-this-month').textContent=fmt(expenses.filter(e=>{ if(!e.due) return true; const d=new Date(e.due+'T00:00:00'); return d<=addMonths(new Date(),1); }).reduce((s,e)=>s+e.amount,0));
+  document.getElementById('re-count').textContent=expenses.length;
+  const catC={insurance:'#1a6b4a','car-insurance':'#1a4a7a',property:'#5a2a8a',subscription:'#0d6b6b',utilities:'#8a5a00',education:'#8a2060',hmo:'#8a2020',sss:'#6b7280',philhealth:'#1a6b4a',pagibig:'#1a4a7a',membership:'#8a5a00',other:'#6b7280'};
+  const renderGroup=(freq,listId,emptyId)=>{
+    const items=expenses.filter(e=>freq==='quarterly'?(e.frequency==='quarterly'||e.frequency==='semi-annual'):(e.frequency===(freq==='annual'?'annual':'monthly')));
+    const list=document.getElementById(listId),empty=document.getElementById(emptyId);
+    if(!items.length){list.innerHTML='';empty.style.display='block';return;}
+    empty.style.display='none';
+    list.innerHTML=items.map(e=>{
+      const color=catC[e.category]||'#6b7280';
+      const days=e.due?daysUntil(e.due):null;
+      const u=days!==null&&days<=7?'badge-red':days!==null&&days<=30?'badge-amber':'badge-neutral';
+      const w=state.wallets.find(x=>x.id===e.walletId);
+      return `<div class="expense-item">
+        <div class="exp-icon" style="background:${color}18">${EXPENSE_ICONS[e.category]||'📋'}</div>
+        <div><div style="font-size:13px;font-weight:600;color:var(--text)">${e.name}</div><div style="font-size:10px;color:var(--text3)">${e.provider||''}${w?' · '+w.icon+' '+w.name:''}${e.note?' · '+e.note:''}</div></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;color:${color};text-align:right">${fmt(e.amount)}</div>
+        <div style="text-align:right"><span class="badge badge-neutral">${FREQ_LABELS[e.frequency]}</span>${e.due?'<div style="margin-top:3px"><span class="badge '+u+'">Due '+fmtDate(e.due)+'</span></div>':''}</div>
+        <div style="font-size:10px;color:var(--text3);text-align:right;font-family:'IBM Plex Mono',monospace">${fmt(toMonthly(e))}/mo</div>
+        <div style="display:flex;gap:4px"><button class="btn btn-outline btn-sm btn-icon" onclick="openModal('expense','${e.id}')">✏</button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('expenses','${e.id}',renderExpenses)">✕</button></div>
+      </div>`;
+    }).join('');
+  };
+  renderGroup('monthly','exp-monthly-list','exp-monthly-empty');
+  renderGroup('quarterly','exp-quarterly-list','exp-quarterly-empty');
+  renderGroup('annual','exp-annual-list','exp-annual-empty');
+  const cats={};
+  expenses.forEach(e=>{ if(!cats[e.category]) cats[e.category]=0; cats[e.category]+=toMonthly(e); });
+  const maxCat=Math.max(...Object.values(cats),1);
+  document.getElementById('exp-category-bars').innerHTML=Object.entries(cats).length?Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="bar-row"><span class="bar-label">${EXPENSE_ICONS[k]||'📋'} ${k.replace(/-/g,' ')}</span><div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(v/maxCat*100)}%;background:${catC[k]||'#6b7280'}"></div></div><span class="bar-val">${fmt(v)}/mo</span></div>`).join(''):'<div class="tip">No expenses to analyze.</div>';
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER — INVESTMENTS
+// ═══════════════════════════════════════════════════════════
+function renderInvestments(){
+  const invs=state.investments;
+  const totalValue=invs.reduce((s,i)=>s+i.value,0);
+  const totalCost=invs.reduce((s,i)=>s+i.cost,0);
+  const totalGain=totalValue-totalCost;
+  const blended=totalValue>0?invs.reduce((s,i)=>s+(i.value/totalValue)*i.annualReturn,0):0;
+  document.getElementById('ip-total').textContent=fmt(totalValue);
+  document.getElementById('ip-cost').textContent=fmt(totalCost);
+  document.getElementById('ip-gain').textContent=fmt(totalGain);
+  document.getElementById('ip-gain').style.color=totalGain>=0?'var(--accent)':'var(--red)';
+  document.getElementById('ip-blended').textContent=pct(blended);
+  document.getElementById('ip-gain-delta').className='metric-delta '+(totalGain>=0?'delta-up':'delta-down');
+  document.getElementById('ip-gain-delta').textContent=(totalGain>=0?'▲ +':'▼ ')+Math.round(totalCost>0?totalGain/totalCost*100:0)+'% total return';
+  const list=document.getElementById('invest-portfolio-list'),empty=document.getElementById('invest-empty');
+  if(!invs.length){list.innerHTML='';empty.style.display='block';}
+  else{
+    empty.style.display='none';
+    list.innerHTML=invs.map(i=>{
+      const gain=i.value-i.cost;
+      const gainPct=i.cost>0?gain/i.cost*100:0;
+      const color=INV_COLORS[i.cls]||'#6b7280';
+      return `<div class="inv-portfolio-item">
+        <div style="width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;background:${color}18;flex-shrink:0">${INV_ICONS[i.cls]||'📦'}</div>
+        <div><div style="font-size:13px;font-weight:600;color:var(--text)">${i.name}</div><div style="font-size:10px;color:var(--text3)">${i.cls.toUpperCase()}${i.platform?' · '+i.platform:''}</div></div>
+        <div style="text-align:right"><div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500">${fmt(i.value)}</div><div style="font-size:10px;color:var(--text3)">Current value</div></div>
+        <div style="text-align:right"><div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:500;color:${gain>=0?'var(--accent)':'var(--red)'}">${fmtD(gain)}</div><div style="font-size:10px;color:${gain>=0?'var(--accent)':'var(--red)'}">${gain>=0?'▲':'▼'} ${Math.abs(Math.round(gainPct*10)/10)}%</div></div>
+        <div style="text-align:right"><div style="font-size:11px;color:var(--teal);font-family:'IBM Plex Mono',monospace;font-weight:600">${i.annualReturn}% p.a.</div>${i.monthly?'<div style="font-size:10px;color:var(--text3)">+'+fmt(i.monthly)+'/mo</div>':''}</div>
+        <div style="display:flex;gap:4px"><button class="btn btn-outline btn-sm btn-icon" onclick="openModal('invest','${i.id}')">✏</button><button class="btn btn-danger btn-sm btn-icon" onclick="deleteItem('investments','${i.id}',renderInvestments)">✕</button></div>
+      </div>`;
+    }).join('');
+  }
+  // Donut by class
+  investDonut=destroyChart(investDonut);
+  const byClass={};
+  invs.forEach(i=>{ if(!byClass[i.cls]) byClass[i.cls]=0; byClass[i.cls]+=i.value; });
+  const donutCanvas=document.getElementById('invest-donut');
+  const donutData=Object.entries(byClass).filter(([,v])=>v>0);
+  if(donutData.length&&donutCanvas){ investDonut=new Chart(donutCanvas,{type:'doughnut',data:{labels:donutData.map(([k])=>k),datasets:[{data:donutData.map(([,v])=>v),backgroundColor:donutData.map(([k])=>INV_COLORS[k]||'#6b7280'),borderWidth:2,borderColor:'#fff',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:true,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+fmt(c.raw)}}}}}); }
+  document.getElementById('invest-legend').innerHTML=donutData.map(([k,v])=>`<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border)"><div style="width:9px;height:9px;border-radius:2px;background:${INV_COLORS[k]||'#6b7280'};flex-shrink:0"></div><span style="flex:1;font-size:12px;color:var(--text2)">${INV_ICONS[k]||'📦'} ${k}</span><span style="font-size:11px;font-family:'IBM Plex Mono',monospace">${fmt(v)}</span></div>`).join('')||'<div style="font-size:12px;color:var(--text3)">No positions</div>';
+  // 12-month projection chart
+  investProjChart=destroyChart(investProjChart);
+  const projCanvas=document.getElementById('invest-proj-chart');
+  if(invs.length&&projCanvas){
+    const labels=[],data=[];
+    let pv=totalValue;
+    const monthlyAdd=invs.reduce((s,i)=>s+i.monthly,0);
+    for(let m=0;m<=12;m++){
+      labels.push(m===0?'Now':addMonths(new Date(),m).toLocaleString('default',{month:'short'}));
+      data.push(Math.round(pv));
+      pv=pv*(1+blended/100/12)+monthlyAdd;
+    }
+    investProjChart=new Chart(projCanvas,{type:'line',data:{labels,datasets:[{label:'Portfolio Value',data,borderColor:'#1a6b4a',backgroundColor:'rgba(26,107,74,0.08)',borderWidth:2,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#1a6b4a'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₱'+c.raw.toLocaleString('en-PH')}}},scales:{x:{ticks:{color:'#9a8e82',font:{size:10}},grid:{color:'rgba(60,40,20,0.06)'}},y:{ticks:{color:'#9a8e82',font:{size:10},callback:v=>'₱'+Math.round(v/1000)+'k'},grid:{color:'rgba(60,40,20,0.06)'}}}}});
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER — EXPLORE MARKETS
+// ═══════════════════════════════════════════════════════════
+function renderMarkets(){
+  const cls=document.getElementById('mkt-class').value;
+  const risk=document.getElementById('mkt-risk').value;
+  const sort=document.getElementById('mkt-sort').value;
+  let filtered=MARKETS.filter(m=>(cls==='all'||m.cls===cls)&&(risk==='all'||m.risk===risk));
+  if(sort==='ret-desc') filtered.sort((a,b)=>b.ret-a.ret);
+  else if(sort==='ret-asc') filtered.sort((a,b)=>a.ret-b.ret);
+  else if(sort==='risk-asc'){ const o={low:0,medium:1,high:2,'very-high':3}; filtered.sort((a,b)=>o[a.risk]-o[b.risk]); }
+  else if(sort==='min-asc') filtered.sort((a,b)=>a.min-b.min);
+  document.getElementById('mkt-count').textContent=filtered.length+' options found across all markets';
+  const riskC={low:'badge-green',medium:'badge-amber',high:'badge-red','very-high':'badge-purple'};
+  const stripeC={low:'#1a6b4a',medium:'#8a5a00',high:'#8a2020','very-high':'#5a2a8a'};
+  document.getElementById('market-grid').innerHTML=filtered.map(m=>`
+    <div class="inv-card" onclick="openModal('invest');document.getElementById('mi-name').value='${m.name}';document.getElementById('mi-class').value='${m.cls}';document.getElementById('mi-return').value='${m.ret}';document.getElementById('mi-platform').value='${m.platform}'">
+      <div class="ic-stripe" style="background:${stripeC[m.risk]}"></div>
+      <div class="ic-header">
+        <div class="ic-name">${INV_ICONS[m.cls]||'📦'} ${m.name}</div>
+        <div class="ic-ret" style="color:${stripeC[m.risk]}">${m.ret}<span>%/yr</span></div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px">
+        <span class="badge ${riskC[m.risk]}">${m.risk} risk</span>
+        <span class="badge badge-teal">${m.cls}</span>
+        <span class="badge badge-neutral">${m.horizon}</span>
+      </div>
+      <div class="ic-desc">${m.desc}</div>
+      <div class="ic-ret-bar"><div class="ic-ret-fill" style="width:${Math.min(m.ret/65*100,100)}%;background:${stripeC[m.risk]}"></div></div>
+      <div class="ic-meta"><span>Min: ${m.min>0?fmt(m.min):'Free'}</span><span>${m.mkt}</span></div>
+      <div style="font-size:10px;color:var(--text3);margin-top:5px">📍 ${m.platform}</div>
+      <div style="margin-top:8px"><span class="badge badge-green" style="font-size:10px">＋ Add to portfolio</span></div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER — BUDGET FORECAST (3-month rolling analysis)
+// ═══════════════════════════════════════════════════════════
+function renderBudget(){
+  // Ensure budgetHistory has 3 months of data per category
+  const cats=['insurance','hmo','subscriptions','utilities','food','transport','education','other'];
+  if(!state.budgetHistory.length){
+    // Seed from current expenses
+    const baseMonthly=state.expenses.reduce((s,e)=>s+toMonthly(e),0)+state.payments.reduce((s,p)=>s+p.monthly,0);
+    state.budgetHistory=[-2,-1,0].map(offset=>({
+      month:offset,
+      label:addMonths(new Date(),offset).toLocaleString('default',{month:'short',year:'numeric'}),
+      total:baseMonthly*(0.9+Math.random()*0.2),
+      cats:cats.reduce((o,c)=>{
+        const base=state.expenses.filter(e=>e.category===c).reduce((s,e)=>s+toMonthly(e),0)||Math.random()*3000;
+        o[c]=Math.round(base*(0.85+Math.random()*0.3));
+        return o;
+      },{})
+    }));
+  }
+  const hist=state.budgetHistory.slice(-3);
+  // Weighted forecast (most recent month gets 50%, prev 30%, oldest 20%)
+  const weights=[0.2,0.3,0.5];
+  const income=g('bf-income')||85000;
+  // Build history input rows
+  document.getElementById('bf-history').innerHTML=hist.map(function(h,hi){
+    var catRows=cats.map(function(c){
+      return '<div class="field-row" style="margin-bottom:6px">'
+        +'<span class="field-label" style="min-width:100px;font-size:11px">'+(EXPENSE_ICONS[c]||'?')+' '+c+'</span>'
+        +'<div class="field-input"><input type="number" id="bh_'+hi+'_'+c+'" value="'+(h.cats[c]||0)+'" oninput="updateBudgetHistory('+hi+',\''+c+'\',this.value)" style="font-size:11px;padding:5px 8px"></div>'
+        +'</div>';
+    }).join('');
+    return '<div style="margin-bottom:10px">'
+      +'<div style="font-size:10px;font-weight:600;color:var(--text3);margin-bottom:6px;text-transform:uppercase">'+h.label+'</div>'
+      +catRows
+      +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);font-size:11px;margin-top:4px">'
+      +'<span style="color:var(--text2);font-weight:500">Month total</span>'
+      +'<span style="font-family:monospace;font-weight:600" id="bh_total_'+hi+'">'+fmt(h.total)+'</span>'
+      +'</div></div>';
+  }).join('');
+  computeBudgetForecast();
+}
+
+function updateBudgetHistory(hi,cat,val){
+  if(!state.budgetHistory[hi]) return;
+  state.budgetHistory[hi].cats[cat]=parseFloat(val)||0;
+  state.budgetHistory[hi].total=Object.values(state.budgetHistory[hi].cats).reduce((s,v)=>s+v,0);
+  const el=document.getElementById('bh_total_'+hi);
+  if(el) el.textContent=fmt(state.budgetHistory[hi].total);
+  computeBudgetForecast();
+}
+
+function computeBudgetForecast(){
+  const hist=state.budgetHistory.slice(-3);
+  const weights=[0.2,0.3,0.5];
+  const income=g('bf-income')||85000;
+  const cats=['insurance','hmo','subscriptions','utilities','food','transport','education','other'];
+  if(hist.length<1) return;
+  // Category forecasts
+  const catForecasts={};
+  cats.forEach(c=>{
+    const vals=hist.map(h=>h.cats[c]||0);
+    catForecasts[c]=Math.round(vals.reduce((s,v,i)=>s+v*(weights[i]||weights[weights.length-1]),0));
+  });
+  const forecastTotal=Object.values(catForecasts).reduce((s,v)=>s+v,0);
+  const avgTotal=hist.length>0?hist.reduce((s,h)=>s+h.total,0)/hist.length:0;
+  const trend=hist.length>=2?(hist[hist.length-1].total-hist[0].total)/hist[0].total*100:0;
+  const surplus=income-forecastTotal;
+  document.getElementById('bf-avg').textContent=fmt(avgTotal);
+  document.getElementById('bf-next').textContent=fmt(forecastTotal);
+  document.getElementById('bf-surplus').textContent=fmt(surplus);
+  document.getElementById('bf-surplus').style.color=surplus>=0?'var(--blue)':'var(--red)';
+  document.getElementById('bf-reserve').textContent=fmt(forecastTotal*0.1);
+  document.getElementById('bf-trend-sub').textContent=trend>=0?`▲ ${Math.round(trend*10)/10}% vs 3mo ago`:`▼ ${Math.abs(Math.round(trend*10)/10)}% vs 3mo ago`;
+  // Budget table
+  let tableHTML='';
+  cats.forEach(c=>{
+    const vals=hist.map(h=>h.cats[c]||0);
+    const forecast=catForecasts[c];
+    const avg=vals.reduce((s,v)=>s+v,0)/Math.max(vals.length,1);
+    const trendPct=vals.length>=2&&vals[0]>0?(vals[vals.length-1]-vals[0])/vals[0]*100:0;
+    const trendClass=Math.abs(trendPct)<3?'same':trendPct>0?'up':'down';
+    const trendIcon=Math.abs(trendPct)<3?'→':trendPct>0?'↑':'↓';
+    const recommended=Math.round(forecast*1.1);
+    tableHTML+=`<tr>
+      <td>${EXPENSE_ICONS[c]||'📋'} ${c}</td>
+      '+vals.map(function(v){return '<td class="num">'+fmt(v)+'</td>';}).join('')+'
+      ${vals.length<3?'<td class="num" style="color:var(--text3)">—</td>'.repeat(3-vals.length):''}
+      <td class="num bold">${fmt(forecast)}</td>
+      <td class="num ${trendClass}" style="font-family:'IBM Plex Mono',monospace">${trendIcon} ${Math.abs(Math.round(trendPct*10)/10)}%</td>
+      <td class="num" style="color:var(--blue)">${fmt(recommended)}</td>
+    </tr>`;
+  });
+  tableHTML+=`<tr style="border-top:2px solid var(--border2)"><td class="bold">TOTAL</td>${hist.map(function(h){return '<td class="num bold">'+fmt(h.total)+'</td>';}).join('')}${hist.length<3?'<td class="num">—</td>'.repeat(3-hist.length):''}<td class="num bold">${fmt(forecastTotal)}</td><td class="num ${trend>=0?'up':'down'}">${trend>=0?'↑':'↓'} ${Math.abs(Math.round(trend*10)/10)}%</td><td class="num bold" style="color:var(--blue)">${fmt(Math.round(forecastTotal*1.1))}</td></tr>`;
+  document.getElementById('budget-table').innerHTML=tableHTML;
+  // Trend chart
+  budgetTrendChart=destroyChart(budgetTrendChart);
+  const tCtx=document.getElementById('budget-trend-chart').getContext('2d');
+  const tLabels=[...hist.map(h=>h.label),'Forecast'];
+  const tData=[...hist.map(h=>Math.round(h.total)),Math.round(forecastTotal)];
+  budgetTrendChart=new Chart(tCtx,{type:'line',data:{labels:tLabels,datasets:[{label:'Monthly Expenses',data:tData,borderColor:'#8a5a00',backgroundColor:'rgba(138,90,0,0.08)',borderWidth:2,fill:true,tension:0.3,pointRadius:4,pointBackgroundColor:['#8a5a00','#8a5a00','#8a5a00','#1a6b4a'],borderDash:[[],[],[],[4,4]]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₱'+c.raw.toLocaleString('en-PH')}}},scales:{x:{ticks:{color:'#9a8e82',font:{size:10}},grid:{color:'rgba(60,40,20,0.06)'}},y:{ticks:{color:'#9a8e82',font:{size:10},callback:v=>'₱'+Math.round(v/1000)+'k'},grid:{color:'rgba(60,40,20,0.06)'}}}}});
+  // 6-month projection
+  budget6moChart=destroyChart(budget6moChart);
+  const b6Ctx=document.getElementById('budget-6mo-chart').getContext('2d');
+  const b6Labels=[],expData=[],incomeData=[],surplusData=[];
+  const incomeGrowth=0.004; // ~5% annual
+  let projIncome=income;
+  let projExpense=forecastTotal;
+  const expGrowth=trend>0?trend/100/12:0.004;
+  for(let m=1;m<=6;m++){
+    b6Labels.push(addMonths(new Date(),m).toLocaleString('default',{month:'short',year:'numeric'}));
+    projIncome*=(1+incomeGrowth);
+    projExpense*=(1+expGrowth);
+    expData.push(Math.round(projExpense));
+    incomeData.push(Math.round(projIncome));
+    surplusData.push(Math.round(projIncome-projExpense));
+  }
+  budget6moChart=new Chart(b6Ctx,{type:'bar',data:{labels:b6Labels,datasets:[{label:'Income',data:incomeData,backgroundColor:'rgba(26,74,122,0.5)',borderRadius:4,borderSkipped:false},{label:'Expenses',data:expData,backgroundColor:'rgba(138,90,0,0.6)',borderRadius:4,borderSkipped:false},{label:'Surplus',data:surplusData,backgroundColor:surplusData.map(v=>v>=0?'rgba(26,107,74,0.7)':'rgba(138,32,32,0.7)'),borderRadius:4,borderSkipped:false,type:'line',borderColor:'#1a6b4a',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#5a5047',font:{size:10},boxWidth:10}}},scales:{x:{ticks:{color:'#9a8e82',font:{size:10}},grid:{color:'rgba(60,40,20,0.06)'}},y:{ticks:{color:'#9a8e82',font:{size:10},callback:v=>'₱'+Math.round(v/1000)+'k'},grid:{color:'rgba(60,40,20,0.06)'}}}}});
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER — PERFORMANCE
+// ═══════════════════════════════════════════════════════════
+function renderPerformance(){
+  const walletTotal=state.wallets.reduce((s,w)=>s+w.balance,0);
+  const invTotal=state.investments.reduce((s,i)=>s+i.value,0);
+  const invCost=state.investments.reduce((s,i)=>s+i.cost,0);
+  const loanTotal=state.payments.reduce((s,p)=>s+p.balance,0);
+  const netWorth=walletTotal+invTotal-loanTotal;
+  const dta=walletTotal+invTotal>0?loanTotal/(walletTotal+invTotal)*100:0;
+  document.getElementById('pf-networth').textContent=fmt(netWorth);
+  document.getElementById('pf-inv-ret').textContent=fmt(invTotal-invCost);
+  document.getElementById('pf-inv-ret').style.color=invTotal>=invCost?'var(--teal)':'var(--red)';
+  document.getElementById('pf-liab').textContent=fmt(loanTotal);
+  document.getElementById('pf-dta').textContent=Math.round(dta*10)/10+'%';
+  document.getElementById('pf-dta').style.color=dta<30?'var(--accent)':dta<60?'var(--amber)':'var(--red)';
+  renderPerformancePane('assets');
+}
+
+function renderPerformancePane(tab){
+  const walletTotal=state.wallets.reduce((s,w)=>s+w.balance,0);
+  const invTotal=state.investments.reduce((s,i)=>s+i.value,0);
+  const loanTotal=state.payments.reduce((s,p)=>s+p.balance,0);
+  const netWorth=walletTotal+invTotal-loanTotal;
+  const expMonthly=state.expenses.reduce((s,e)=>s+toMonthly(e),0)+state.payments.reduce((s,p)=>s+p.monthly,0);
+  const blended=invTotal>0?state.investments.reduce((s,i)=>s+(i.value/invTotal)*i.annualReturn,0):0;
+  const monthlyAdd=state.investments.reduce((s,i)=>s+i.monthly,0);
+
+  if(tab==='assets'){
+    const totAssets=walletTotal+invTotal||1;
+    document.getElementById('pf-asset-bars').innerHTML=[
+      {name:'Cash Wallets',val:walletTotal,color:'#1a4a7a'},{name:'Investments',val:invTotal,color:'#1a6b4a'},
+      {name:'Loan Liabilities',val:-loanTotal,color:'#8a2020'}
+    ].map(a=>`<div class="bar-row"><span class="bar-label">${a.name}</span><div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(Math.abs(a.val)/totAssets*100)}%;background:${a.color}"></div></div><span class="bar-val">${fmt(a.val)}</span></div>`).join('');
+    pfAssetChart=destroyChart(pfAssetChart);
+    const ctx=document.getElementById('pf-asset-chart')?.getContext('2d');
+    if(ctx){
+      const labels=[]; const assetData=[]; const liabData=[]; const nwData=[];
+      for(let m=0;m<=6;m++){
+        labels.push(m===0?'Now':addMonths(new Date(),m).toLocaleString('default',{month:'short'}));
+        const loanRed=state.payments.reduce((s,p)=>s+Math.min(p.monthly*m,p.balance),0);
+        const invGrow=invTotal*Math.pow(1+blended/100/12,m)+monthlyAdd*m;
+        assetData.push(Math.round(walletTotal+invGrow));
+        liabData.push(Math.round(Math.max(loanTotal-loanRed,0)));
+        nwData.push(Math.round(walletTotal+invGrow-Math.max(loanTotal-loanRed,0)));
+      }
+      pfAssetChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Assets',data:assetData,borderColor:'#1a6b4a',borderWidth:2,tension:0.4,pointRadius:3,fill:false},{label:'Liabilities',data:liabData,borderColor:'#8a2020',borderWidth:2,tension:0.4,pointRadius:3,fill:false},{label:'Net Worth',data:nwData,borderColor:'#1a4a7a',borderWidth:2.5,tension:0.4,pointRadius:3,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#5a5047',font:{size:10},boxWidth:10}}},scales:{x:{ticks:{color:'#9a8e82',font:{size:10}},grid:{display:false}},y:{ticks:{color:'#9a8e82',font:{size:10},callback:v=>'₱'+Math.round(v/1000)+'k'},grid:{color:'rgba(60,40,20,0.06)'}}}}});
+    }
+  } else if(tab==='expenses'){
+    const cats={};
+    state.expenses.forEach(e=>{ if(!cats[e.category]) cats[e.category]=0; cats[e.category]+=toMonthly(e); });
+    state.payments.forEach(p=>{ if(!cats['loan-payments']) cats['loan-payments']=0; cats['loan-payments']+=p.monthly; });
+    const maxC=Math.max(...Object.values(cats),1);
+    const catC={insurance:'#1a6b4a','car-insurance':'#1a4a7a',property:'#5a2a8a',subscription:'#0d6b6b',utilities:'#8a5a00',education:'#8a2060',hmo:'#8a2020',sss:'#6b7280',philhealth:'#1a6b4a',pagibig:'#1a4a7a',membership:'#8a5a00','loan-payments':'#8a2020',other:'#6b7280'};
+    document.getElementById('pf-exp-bars').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="bar-row"><span class="bar-label">${EXPENSE_ICONS[k]||'📋'} ${k.replace(/-/g,' ')}</span><div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(v/maxC*100)}%;background:${catC[k]||'#6b7280'}"></div></div><span class="bar-val">${fmt(v)}/mo</span></div>`).join('')||'<div class="tip">No expense data.</div>';
+    pfExpChart=destroyChart(pfExpChart);
+    const ctx=document.getElementById('pf-exp-chart')?.getContext('2d');
+    if(ctx){
+      const labels=[],data=[];
+      const hist=state.budgetHistory.slice(-3);
+      hist.forEach(h=>{ labels.push(h.label); data.push(Math.round(h.total)); });
+      for(let m=1;m<=3;m++){
+        labels.push(addMonths(new Date(),m).toLocaleString('default',{month:'short'}));
+        data.push(Math.round(expMonthly*(1+0.004*m)));
+      }
+      pfExpChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Expenses',data,backgroundColor:[...Array(hist.length).fill('rgba(138,90,0,0.5)'),...Array(3).fill('rgba(138,90,0,0.25)')],borderRadius:4,borderSkipped:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₱'+c.raw.toLocaleString('en-PH')}}},scales:{x:{ticks:{color:'#9a8e82',font:{size:10}},grid:{display:false}},y:{ticks:{color:'#9a8e82',font:{size:10},callback:v=>'₱'+Math.round(v/1000)+'k'},grid:{color:'rgba(60,40,20,0.06)'}}}}});
+    }
+  } else if(tab==='investments'){
+    const invs=state.investments;
+    const maxV=Math.max(...invs.map(i=>i.value),1);
+    document.getElementById('pf-inv-bars').innerHTML=invs.length?invs.map(i=>{
+      const gain=i.value-i.cost;
+      const color=INV_COLORS[i.cls]||'#6b7280';
+      return `<div class="bar-row"><span class="bar-label" style="min-width:110px">${i.name.slice(0,14)}</span><div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(i.value/maxV*100)}%;background:${color}"></div></div><span class="bar-val" style="color:${gain>=0?'var(--accent)':'var(--red)'}">${gain>=0?'+':'-'}${Math.abs(Math.round(gain/i.cost*100))}% · ${fmt(i.value)}</span></div>`;
+    }).join(''):'<div class="tip">No investment positions added.</div>';
+    pfInvChart=destroyChart(pfInvChart);
+    const ctx=document.getElementById('pf-inv-chart')?.getContext('2d');
+    if(ctx&&invs.length){
+      const labels=[],data=[];
+      let pv=invTotal;
+      for(let m=0;m<=12;m++){
+        labels.push(m===0?'Now':addMonths(new Date(),m).toLocaleString('default',{month:'short'}));
+        data.push(Math.round(pv));
+        pv=pv*(1+blended/100/12)+monthlyAdd;
+      }
+      pfInvChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Portfolio',data,borderColor:'#0d6b6b',backgroundColor:'rgba(13,107,107,0.08)',borderWidth:2,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#0d6b6b'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₱'+c.raw.toLocaleString('en-PH')}}},scales:{x:{ticks:{color:'#9a8e82',font:{size:10}},grid:{display:false}},y:{ticks:{color:'#9a8e82',font:{size:10},callback:v=>'₱'+Math.round(v/1000)+'k'},grid:{color:'rgba(60,40,20,0.06)'}}}}});
+    }
+  } else if(tab==='networth'){
+    pfNwChart=destroyChart(pfNwChart);
+    const ctx=document.getElementById('pf-nw-chart')?.getContext('2d');
+    if(ctx){
+      const labels=[],nwData=[],assetData=[],liabData=[];
+      const monthlyGoalSave=state.futurePlans.reduce((s,p)=>s+p.monthly,0);
+      for(let m=0;m<=24;m++){
+        labels.push(m===0?'Now':addMonths(new Date(),m).toLocaleString('default',{month:'short',year:'2-digit'}));
+        const loanRed=state.payments.reduce((s,p)=>s+Math.min(p.monthly*m,p.balance),0);
+        const invGrow=invTotal*Math.pow(1+blended/100/12,m)+monthlyAdd*m;
+        const walletGrow=walletTotal+monthlyGoalSave*m;
+        const assets=walletGrow+invGrow;
+        const liab=Math.max(loanTotal-loanRed,0);
+        assetData.push(Math.round(assets));
+        liabData.push(Math.round(liab));
+        nwData.push(Math.round(assets-liab));
+      }
+      pfNwChart=new Chart(ctx,{type:'line',data:{labels,datasets:[{label:'Net Worth',data:nwData,borderColor:'#1a4a7a',backgroundColor:'rgba(26,74,122,0.06)',borderWidth:2.5,fill:true,tension:0.4,pointRadius:2},{label:'Total Assets',data:assetData,borderColor:'#1a6b4a',borderWidth:1.5,tension:0.4,pointRadius:0,borderDash:[4,4]},{label:'Liabilities',data:liabData,borderColor:'#8a2020',borderWidth:1.5,tension:0.4,pointRadius:0,borderDash:[4,4]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#5a5047',font:{size:10},boxWidth:10}}},scales:{x:{ticks:{color:'#9a8e82',font:{size:10},maxRotation:45},grid:{display:false}},y:{ticks:{color:'#9a8e82',font:{size:10},callback:v=>'₱'+Math.round(v/1000)+'k'},grid:{color:'rgba(60,40,20,0.06)'}}}}});
+      // Milestones table
+      const milestones=[3,6,12,18,24];
+      document.getElementById('pf-nw-table').innerHTML=`<table class="sum-table"><thead><tr><th>Milestone</th><th class="num">Net Worth</th><th class="num">Assets</th><th class="num">Liabilities</th><th class="num">Change</th></tr></thead><tbody>${milestones.map(function(m){return '<tr><td>'+m+' months</td><td class="num bold">'+fmt(nwData[m])+'</td><td class="num pos">'+fmt(assetData[m])+'</td><td class="num neg">'+fmt(liabData[m])+'</td><td class="num '+(nwData[m]>=nwData[0]?'pos':'neg')+'">'+fmtD(nwData[m]-nwData[0])+'</td></tr>';}).join('')}</tbody></table>`;
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// RENDER — OVERVIEW
+// ═══════════════════════════════════════════════════════════
+function renderOverview(){
+  const walletTotal=state.wallets.reduce((s,w)=>s+w.balance,0);
+  const invTotal=state.investments.reduce((s,i)=>s+i.value,0);
+  const totalAssets=walletTotal+invTotal;
+  const loanTotal=state.payments.reduce((s,p)=>s+p.balance,0);
+  const goalSaved=state.futurePlans.reduce((s,p)=>s+p.saved,0);
+  const totalCommit=loanTotal+goalSaved;
+  const freeCash=Math.max(totalAssets-totalCommit,0);
+  const allocRate=totalAssets>0?Math.round(totalCommit/totalAssets*100):0;
+  document.getElementById('ov-assets').textContent=fmt(totalAssets);
+  document.getElementById('ov-commit').textContent=fmt(totalCommit);
+  document.getElementById('ov-free').textContent=fmt(freeCash);
+  document.getElementById('ov-rate').textContent=allocRate+'%';
+  updateTopPill();
+  const monthlyPay=state.payments.reduce((s,p)=>s+p.monthly,0);
+  const monthlyExp=state.expenses.reduce((s,e)=>s+toMonthly(e),0);
+  const monthlyGoal=state.futurePlans.reduce((s,p)=>s+p.monthly,0);
+  const monthlyInv=state.investments.reduce((s,i)=>s+i.monthly,0);
+  const rows=[
+    {label:'🏦 Wallet Balances',amount:walletTotal,bold:true,pos:true},
+    {label:'📈 Investment Portfolio',amount:invTotal,bold:false,pos:true},
+    {label:'🎯 Goal Savings',amount:-goalSaved},{label:'📆 Loan Balances',amount:-loanTotal},
+    {label:'💵 Free Cash',amount:freeCash,bold:true,pos:true},null,
+    {label:'🔁 Monthly Loan Payments',amount:monthlyPay,neg:true},
+    {label:'🔁 Monthly Expenses',amount:monthlyExp,neg:true},
+    {label:'🎯 Monthly Goal Savings',amount:monthlyGoal,neg:true},
+    {label:'📈 Monthly Investments',amount:monthlyInv,neg:true},
+    {label:'📊 Total Monthly Outflow',amount:monthlyPay+monthlyExp+monthlyGoal+monthlyInv,bold:true,neg:true},
+  ];
+  document.getElementById('ov-flow-table').innerHTML=rows.map(r=>r===null?`<tr><td colspan="3"><hr class="div" style="margin:3px 0"></td></tr>`:
+    `<tr><td class="${r.bold?'bold':''}">${r.label}</td><td class="num ${r.pos?'pos':r.neg?'neg':r.bold?'bold':''}">${r.amount<0?'-'+fmt(-r.amount):fmt(r.amount)}</td><td class="num" style="color:var(--text3)">${totalAssets>0?Math.round(Math.abs(r.amount)/totalAssets*100)+'%':''}</td></tr>`
+  ).join('');
+  ovDonut=destroyChart(ovDonut);
+  const ovData=[{label:'Free Cash',val:freeCash,color:'#1a6b4a'},{label:'Investments',val:invTotal,color:'#0d6b6b'},{label:'Goal Savings',val:goalSaved,color:'#1a4a7a'},{label:'Loan Balances',val:loanTotal,color:'#8a2020'}].filter(d=>d.val>0);
+  const canvas=document.getElementById('ov-donut');
+  if(ovData.length&&canvas){ ovDonut=new Chart(canvas,{type:'doughnut',data:{labels:ovData.map(d=>d.label),datasets:[{data:ovData.map(d=>d.val),backgroundColor:ovData.map(d=>d.color),borderWidth:2,borderColor:'#fff',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:true,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.label+': '+fmt(c.raw)}}}}}); }
+  document.getElementById('ov-legend').innerHTML=ovData.map(d=>`<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border)"><div style="width:9px;height:9px;border-radius:2px;background:${d.color};flex-shrink:0"></div><span style="flex:1;font-size:12px;color:var(--text2)">${d.label}</span><span style="font-size:11px;font-family:'IBM Plex Mono',monospace">${fmt(d.val)}</span></div>`).join('')||'<div style="font-size:12px;color:var(--text3)">Add data to see allocation</div>';
+  let calHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px">';
+  for(let i=0;i<6;i++){
+    const d=addMonths(new Date(),i+1);
+    const label=d.toLocaleString('default',{month:'long',year:'numeric'});
+    const payD=state.payments.filter(p=>p.months>i).reduce((s,p)=>s+p.monthly,0);
+    const expD=state.expenses.reduce((s,e)=>s+toMonthly(e),0);
+    const goalD=state.futurePlans.reduce((s,p)=>s+p.monthly,0);
+    const invD=state.investments.reduce((s,i)=>s+i.monthly,0);
+    const tot=payD+expD+goalD+invD;
+    calHTML+=`<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px">
+      <div style="font-size:10px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.8px">${label}</div>
+      ${payD?'<div class="bar-row" style="margin-bottom:5px"><span class="bar-label" style="font-size:10px">Payments</span><span class="bar-val" style="color:var(--amber)">'+fmt(payD)+'</span></div>':''}
+      ${expD?'<div class="bar-row" style="margin-bottom:5px"><span class="bar-label" style="font-size:10px">Expenses</span><span class="bar-val" style="color:var(--red)">'+fmt(expD)+'</span></div>':''}
+      ${goalD?'<div class="bar-row" style="margin-bottom:5px"><span class="bar-label" style="font-size:10px">Goals</span><span class="bar-val" style="color:var(--blue)">'+fmt(goalD)+'</span></div>':''}
+      ${invD?'<div class="bar-row" style="margin-bottom:5px"><span class="bar-label" style="font-size:10px">Investments</span><span class="bar-val" style="color:var(--teal)">'+fmt(invD)+'</span></div>':''}
+      <hr class="div" style="margin:6px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;color:var(--text3)">Total outflow</span>
+        <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--red)">${fmt(tot)}</span>
+      </div>
+    </div>`;
+  }
+  calHTML+='</div>';
+  document.getElementById('ov-calendar').innerHTML=calHTML;
+}
+
+function updateTopPill(){
+  const t=state.wallets.reduce((s,w)=>s+w.balance,0)+state.investments.reduce((s,i)=>s+i.value,0);
+  document.getElementById('total-pill').textContent='Total: '+fmt(t);
+}
+
+// ═══════════════════════════════════════════════════════════
+// SEED DATA
+// ═══════════════════════════════════════════════════════════
+function seedDefaultData(){
+  if(state.wallets.length) return;
+  state.wallets=[
+    {id:uid(),name:'BDO Savings',type:'savings',balance:85000,bank:'BDO Unibank',note:'Emergency + daily use',color:'#1a4a7a',icon:'🏦'},
+    {id:uid(),name:'Maya Wallet',type:'digital',balance:12500,bank:'Maya / PayMaya',note:'Online payments',color:'#5a2a8a',icon:'📱'},
+    {id:uid(),name:'GCash',type:'digital',balance:8200,bank:'Globe / GCash',note:'Bills & transfers',color:'#1a6b4a',icon:'💳'},
+    {id:uid(),name:'Cash on Hand',type:'cash',balance:5000,bank:'',note:'',color:'#8a5a00',icon:'💵'},
+  ];
+  const wId=state.wallets[0].id;
+  state.futurePlans=[
+    {id:uid(),name:'Japan Vacation',category:'vacation',target:80000,saved:15000,monthly:5000,walletId:wId,date:'2025-12-01',note:'Tokyo & Osaka, 7 nights'},
+    {id:uid(),name:'Emergency Buffer',category:'emergency',target:210000,saved:85000,monthly:8000,walletId:wId,date:'2026-06-01',note:'6-month expense coverage'},
+  ];
+  state.payments=[
+    {id:uid(),name:'BDO Car Loan',type:'car',balance:420000,monthly:9500,months:44,due:today(),walletId:wId,interest:7.5},
+    {id:uid(),name:'SSS Salary Loan',type:'sss',balance:25000,monthly:2083,months:12,due:today(),walletId:wId,interest:10},
+  ];
+  const td=today();
+  state.expenses=[
+    {id:uid(),name:'Sun Life VUL',category:'insurance',amount:3500,frequency:'monthly',due:td,provider:'Sun Life Financial',walletId:wId,note:'Policy SL-XXXXXX'},
+    {id:uid(),name:'AXA Health',category:'hmo',amount:1800,frequency:'monthly',due:td,provider:'AXA Philippines',walletId:wId,note:''},
+    {id:uid(),name:'Netflix',category:'subscription',amount:549,frequency:'monthly',due:td,provider:'Netflix',walletId:wId,note:''},
+    {id:uid(),name:'Car Insurance',category:'car-insurance',amount:5000,frequency:'annual',due:'2025-08-15',provider:'Malayan Insurance',walletId:wId,note:'Comprehensive + CTPL'},
+    {id:uid(),name:'PhilHealth',category:'philhealth',amount:2550,frequency:'monthly',due:td,provider:'PhilHealth',walletId:wId,note:''},
+    {id:uid(),name:'Pag-IBIG',category:'pagibig',amount:200,frequency:'monthly',due:td,provider:'Pag-IBIG Fund',walletId:wId,note:''},
+  ];
+  state.investments=[
+    {id:uid(),name:'FMETF (PSEi ETF)',cls:'etf',cost:20000,value:23400,annualReturn:11,monthly:2000,platform:'COL Financial',note:''},
+    {id:uid(),name:'BDO UITF Equity',cls:'funds',cost:15000,value:16200,annualReturn:10,monthly:1000,platform:'BDO Online',note:''},
+    {id:uid(),name:'RTB (Retail Treasury)',cls:'bonds',cost:30000,value:30000,annualReturn:6.5,monthly:0,platform:'Landbank',note:'Series 27'},
+    {id:uid(),name:'MP2 Pag-IBIG',cls:'mp2',cost:12000,value:13500,annualReturn:7.2,monthly:500,platform:'Pag-IBIG Fund',note:''},
+  ];
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+loadData();
+seedDefaultData();
+renderWallets();
+updateTopPill();
+document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',e=>{ if(e.target===bg) bg.classList.remove('open'); }));
+</script>
+</body>
+</html>
