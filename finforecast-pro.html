@@ -9,6 +9,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#f5f2ee">
 <title>FinForecast Pro</title>
+<meta name="application-name" content="FinForecast Pro">
+<meta name="msapplication-TileColor" content="#1a6b4a">
+<meta name="format-detection" content="telephone=no">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -508,6 +511,84 @@ input,select,textarea{font-size:16px!important}
 .export-btn{padding:6px 12px;border-radius:var(--radius-sm);background:var(--blue-l);color:var(--blue);border:1px solid rgba(26,74,122,0.2);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
 .export-btn:hover{background:var(--blue-m)}
 @media(max-width:480px){.export-btn span.export-label{display:none}}
+
+/* ── IMPORT MODAL ── */
+.import-modal-overlay{position:fixed;inset:0;background:rgba(28,24,20,0.5);z-index:1100;display:none;align-items:center;justify-content:center;padding:16px}
+.import-modal-overlay.open{display:flex;animation:modalIn .18s ease}
+.import-modal{background:var(--bg2);border-radius:var(--radius);padding:26px;width:100%;max-width:500px;box-shadow:0 8px 40px rgba(60,40,20,0.18);position:relative;max-height:92vh;overflow-y:auto}
+.import-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--text);margin-bottom:4px}
+.import-sub{font-size:12px;color:var(--text3);margin-bottom:16px;line-height:1.6}
+.import-close{position:absolute;top:14px;right:14px;width:26px;height:26px;border-radius:6px;background:var(--bg3);border:none;cursor:pointer;font-size:14px;color:var(--text2);display:flex;align-items:center;justify-content:center}
+.import-close:hover{background:var(--bg4)}
+.import-dropzone{
+  border:2px dashed var(--border2);border-radius:var(--radius);
+  padding:28px 20px;text-align:center;cursor:pointer;
+  transition:all .2s;background:var(--bg3);margin-bottom:14px;
+  position:relative;
+}
+.import-dropzone.drag-over{border-color:var(--accent);background:var(--accent-l)}
+.import-dropzone .dz-icon{font-size:32px;margin-bottom:8px}
+.import-dropzone .dz-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.import-dropzone .dz-sub{font-size:11px;color:var(--text3)}
+.import-dropzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:16px}
+.import-file-info{background:var(--accent-l);border:1px solid rgba(26,107,74,0.2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;display:none;align-items:center;gap:10px}
+.import-file-info.show{display:flex}
+.import-file-name{flex:1;font-size:12px;font-weight:600;color:var(--accent)}
+.import-file-size{font-size:11px;color:var(--text3)}
+.import-sheets-title{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
+.import-sheet-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.import-sheet-row{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px}
+.import-sheet-header{display:flex;align-items:center;gap:8px;margin-bottom:0}
+.import-sheet-header input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);cursor:pointer;flex-shrink:0}
+.import-sheet-header label{flex:1;font-size:13px;color:var(--text);cursor:pointer;font-weight:500}
+.import-sheet-mode{display:flex;gap:6px;margin-top:8px;display:none}
+.import-sheet-mode.show{display:flex}
+.import-mode-btn{flex:1;padding:5px 8px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--bg2);font-size:11px;cursor:pointer;text-align:center;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.import-mode-btn.active{background:var(--accent-l);color:var(--accent);border-color:rgba(26,107,74,0.3);font-weight:600}
+.import-preview{background:var(--bg3);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:14px;display:none;max-height:140px;overflow-y:auto}
+.import-preview.show{display:block}
+.import-preview-title{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+.import-preview table{width:100%;border-collapse:collapse;font-size:11px}
+.import-preview th{background:var(--bg4);padding:4px 6px;text-align:left;color:var(--text2);font-weight:600;white-space:nowrap;font-size:10px}
+.import-preview td{padding:4px 6px;border-bottom:1px solid var(--border);color:var(--text2);white-space:nowrap}
+.import-progress{display:none;align-items:center;gap:10px;padding:10px 12px;background:var(--amber-l);border-radius:var(--radius-sm);font-size:12px;color:var(--amber);margin-bottom:12px}
+.import-progress.show{display:flex}
+.import-result{display:none;padding:10px 14px;border-radius:var(--radius-sm);font-size:12px;margin-bottom:12px;line-height:1.7}
+.import-result.show{display:block}
+.import-result.success{background:var(--accent-l);color:var(--accent);border:1px solid rgba(26,107,74,0.2)}
+.import-result.error{background:var(--red-l);color:var(--red);border:1px solid rgba(138,32,32,0.2)}
+.import-result.warn{background:var(--amber-l);color:var(--amber);border:1px solid rgba(138,90,0,0.2)}
+.import-actions{display:flex;gap:8px;justify-content:flex-end}
+.import-go-btn{background:var(--amber);color:#fff;padding:8px 20px;border-radius:var(--radius-sm);font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:background .15s}
+.import-go-btn:hover{background:#7a4e00}
+.import-go-btn:disabled{background:var(--bg5);color:var(--text3);cursor:not-allowed}
+.import-tip{font-size:11px;color:var(--text3);line-height:1.6;padding:8px 12px;background:var(--bg3);border-left:3px solid var(--amber);border-radius:var(--radius-sm);margin-bottom:12px}
+/* Android-specific tweaks */
+.platform-android .mob-more-menu{border-radius:var(--radius)}
+.platform-android .del-confirm-sheet{border-radius:var(--radius)}
+.platform-android input[type=file]{font-size:14px}
+
+
+/* ── ANDROID PLATFORM ── */
+.platform-android .mobile-nav{padding-bottom:calc(8px + env(safe-area-inset-bottom))}
+.platform-android .main{padding-bottom:72px}
+.platform-android input[type=number],
+.platform-android input[type=text],
+.platform-android input[type=date],
+.platform-android select,
+.platform-android textarea{font-size:16px!important;border-radius:4px}
+/* Android Chrome bottom bar adjustment */
+@media(max-width:767px){
+  .platform-android .toast{bottom:80px}
+  .platform-android .del-confirm-sheet{border-radius:16px 16px 0 0}
+  .platform-android .modal-bg{align-items:flex-end;padding:0}
+  .platform-android .modal{border-radius:20px 20px 0 0;max-height:90vh}
+  .platform-android .import-modal-overlay{align-items:flex-end;padding:0}
+  .platform-android .import-modal{border-radius:20px 20px 0 0;max-height:90vh}
+  .platform-android .export-modal-overlay{align-items:flex-end;padding:0}
+  .platform-android .export-modal{border-radius:20px 20px 0 0;max-height:90vh}
+}
+
 </style>
 </head>
 <body>
@@ -551,6 +632,7 @@ input,select,textarea{font-size:16px!important}
   </div>
   <div class="topbar-right">
     <span class="total-pill" id="total-pill">Total: &#x20B1;0</span>
+    <button class="export-btn" onclick="openImportModal()" title="Import from Excel" style="background:var(--amber-l);color:var(--amber);border-color:rgba(138,90,0,0.2)">&#x1F4C2; <span class="export-label">Import</span></button>
     <button class="export-btn" onclick="openExportModal()" title="Export to Excel">&#x1F4CA; <span class="export-label">Export</span></button>
     <button class="save-btn" onclick="saveData()">&#x1F4BE; Save</button>
   </div>
@@ -1737,15 +1819,23 @@ window.addEventListener('beforeinstallprompt',function(e){
   }
 });
 function installPWA(){
-  if(_deferredPrompt){
-    _deferredPrompt.prompt();
-    _deferredPrompt.userChoice.then(function(){
-      _deferredPrompt=null;
+  // Android Chrome - use native prompt
+  var prompt = window._androidInstallPrompt || _deferredPrompt;
+  if(prompt){
+    prompt.prompt();
+    prompt.userChoice.then(function(result){
+      window._androidInstallPrompt=null; _deferredPrompt=null;
       document.getElementById('pwa-banner').classList.remove('show');
+      if(result.outcome==='accepted') showToast('App installed!');
     });
   } else {
-    // iOS: show manual instructions
-    alert('To install: tap Share then Add to Home Screen.');
+    // iOS or other - show instructions
+    var ua=navigator.userAgent;
+    if(/Android/.test(ua)){
+      alert('Open Chrome menu (3 dots) then tap "Add to Home screen".');
+    } else {
+      alert('Tap Share then "Add to Home Screen".');
+    }
     document.getElementById('pwa-banner').classList.remove('show');
   }
 }
@@ -1854,11 +1944,33 @@ document.addEventListener('visibilitychange',function(){
   if(isMac) document.documentElement.classList.add('platform-mac');
   // iOS Safari: add standalone class when running as installed app
   if(window.navigator.standalone) document.documentElement.classList.add('ios-standalone');
-  // Show iOS install tip if on iOS Safari not in standalone mode
+  // iOS: show install tip if on Safari and not already installed
   if(isIOS&&!window.navigator.standalone&&!localStorage.getItem('pwa_dismissed')){
     setTimeout(function(){
-      document.getElementById('pwa-banner').classList.add('show');
+      var banner=document.getElementById('pwa-banner');
+      if(banner){
+        banner.querySelector('.pwa-banner-sub').textContent='Tap Share then Add to Home Screen for app-like access.';
+        banner.classList.add('show');
+      }
     },4000);
+  }
+  // Android: show install prompt via beforeinstallprompt
+  if(isAndroid&&!localStorage.getItem('pwa_dismissed')){
+    window.addEventListener('beforeinstallprompt',function(e){
+      e.preventDefault();
+      window._androidInstallPrompt=e;
+      setTimeout(function(){
+        var banner=document.getElementById('pwa-banner');
+        if(banner){
+          banner.querySelector('.pwa-banner-sub').textContent='Add FinForecast Pro to your home screen.';
+          banner.classList.add('show');
+        }
+      },3000);
+    });
+  }
+  // Standalone mode detection (Android Chrome)
+  if(window.matchMedia('(display-mode: standalone)').matches){
+    document.documentElement.classList.add('ios-standalone');
   }
 })();
 
@@ -1987,107 +2099,225 @@ function bold(v){ return {v:v,t:'s',b:true}; }
 
 // ── Build data for each sheet ────────────────────────────────────────────────
 function buildWalletsSheet(){
-  var rows=[[hdr('Wallet Name'),hdr('Type'),hdr('Bank / Institution'),hdr('Balance (PHP)'),hdr('Note')]];
+  // Pure flat table — 1 row per wallet, consistent columns, no blank rows, no totals row
+  var SNAP = new Date().toISOString().split('T')[0];
+  var rows=[[ hdr('WalletID'), hdr('WalletName'), hdr('WalletType'), hdr('Institution'),
+              hdr('Balance_PHP'), hdr('Note'), hdr('SnapshotDate') ]];
   state.wallets.forEach(function(w){
-    rows.push([str(w.name),str(w.type),str(w.bank||''),num(w.balance),str(w.note||'')]);
+    rows.push([
+      str(w.id), str(w.name), str(w.type), str(w.bank||''),
+      num(w.balance), str(w.note||''), str(SNAP)
+    ]);
   });
-  rows.push([]);
-  rows.push([bold('TOTAL'),'','',num(state.wallets.reduce(function(s,w){return s+w.balance;},0)),'']);
   return rows;
 }
 
 function buildPlansSheet(){
-  var rows=[[hdr('Plan Name'),hdr('Category'),hdr('Target (PHP)'),hdr('Saved (PHP)'),hdr('Remaining (PHP)'),hdr('Monthly Contrib.'),hdr('Progress %'),hdr('Target Date'),hdr('Source Wallet'),hdr('Note')]];
+  var SNAP = new Date().toISOString().split('T')[0];
+  var rows=[[ hdr('PlanID'), hdr('PlanName'), hdr('Category'),
+              hdr('Target_PHP'), hdr('Saved_PHP'), hdr('Remaining_PHP'),
+              hdr('Progress_Pct'), hdr('MonthlyContrib_PHP'),
+              hdr('TargetDate'), hdr('DaysUntilTarget'),
+              hdr('MonthsToComplete'), hdr('Status'),
+              hdr('SourceWallet'), hdr('Note'), hdr('SnapshotDate') ]];
   state.futurePlans.forEach(function(p){
-    var w=state.wallets.find(function(x){return x.id===p.walletId;});
-    var prog=p.target>0?Math.round(p.saved/p.target*100):0;
-    rows.push([str(p.name),str(p.category),num(p.target),num(p.saved),num(Math.max(p.target-p.saved,0)),num(p.monthly),num(prog),dat(p.date||''),str(w?w.name:''),str(p.note||'')]);
+    var w = state.wallets.find(function(x){return x.id===p.walletId;});
+    var remaining = Math.max(p.target - p.saved, 0);
+    var prog = p.target > 0 ? Math.round(p.saved/p.target*10000)/100 : 0;
+    var daysLeft = p.date ? Math.ceil((new Date(p.date+'T00:00:00')-new Date())/86400000) : '';
+    var moLeft = (p.monthly > 0 && remaining > 0) ? Math.ceil(remaining/p.monthly) : '';
+    var status = remaining <= 0 ? 'Completed' : (daysLeft !== '' && daysLeft < 0 ? 'Overdue' : 'In Progress');
+    rows.push([
+      str(p.id), str(p.name), str(p.category),
+      num(p.target), num(p.saved), num(remaining),
+      num(prog), num(p.monthly),
+      str(p.date||''), daysLeft !== '' ? num(daysLeft) : str(''),
+      moLeft !== '' ? num(moLeft) : str(''), str(status),
+      str(w?w.name:''), str(p.note||''), str(SNAP)
+    ]);
   });
   return rows;
 }
 
 function buildPaymentsSheet(){
-  var rows=[[hdr('Payment Name'),hdr('Type'),hdr('Total Balance (PHP)'),hdr('Monthly Payment (PHP)'),hdr('Months Remaining'),hdr('Interest Rate %'),hdr('Next Due Date'),hdr('Source Wallet'),hdr('Total Remaining Cost')]];
+  var SNAP = new Date().toISOString().split('T')[0];
+  var rows=[[ hdr('PaymentID'), hdr('PaymentName'), hdr('PaymentType'),
+              hdr('OutstandingBalance_PHP'), hdr('MonthlyPayment_PHP'),
+              hdr('MonthsRemaining'), hdr('TotalRemainingCost_PHP'),
+              hdr('InterestRate_Pct'), hdr('TotalInterestRemaining_PHP'),
+              hdr('NextDueDate'), hdr('DaysUntilDue'), hdr('DueStatus'),
+              hdr('SourceWallet'), hdr('SnapshotDate') ]];
   state.payments.forEach(function(p){
-    var w=state.wallets.find(function(x){return x.id===p.walletId;});
-    var totalCost=p.monthly*p.months;
-    rows.push([str(p.name),str(p.type),num(p.balance),num(p.monthly),num(p.months),num(p.interest||0),dat(p.due||''),str(w?w.name:''),num(totalCost)]);
+    var w = state.wallets.find(function(x){return x.id===p.walletId;});
+    var totalCost = p.monthly * p.months;
+    var totalInterest = Math.max(totalCost - p.balance, 0);
+    var days = p.due ? Math.ceil((new Date(p.due+'T00:00:00')-new Date())/86400000) : '';
+    var dueStatus = days === '' ? 'No Date'
+                  : days < 0  ? 'Overdue'
+                  : days <= 7  ? 'Due This Week'
+                  : days <= 30 ? 'Due This Month'
+                  : 'Upcoming';
+    rows.push([
+      str(p.id), str(p.name), str(p.type),
+      num(p.balance), num(p.monthly),
+      num(p.months), num(totalCost),
+      num(p.interest||0), num(Math.round(totalInterest*100)/100),
+      str(p.due||''), days !== '' ? num(days) : str(''), str(dueStatus),
+      str(w?w.name:''), str(SNAP)
+    ]);
   });
-  rows.push([]);
-  rows.push([bold('TOTALS'),'',num(state.payments.reduce(function(s,p){return s+p.balance;},0)),num(state.payments.reduce(function(s,p){return s+p.monthly;},0)),'','','','','']);
   return rows;
 }
 
 function buildExpensesSheet(){
-  var FREQ_MO={monthly:1,quarterly:3,'semi-annual':6,annual:12};
-  var rows=[[hdr('Expense Name'),hdr('Category'),hdr('Amount (PHP)'),hdr('Frequency'),hdr('Monthly Equiv. (PHP)'),hdr('Annual Cost (PHP)'),hdr('Next Due Date'),hdr('Provider'),hdr('Source Wallet'),hdr('Note')]];
+  var SNAP = new Date().toISOString().split('T')[0];
+  var FREQ_MO = {monthly:1, quarterly:3, 'semi-annual':6, annual:12};
+  var rows=[[ hdr('ExpenseID'), hdr('ExpenseName'), hdr('Category'),
+              hdr('Amount_PHP'), hdr('Frequency'), hdr('FrequencyMonths'),
+              hdr('MonthlyEquiv_PHP'), hdr('QuarterlyEquiv_PHP'),
+              hdr('AnnualCost_PHP'), hdr('NextDueDate'),
+              hdr('DaysUntilDue'), hdr('DueStatus'), hdr('DueMonth'),
+              hdr('DueYear'), hdr('Provider'),
+              hdr('SourceWallet'), hdr('Note'), hdr('SnapshotDate') ]];
   state.expenses.forEach(function(e){
-    var w=state.wallets.find(function(x){return x.id===e.walletId;});
-    var mo=e.amount/(FREQ_MO[e.frequency]||1);
-    rows.push([str(e.name),str(e.category),num(e.amount),str(e.frequency),num(Math.round(mo*100)/100),num(Math.round(mo*1200)/100),dat(e.due||''),str(e.provider||''),str(w?w.name:''),str(e.note||'')]);
+    var w = state.wallets.find(function(x){return x.id===e.walletId;});
+    var freqMo = FREQ_MO[e.frequency] || 1;
+    var mo = e.amount / freqMo;
+    var qtr = mo * 3;
+    var annual = mo * 12;
+    var days = e.due ? Math.ceil((new Date(e.due+'T00:00:00')-new Date())/86400000) : '';
+    var dueStatus = days === '' ? 'No Date'
+                  : days < 0  ? 'Overdue'
+                  : days <= 7  ? 'Due This Week'
+                  : days <= 30 ? 'Due This Month'
+                  : 'Upcoming';
+    var dueDate = e.due ? new Date(e.due+'T00:00:00') : null;
+    var dueMonth = dueDate ? dueDate.toLocaleString('default',{month:'long'}) : '';
+    var dueYear  = dueDate ? dueDate.getFullYear() : '';
+    rows.push([
+      str(e.id), str(e.name), str(e.category),
+      num(e.amount), str(e.frequency), num(freqMo),
+      num(Math.round(mo*100)/100), num(Math.round(qtr*100)/100),
+      num(Math.round(annual*100)/100),
+      str(e.due||''), days !== '' ? num(days) : str(''), str(dueStatus),
+      str(dueMonth), dueYear ? num(dueYear) : str(''),
+      str(e.provider||''), str(w?w.name:''), str(e.note||''), str(SNAP)
+    ]);
   });
-  var totMo=state.expenses.reduce(function(s,e){return s+(e.amount/(FREQ_MO[e.frequency]||1));},0);
-  rows.push([]);
-  rows.push([bold('TOTALS'),'','','',num(Math.round(totMo*100)/100),num(Math.round(totMo*1200)/100),'','','','']);
   return rows;
 }
 
 function buildInvestmentsSheet(){
-  var rows=[[hdr('Investment Name'),hdr('Asset Class'),hdr('Cost / Invested (PHP)'),hdr('Current Value (PHP)'),hdr('Unrealized Gain (PHP)'),hdr('Return %'),hdr('Annual Return %'),hdr('Monthly Addition (PHP)'),hdr('Platform'),hdr('Note')]];
+  var SNAP = new Date().toISOString().split('T')[0];
+  var rows=[[ hdr('InvestmentID'), hdr('InvestmentName'), hdr('AssetClass'),
+              hdr('CostBasis_PHP'), hdr('CurrentValue_PHP'),
+              hdr('UnrealizedGain_PHP'), hdr('UnrealizedGain_Pct'),
+              hdr('AnnualReturn_Pct'), hdr('ProjectedAnnualGain_PHP'),
+              hdr('MonthlyAddition_PHP'), hdr('AnnualAddition_PHP'),
+              hdr('Projected12Mo_PHP'), hdr('Platform'),
+              hdr('PerformanceStatus'), hdr('Note'), hdr('SnapshotDate') ]];
   state.investments.forEach(function(i){
-    var gain=i.value-i.cost;
-    var retPct=i.cost>0?Math.round(gain/i.cost*1000)/10:0;
-    rows.push([str(i.name),str(i.cls),num(i.cost),num(i.value),num(gain),num(retPct),num(i.annualReturn||0),num(i.monthly||0),str(i.platform||''),str(i.note||'')]);
+    var gain = i.value - i.cost;
+    var gainPct = i.cost > 0 ? Math.round(gain/i.cost*10000)/100 : 0;
+    var projAnnual = i.value * (i.annualReturn||0) / 100;
+    var monthly12 = (i.monthly||0) * 12;
+    // Simple 12-month compound projection
+    var proj12 = i.value;
+    var mRate = (i.annualReturn||0)/100/12;
+    for(var m=0;m<12;m++) proj12 = proj12*(1+mRate)+(i.monthly||0);
+    var perfStatus = gainPct >= 10 ? 'Strong Gain'
+                   : gainPct >= 0  ? 'Positive'
+                   : gainPct >= -5 ? 'Slight Loss'
+                   : 'Significant Loss';
+    rows.push([
+      str(i.id), str(i.name), str(i.cls),
+      num(i.cost), num(i.value),
+      num(gain), num(gainPct),
+      num(i.annualReturn||0), num(Math.round(projAnnual*100)/100),
+      num(i.monthly||0), num(monthly12),
+      num(Math.round(proj12*100)/100),
+      str(i.platform||''), str(perfStatus),
+      str(i.note||''), str(SNAP)
+    ]);
   });
-  rows.push([]);
-  var totalCost=state.investments.reduce(function(s,i){return s+i.cost;},0);
-  var totalVal=state.investments.reduce(function(s,i){return s+i.value;},0);
-  rows.push([bold('TOTALS'),'',num(totalCost),num(totalVal),num(totalVal-totalCost),'','',num(state.investments.reduce(function(s,i){return s+(i.monthly||0);},0)),'','']);
   return rows;
 }
 
 function buildSummarySheet(){
-  var walletTotal=state.wallets.reduce(function(s,w){return s+w.balance;},0);
-  var invTotal=state.investments.reduce(function(s,i){return s+i.value;},0);
-  var invCost=state.investments.reduce(function(s,i){return s+i.cost;},0);
-  var loanTotal=state.payments.reduce(function(s,p){return s+p.balance;},0);
-  var goalSaved=state.futurePlans.reduce(function(s,p){return s+p.saved;},0);
-  var monthlyPay=state.payments.reduce(function(s,p){return s+p.monthly;},0);
-  var FREQ_MO={monthly:1,quarterly:3,'semi-annual':6,annual:12};
-  var monthlyExp=state.expenses.reduce(function(s,e){return s+(e.amount/(FREQ_MO[e.frequency]||1));},0);
-  var monthlyGoal=state.futurePlans.reduce(function(s,p){return s+p.monthly;},0);
-  var monthlyInv=state.investments.reduce(function(s,i){return s+(i.monthly||0);},0);
-  var netWorth=walletTotal+invTotal-loanTotal;
-  var today=new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
-  return [
-    [hdr('FinForecast Pro — Financial Summary'),str('Generated: '+today)],
-    [],
-    [bold('ASSETS'),hdr('Amount (PHP)')],
-    [str('Cash & Wallet Balances'),num(walletTotal)],
-    [str('Investment Portfolio Value'),num(invTotal)],
-    [str('Total Assets'),num(walletTotal+invTotal)],
-    [],
-    [bold('LIABILITIES'),hdr('Amount (PHP)')],
-    [str('Outstanding Loan Balances'),num(loanTotal)],
-    [str('Goal Savings Allocated'),num(goalSaved)],
-    [],
-    [bold('NET WORTH'),num(netWorth)],
-    [str('Investment Unrealized Gain/Loss'),num(invTotal-invCost)],
-    [],
-    [bold('MONTHLY OUTFLOWS'),hdr('Amount (PHP)')],
-    [str('Loan / Debt Payments'),num(monthlyPay)],
-    [str('Recurring Expenses'),num(Math.round(monthlyExp*100)/100)],
-    [str('Savings Goals Contributions'),num(monthlyGoal)],
-    [str('Investment Additions'),num(monthlyInv)],
-    [bold('Total Monthly Outflow'),num(monthlyPay+monthlyExp+monthlyGoal+monthlyInv)],
-    [],
-    [bold('RECORD COUNTS'),hdr('Count')],
-    [str('Wallets'),num(state.wallets.length)],
-    [str('Future Plans'),num(state.futurePlans.length)],
-    [str('Termed Payments'),num(state.payments.length)],
-    [str('Recurring Expenses'),num(state.expenses.length)],
-    [str('Investment Positions'),num(state.investments.length)],
-  ];
+  // Pure tabular: every metric is 1 row with Label, Value, Unit, Category columns
+  // Perfect for pivot tables and charts in Excel
+  var SNAP = new Date().toISOString().split('T')[0];
+  var FREQ_MO = {monthly:1,quarterly:3,'semi-annual':6,annual:12};
+  var walletTotal  = state.wallets.reduce(function(s,w){return s+w.balance;},0);
+  var invTotal     = state.investments.reduce(function(s,i){return s+i.value;},0);
+  var invCost      = state.investments.reduce(function(s,i){return s+i.cost;},0);
+  var loanTotal    = state.payments.reduce(function(s,p){return s+p.balance;},0);
+  var goalTotal    = state.futurePlans.reduce(function(s,p){return s+p.target;},0);
+  var goalSaved    = state.futurePlans.reduce(function(s,p){return s+p.saved;},0);
+  var goalRemain   = Math.max(goalTotal-goalSaved,0);
+  var monthlyPay   = state.payments.reduce(function(s,p){return s+p.monthly;},0);
+  var monthlyExp   = state.expenses.reduce(function(s,e){return s+(e.amount/(FREQ_MO[e.frequency]||1));},0);
+  var monthlyGoal  = state.futurePlans.reduce(function(s,p){return s+p.monthly;},0);
+  var monthlyInv   = state.investments.reduce(function(s,i){return s+(i.monthly||0);},0);
+  var totalOutflow = monthlyPay+monthlyExp+monthlyGoal+monthlyInv;
+  var netWorth     = walletTotal+invTotal-loanTotal;
+  var invGain      = invTotal-invCost;
+  var invGainPct   = invCost>0 ? Math.round(invGain/invCost*10000)/100 : 0;
+  var allocRate    = (walletTotal+invTotal)>0 ? Math.round((loanTotal+goalSaved)/(walletTotal+invTotal)*10000)/100 : 0;
+  var dtaRatio     = (walletTotal+invTotal)>0 ? Math.round(loanTotal/(walletTotal+invTotal)*10000)/100 : 0;
+
+  var rows = [[
+    hdr('MetricLabel'), hdr('Value'), hdr('Unit'),
+    hdr('Category'), hdr('SubCategory'), hdr('SnapshotDate')
+  ]];
+
+  function row(label,val,unit,cat,sub){
+    rows.push([str(label), num(val), str(unit), str(cat), str(sub), str(SNAP)]);
+  }
+
+  // Assets
+  row('Cash & Wallet Balances',   walletTotal,  'PHP', 'Assets',      'Cash');
+  row('Investment Portfolio Value',invTotal,    'PHP', 'Assets',      'Investments');
+  row('Total Assets',             walletTotal+invTotal,'PHP','Assets','Total');
+
+  // Liabilities
+  row('Outstanding Loan Balances',loanTotal,    'PHP', 'Liabilities', 'Loans');
+  row('Goal Savings Allocated',   goalSaved,    'PHP', 'Liabilities', 'Goals');
+  row('Total Liabilities',        loanTotal+goalSaved,'PHP','Liabilities','Total');
+
+  // Net Worth
+  row('Net Worth',                netWorth,     'PHP', 'Net Worth',   'Total');
+  row('Debt-to-Asset Ratio',      dtaRatio,     '%',   'Net Worth',   'Ratio');
+  row('Allocation Rate',          allocRate,    '%',   'Net Worth',   'Ratio');
+
+  // Investments
+  row('Total Amount Invested',    invCost,      'PHP', 'Investments', 'Cost Basis');
+  row('Current Portfolio Value',  invTotal,     'PHP', 'Investments', 'Market Value');
+  row('Unrealized Gain/Loss',     invGain,      'PHP', 'Investments', 'Performance');
+  row('Portfolio Return Pct',     invGainPct,   '%',   'Investments', 'Performance');
+
+  // Monthly outflows
+  row('Monthly Loan Payments',    Math.round(monthlyPay*100)/100,  'PHP', 'Monthly Outflow', 'Loans');
+  row('Monthly Recurring Expenses',Math.round(monthlyExp*100)/100, 'PHP', 'Monthly Outflow', 'Expenses');
+  row('Monthly Goal Contributions',Math.round(monthlyGoal*100)/100,'PHP', 'Monthly Outflow', 'Goals');
+  row('Monthly Investment Additions',Math.round(monthlyInv*100)/100,'PHP','Monthly Outflow', 'Investments');
+  row('Total Monthly Outflow',    Math.round(totalOutflow*100)/100,'PHP', 'Monthly Outflow', 'Total');
+  row('Annual Outflow Estimate',  Math.round(totalOutflow*12*100)/100,'PHP','Monthly Outflow','Annual');
+
+  // Goals
+  row('Total Goal Target',        goalTotal,    'PHP', 'Goals',       'Target');
+  row('Total Goal Saved',         goalSaved,    'PHP', 'Goals',       'Saved');
+  row('Total Goal Remaining',     goalRemain,   'PHP', 'Goals',       'Remaining');
+  row('Goal Progress Pct',        goalTotal>0?Math.round(goalSaved/goalTotal*10000)/100:0,'%','Goals','Progress');
+
+  // Counts
+  rows.push([str('Wallet Count'),       num(state.wallets.length),      str('Count'), str('Records'), str('Wallets'),     str(SNAP)]);
+  rows.push([str('Future Plan Count'),  num(state.futurePlans.length),  str('Count'), str('Records'), str('Plans'),       str(SNAP)]);
+  rows.push([str('Payment Count'),      num(state.payments.length),     str('Count'), str('Records'), str('Payments'),    str(SNAP)]);
+  rows.push([str('Expense Count'),      num(state.expenses.length),     str('Count'), str('Records'), str('Expenses'),    str(SNAP)]);
+  rows.push([str('Investment Count'),   num(state.investments.length),  str('Count'), str('Records'), str('Investments'), str(SNAP)]);
+
+  return rows;
 }
 
 // ── Build XLSX binary (OOXML ZIP) ─────────────────────────────────────────────
@@ -2552,6 +2782,713 @@ renderWallets=function(){
   });
 };
 
+
+
+// ═══════════════════════════════════════════════════════════
+// EXCEL IMPORT ENGINE — Pure JS XLSX reader
+// Reads .xlsx files (OOXML ZIP format) without any library
+// ═══════════════════════════════════════════════════════════
+
+var _importData = {}; // parsed sheets: {sheetName: [[row],[row],...]}
+var _importModes = {}; // {sheetKey: 'merge'|'replace'}
+
+// ── Minimal ZIP parser ────────────────────────────────────────────────────────
+function parseZip(buffer){
+  var bytes = new Uint8Array(buffer);
+  var files = {};
+
+  function readU16(pos){ return bytes[pos]|(bytes[pos+1]<<8); }
+  function readU32(pos){ return (bytes[pos]|(bytes[pos+1]<<8)|(bytes[pos+2]<<16)|(bytes[pos+3]<<24))>>>0; }
+
+  var i = 0;
+  while(i < bytes.length - 4){
+    // Local file header signature: PK\x03\x04
+    if(bytes[i]===0x50&&bytes[i+1]===0x4B&&bytes[i+2]===0x03&&bytes[i+3]===0x04){
+      var compression = readU16(i+8);
+      var compressedSize = readU32(i+18);
+      var uncompressedSize = readU32(i+22);
+      var nameLen = readU16(i+26);
+      var extraLen = readU16(i+28);
+      var name = '';
+      for(var n=0;n<nameLen;n++) name += String.fromCharCode(bytes[i+30+n]);
+      var dataStart = i+30+nameLen+extraLen;
+      var data = bytes.slice(dataStart, dataStart+compressedSize);
+      if(compression===0){
+        // Stored (no compression)
+        files[name] = data;
+      } else if(compression===8){
+        // Deflate - use DecompressionStream if available, else skip
+        files[name] = {compressed:data, uncompressedSize:uncompressedSize};
+      }
+      i = dataStart + compressedSize;
+    } else {
+      i++;
+    }
+  }
+  return files;
+}
+
+// ── Decode UTF-8 bytes ────────────────────────────────────────────────────────
+function decodeUTF8(bytes){
+  try{
+    return new TextDecoder('utf-8').decode(bytes);
+  }catch(e){
+    var s='';
+    for(var i=0;i<bytes.length;i++) s+=String.fromCharCode(bytes[i]);
+    return s;
+  }
+}
+
+// ── Parse XML string to simple object ────────────────────────────────────────
+function parseXML(xmlStr){
+  try{
+    return new DOMParser().parseFromString(xmlStr,'application/xml');
+  }catch(e){ return null; }
+}
+
+// ── Excel date serial to string ───────────────────────────────────────────────
+function excelDateToStr(serial){
+  if(!serial||isNaN(serial)) return '';
+  var d = new Date(Math.round((serial-25569)*86400000));
+  return d.toISOString().split('T')[0];
+}
+
+// ── Main XLSX reader ──────────────────────────────────────────────────────────
+function readXlsx(buffer, callback){
+  var files = parseZip(buffer);
+
+  // Handle compressed files with DecompressionStream
+  var compressedFiles = Object.keys(files).filter(function(k){ return files[k].compressed; });
+
+  function decompressAll(keys, done){
+    if(!keys.length){ done(); return; }
+    var key = keys.shift();
+    var obj = files[key];
+    if(typeof DecompressionStream !== 'undefined'){
+      var ds = new DecompressionStream('deflate-raw');
+      var writer = ds.writable.getWriter();
+      var reader = ds.readable.getReader();
+      var chunks = [];
+      reader.read().then(function pump(result){
+        if(result.done){
+          var total = new Uint8Array(chunks.reduce(function(s,c){return s+c.length;},0));
+          var off=0;
+          chunks.forEach(function(c){total.set(c,off);off+=c.length;});
+          files[key] = total;
+          decompressAll(keys, done);
+          return;
+        }
+        chunks.push(result.value);
+        reader.read().then(pump);
+      });
+      writer.write(obj.compressed);
+      writer.close();
+    } else {
+      // DecompressionStream not available - skip this file
+      delete files[key];
+      decompressAll(keys, done);
+    }
+  }
+
+  decompressAll(compressedFiles, function(){
+    try{
+      var result = extractSheetsFromXlsx(files);
+      callback(null, result);
+    }catch(e){
+      callback(e, null);
+    }
+  });
+}
+
+function extractSheetsFromXlsx(files){
+  // 1. Get shared strings
+  var sharedStrings = [];
+  var ssFile = files['xl/sharedStrings.xml'];
+  if(ssFile){
+    var ssXml = parseXML(decodeUTF8(ssFile));
+    if(ssXml){
+      var siEls = ssXml.querySelectorAll('si');
+      siEls.forEach(function(si){
+        // Get all text nodes, concatenate (handles rich text)
+        var texts = si.querySelectorAll('t');
+        var val = '';
+        texts.forEach(function(t){ val += t.textContent || ''; });
+        sharedStrings.push(val);
+      });
+    }
+  }
+
+  // 2. Get workbook sheet names
+  var sheetNames = {};
+  var wbFile = files['xl/workbook.xml'];
+  if(wbFile){
+    var wbXml = parseXML(decodeUTF8(wbFile));
+    if(wbXml){
+      wbXml.querySelectorAll('sheet').forEach(function(s){
+        var rid = s.getAttribute('r:id') || s.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');
+        var name = s.getAttribute('name') || '';
+        // Extract sheet number from rId
+        var num = (rid||'').replace(/[^0-9]/g,'');
+        sheetNames[num] = name;
+      });
+    }
+  }
+
+  // 3. Get styles (to detect date format cells)
+  var dateCells = {};
+  var stylesFile = files['xl/styles.xml'];
+  var dateFormatIds = {};
+  if(stylesFile){
+    var stXml = parseXML(decodeUTF8(stylesFile));
+    if(stXml){
+      // Number format IDs 14-17 and 164+ can be dates
+      var numFmts = stXml.querySelectorAll('numFmt');
+      var dateFormatNums = {};
+      numFmts.forEach(function(nf){
+        var id = parseInt(nf.getAttribute('numFmtId')||'0');
+        var code = (nf.getAttribute('formatCode')||'').toLowerCase();
+        if(code.indexOf('y')>=0||code.indexOf('d')>=0||code.indexOf('m')>=0){
+          dateFormatNums[id] = true;
+        }
+      });
+      // Built-in date formats
+      [14,15,16,17,18,19,20,21,22].forEach(function(n){ dateFormatNums[n]=true; });
+      // Map cell XF index to numFmtId
+      var xfs = stXml.querySelectorAll('cellXfs xf');
+      xfs.forEach(function(xf,idx){
+        var numFmtId = parseInt(xf.getAttribute('numFmtId')||'0');
+        if(dateFormatNums[numFmtId]) dateFormatIds[idx] = true;
+      });
+    }
+  }
+
+  // 4. Parse each worksheet
+  var sheets = {};
+  var sheetIndex = 1;
+  while(true){
+    var wsKey = 'xl/worksheets/sheet'+sheetIndex+'.xml';
+    var wsFile = files[wsKey];
+    if(!wsFile) break;
+    var sheetName = sheetNames[String(sheetIndex+1)] || ('Sheet'+sheetIndex);
+    var wsXml = parseXML(decodeUTF8(wsFile));
+    if(wsXml){
+      var rows = [];
+      wsXml.querySelectorAll('row').forEach(function(rowEl){
+        var rowArr = [];
+        var maxCol = 0;
+        rowEl.querySelectorAll('c').forEach(function(cell){
+          var ref = cell.getAttribute('r') || '';
+          // Parse column letter to index
+          var col = ref.replace(/[0-9]/g,'').toUpperCase();
+          var colIdx = 0;
+          for(var ci=0;ci<col.length;ci++) colIdx = colIdx*26 + (col.charCodeAt(ci)-64);
+          colIdx -= 1; // 0-based
+          maxCol = Math.max(maxCol, colIdx);
+          var t = cell.getAttribute('t') || '';
+          var s = parseInt(cell.getAttribute('s')||'-1');
+          var vEl = cell.querySelector('v');
+          var rawVal = vEl ? vEl.textContent : '';
+          var value;
+          if(t==='s'){
+            // Shared string
+            value = sharedStrings[parseInt(rawVal)] || '';
+          } else if(t==='inlineStr'){
+            value = (cell.querySelector('is t') || {}).textContent || '';
+          } else if(t==='b'){
+            value = rawVal==='1' ? true : false;
+          } else {
+            // Number or date
+            var num = parseFloat(rawVal);
+            if(!isNaN(num) && dateFormatIds[s]){
+              value = excelDateToStr(num);
+            } else if(!isNaN(num)){
+              value = num;
+            } else {
+              value = rawVal;
+            }
+          }
+          rowArr[colIdx] = value;
+        });
+        // Fill any undefined slots
+        for(var k=0;k<=maxCol;k++) if(rowArr[k]===undefined) rowArr[k]='';
+        rows.push(rowArr);
+      });
+      sheets[sheetName] = rows;
+    }
+    sheetIndex++;
+  }
+  return sheets;
+}
+
+// ═══════════════════════════════════════════════════════════
+// IMPORT MAPPING ENGINE
+// Maps column headers from exported sheets back to state objects
+// ═══════════════════════════════════════════════════════════
+
+// Column name → state field mapping for each sheet type
+var IMPORT_MAPS = {
+  'Wallets': {
+    detect: function(headers){ return headers.indexOf('WalletName')>=0; },
+    stateKey: 'wallets',
+    mapRow: function(row, headers){
+      var get = function(name){ var i=headers.indexOf(name); return i>=0?(row[i]||''):''; };
+      var name = String(get('WalletName')).trim();
+      if(!name) return null;
+      return {
+        id: String(get('WalletID')).trim() || uid(),
+        name: name,
+        type: String(get('WalletType')||'savings').trim(),
+        bank: String(get('Institution')||'').trim(),
+        balance: parseFloat(get('Balance_PHP'))||0,
+        note: String(get('Note')||'').trim(),
+        color: '#1a4a7a',
+        icon: 'F'
+      };
+    }
+  },
+  'Future Plans': {
+    detect: function(headers){ return headers.indexOf('PlanName')>=0; },
+    stateKey: 'futurePlans',
+    mapRow: function(row, headers){
+      var get = function(name){ var i=headers.indexOf(name); return i>=0?(row[i]||''):''; };
+      var name = String(get('PlanName')).trim();
+      if(!name) return null;
+      return {
+        id: String(get('PlanID')).trim() || uid(),
+        name: name,
+        category: String(get('Category')||'other').trim(),
+        target: parseFloat(get('Target_PHP'))||0,
+        saved: parseFloat(get('Saved_PHP'))||0,
+        monthly: parseFloat(get('MonthlyContrib_PHP'))||0,
+        walletId: '',
+        date: String(get('TargetDate')||'').trim(),
+        note: String(get('Note')||'').trim()
+      };
+    }
+  },
+  'Termed Payments': {
+    detect: function(headers){ return headers.indexOf('PaymentName')>=0; },
+    stateKey: 'payments',
+    mapRow: function(row, headers){
+      var get = function(name){ var i=headers.indexOf(name); return i>=0?(row[i]||''):''; };
+      var name = String(get('PaymentName')).trim();
+      if(!name) return null;
+      return {
+        id: String(get('PaymentID')).trim() || uid(),
+        name: name,
+        type: String(get('PaymentType')||'loan').trim(),
+        balance: parseFloat(get('OutstandingBalance_PHP'))||0,
+        monthly: parseFloat(get('MonthlyPayment_PHP'))||0,
+        months: parseFloat(get('MonthsRemaining'))||0,
+        due: String(get('NextDueDate')||'').trim(),
+        walletId: '',
+        interest: parseFloat(get('InterestRate_Pct'))||0
+      };
+    }
+  },
+  'Recurring Expenses': {
+    detect: function(headers){ return headers.indexOf('ExpenseName')>=0; },
+    stateKey: 'expenses',
+    mapRow: function(row, headers){
+      var get = function(name){ var i=headers.indexOf(name); return i>=0?(row[i]||''):''; };
+      var name = String(get('ExpenseName')).trim();
+      if(!name) return null;
+      var freq = String(get('Frequency')||'monthly').trim().toLowerCase();
+      if(['monthly','quarterly','semi-annual','annual'].indexOf(freq)<0) freq='monthly';
+      return {
+        id: String(get('ExpenseID')).trim() || uid(),
+        name: name,
+        category: String(get('Category')||'other').trim(),
+        amount: parseFloat(get('Amount_PHP'))||0,
+        frequency: freq,
+        due: String(get('NextDueDate')||'').trim(),
+        provider: String(get('Provider')||'').trim(),
+        walletId: '',
+        note: String(get('Note')||'').trim()
+      };
+    }
+  },
+  'Investments': {
+    detect: function(headers){ return headers.indexOf('InvestmentName')>=0; },
+    stateKey: 'investments',
+    mapRow: function(row, headers){
+      var get = function(name){ var i=headers.indexOf(name); return i>=0?(row[i]||''):''; };
+      var name = String(get('InvestmentName')).trim();
+      if(!name) return null;
+      return {
+        id: String(get('InvestmentID')).trim() || uid(),
+        name: name,
+        cls: String(get('AssetClass')||'other').trim(),
+        cost: parseFloat(get('CostBasis_PHP'))||0,
+        value: parseFloat(get('CurrentValue_PHP'))||0,
+        annualReturn: parseFloat(get('AnnualReturn_Pct'))||0,
+        monthly: parseFloat(get('MonthlyAddition_PHP'))||0,
+        platform: String(get('Platform')||'').trim(),
+        note: String(get('Note')||'').trim()
+      };
+    }
+  }
+};
+
+// Known sheet name aliases (in case user renamed them slightly)
+var SHEET_ALIASES = {
+  'wallets': 'Wallets',
+  'wallet': 'Wallets',
+  'future plans': 'Future Plans',
+  'plans': 'Future Plans',
+  'future': 'Future Plans',
+  'termed payments': 'Termed Payments',
+  'payments': 'Termed Payments',
+  'loans': 'Termed Payments',
+  'recurring expenses': 'Recurring Expenses',
+  'expenses': 'Recurring Expenses',
+  'recurring': 'Recurring Expenses',
+  'investments': 'Investments',
+  'investment portfolio': 'Investments',
+  'portfolio': 'Investments',
+};
+
+function normalizeSheetName(name){
+  var lower = name.trim().toLowerCase();
+  return SHEET_ALIASES[lower] || name;
+}
+
+// ═══════════════════════════════════════════════════════════
+// IMPORT UI FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+
+function openImportModal(){
+  clearImportFile();
+  document.getElementById('import-modal-overlay').classList.add('open');
+}
+
+function closeImportModal(){
+  document.getElementById('import-modal-overlay').classList.remove('open');
+  clearImportFile();
+}
+
+function clearImportFile(){
+  _importData = {};
+  _importModes = {};
+  document.getElementById('import-file-input').value = '';
+  document.getElementById('import-file-info').classList.remove('show');
+  document.getElementById('import-sheets-section').style.display = 'none';
+  document.getElementById('import-preview').classList.remove('show');
+  document.getElementById('import-progress').classList.remove('show');
+  document.getElementById('import-result').classList.remove('show');
+  document.getElementById('import-result').className = 'import-result';
+  document.getElementById('import-go-btn').disabled = true;
+}
+
+function handleImportFile(e){
+  var file = e.target.files && e.target.files[0];
+  if(!file) return;
+  if(!file.name.match(/\.xlsx?$/i)){
+    showImportResult('error', 'Please select a .xlsx file exported from FinForecast Pro.');
+    return;
+  }
+  document.getElementById('import-file-name').textContent = file.name;
+  document.getElementById('import-file-size').textContent = (file.size/1024).toFixed(1)+' KB';
+  document.getElementById('import-file-info').classList.add('show');
+  document.getElementById('import-sheets-section').style.display = 'none';
+  document.getElementById('import-preview').classList.remove('show');
+  document.getElementById('import-result').classList.remove('show');
+  document.getElementById('import-go-btn').disabled = true;
+
+  var prog = document.getElementById('import-progress');
+  prog.classList.add('show');
+  document.getElementById('import-progress-text').textContent = 'Reading Excel file...';
+
+  var reader = new FileReader();
+  reader.onload = function(ev){
+    var buffer = ev.target.result;
+    readXlsx(buffer, function(err, sheets){
+      prog.classList.remove('show');
+      if(err){
+        showImportResult('error', 'Could not read file: '+err.message+'. Make sure it is a valid .xlsx file.');
+        return;
+      }
+      _importData = sheets;
+      buildImportSheetList(sheets);
+    });
+  };
+  reader.onerror = function(){
+    prog.classList.remove('show');
+    showImportResult('error', 'Failed to read file. Please try again.');
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function buildImportSheetList(sheets){
+  var sheetNames = Object.keys(sheets);
+  if(!sheetNames.length){
+    showImportResult('error', 'No sheets found in this file.');
+    return;
+  }
+
+  var recognized = [];
+  var unrecognized = [];
+
+  sheetNames.forEach(function(name){
+    var normName = normalizeSheetName(name);
+    var mapKey = normName;
+    var mapDef = IMPORT_MAPS[mapKey];
+
+    // Also try to detect by column headers
+    if(!mapDef){
+      var rows = sheets[name];
+      if(rows && rows.length > 0){
+        var headers = rows[0].map(function(h){ return String(h||''); });
+        Object.keys(IMPORT_MAPS).forEach(function(k){
+          if(!mapDef && IMPORT_MAPS[k].detect(headers)){
+            mapDef = IMPORT_MAPS[k];
+            mapKey = k;
+          }
+        });
+      }
+    }
+
+    if(mapDef){
+      var rows = sheets[name];
+      var dataRows = rows ? rows.length - 1 : 0; // minus header
+      recognized.push({name:name, mapKey:mapKey, mapDef:mapDef, count:dataRows});
+    } else if(name !== 'KPI Summary' && name !== 'Financial Summary'){
+      unrecognized.push(name);
+    }
+  });
+
+  if(!recognized.length){
+    showImportResult('warn',
+      'No importable sheets found. This file may not be a FinForecast export, or the sheet names were changed.\n\n'+
+      'Expected sheets: Wallets, Future Plans, Termed Payments, Recurring Expenses, Investments.\n'+
+      'Found: '+sheetNames.join(', ')+'.'
+    );
+    return;
+  }
+
+  // Build sheet list UI
+  var listEl = document.getElementById('import-sheet-list');
+  listEl.innerHTML = '';
+  recognized.forEach(function(s){
+    var existing = state[s.mapDef.stateKey] ? state[s.mapDef.stateKey].length : 0;
+    _importModes[s.mapKey] = existing > 0 ? 'merge' : 'replace';
+
+    var div = document.createElement('div');
+    div.className = 'import-sheet-row';
+    div.id = 'isr-'+s.mapKey.replace(/\s+/g,'-').toLowerCase();
+    div.innerHTML =
+      '<div class="import-sheet-header">' +
+        '<input type="checkbox" id="is-'+s.mapKey.replace(/\s+/g,'-').toLowerCase()+'" checked ' +
+               'onchange="toggleImportSheet(\''+s.mapKey+'\',this)">' +
+        '<label for="is-'+s.mapKey.replace(/\s+/g,'-').toLowerCase()+'">' +
+          sheetIcon(s.mapKey)+' '+s.name +
+          ' <span style="font-size:11px;color:var(--text3);font-weight:400">('+s.count+' rows)</span>' +
+        '</label>' +
+        '<button class="btn btn-outline btn-sm" onclick="previewImportSheet(\''+s.name+'\')" style="flex-shrink:0;font-size:10px">Preview</button>' +
+      '</div>' +
+      '<div class="import-sheet-mode show" id="ism-'+s.mapKey.replace(/\s+/g,'-').toLowerCase()+'">' +
+        '<div class="import-mode-btn '+(existing>0?'':'active')+'" onclick="setImportMode(\''+s.mapKey+'\',\'replace\',this)">Replace all ('+existing+' existing)</div>' +
+        '<div class="import-mode-btn '+(existing>0?'active':'')+'" onclick="setImportMode(\''+s.mapKey+'\',\'merge\',this)">Merge (keep existing)</div>' +
+      '</div>';
+    listEl.appendChild(div);
+  });
+
+  document.getElementById('import-sheets-section').style.display = 'block';
+  document.getElementById('import-go-btn').disabled = false;
+
+  var msg = 'Found '+recognized.length+' importable sheet'+(recognized.length!==1?'s':'');
+  if(unrecognized.length) msg += '. Skipping: '+unrecognized.join(', ')+' (KPI Summary is read-only).';
+  showImportResult('success', msg);
+}
+
+function sheetIcon(mapKey){
+  var icons = {
+    'Wallets':'F','Future Plans':'T','Termed Payments':'D',
+    'Recurring Expenses':'R','Investments':'I'
+  };
+  var map = {'Wallets':'&#x1F3E6;','Future Plans':'&#x1F3AF;','Termed Payments':'&#x1F4C6;','Recurring Expenses':'&#x1F501;','Investments':'&#x1F4C8;'};
+  return map[mapKey] || '&#x1F4CB;';
+}
+
+function toggleImportSheet(mapKey, cb){
+  var modeEl = document.getElementById('ism-'+mapKey.replace(/\s+/g,'-').toLowerCase());
+  if(modeEl) modeEl.style.display = cb.checked ? 'flex' : 'none';
+  updateImportGoBtn();
+}
+
+function updateImportGoBtn(){
+  var anyChecked = document.querySelectorAll('.import-sheet-header input[type=checkbox]:checked').length > 0;
+  document.getElementById('import-go-btn').disabled = !anyChecked;
+}
+
+function setImportMode(mapKey, mode, btn){
+  _importModes[mapKey] = mode;
+  var parent = btn.closest('.import-sheet-mode');
+  if(parent) parent.querySelectorAll('.import-mode-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+}
+
+function previewImportSheet(sheetName){
+  var rows = _importData[sheetName];
+  if(!rows || !rows.length){ return; }
+  var headers = rows[0];
+  var dataRows = rows.slice(1,Math.min(4,rows.length)); // show up to 3 data rows
+  var table = '<table><thead><tr>'+headers.map(function(h){ return '<th>'+String(h||'').slice(0,14)+'</th>'; }).join('')+'</tr></thead><tbody>';
+  dataRows.forEach(function(row){
+    table += '<tr>'+headers.map(function(_,i){ return '<td>'+String(row[i]!==undefined?row[i]:'').slice(0,16)+'</td>'; }).join('')+'</tr>';
+  });
+  table += '</tbody></table>';
+  document.getElementById('import-preview-table').innerHTML = table;
+  document.getElementById('import-preview').classList.add('show');
+}
+
+function showImportResult(type, msg){
+  var el = document.getElementById('import-result');
+  el.className = 'import-result show '+type;
+  el.textContent = msg;
+}
+
+// ── Run the actual import ─────────────────────────────────────────────────────
+function runImport(){
+  var prog = document.getElementById('import-progress');
+  var goBtn = document.getElementById('import-go-btn');
+  prog.classList.add('show');
+  document.getElementById('import-progress-text').textContent = 'Importing data...';
+  goBtn.disabled = true;
+
+  setTimeout(function(){
+    try{
+      var imported = [];
+      var errors = [];
+      var sheetNames = Object.keys(_importData);
+
+      sheetNames.forEach(function(sheetName){
+        var normName = normalizeSheetName(sheetName);
+        var mapDef = IMPORT_MAPS[normName];
+        if(!mapDef){
+          // Try header detection
+          var rows = _importData[sheetName];
+          if(rows&&rows.length){
+            var hdrs = rows[0].map(function(h){return String(h||'');});
+            Object.keys(IMPORT_MAPS).forEach(function(k){
+              if(!mapDef&&IMPORT_MAPS[k].detect(hdrs)){ mapDef=IMPORT_MAPS[k]; normName=k; }
+            });
+          }
+        }
+        if(!mapDef) return;
+
+        // Check if this sheet is selected
+        var cbId = 'is-'+normName.replace(/\s+/g,'-').toLowerCase();
+        var cb = document.getElementById(cbId);
+        if(cb&&!cb.checked) return;
+
+        var rows = _importData[sheetName];
+        if(!rows||rows.length<2) return;
+
+        var headers = rows[0].map(function(h){ return String(h||''); });
+        var dataRows = rows.slice(1);
+        var mode = _importModes[normName] || 'merge';
+        var parsed = [];
+        var skipped = 0;
+
+        dataRows.forEach(function(row){
+          // Skip rows that are all empty
+          var hasData = row.some(function(v){ return v!==undefined&&v!==null&&v!==''; });
+          if(!hasData){ skipped++; return; }
+          var obj = mapDef.mapRow(row, headers);
+          if(obj) parsed.push(obj);
+          else skipped++;
+        });
+
+        if(!parsed.length){
+          errors.push(sheetName+': no valid rows found');
+          return;
+        }
+
+        var stateKey = mapDef.stateKey;
+        if(mode==='replace'){
+          state[stateKey] = parsed;
+        } else {
+          // Merge: add rows that don't already exist by ID or by name
+          var existing = state[stateKey] || [];
+          var existingIds = {};
+          existing.forEach(function(e){ existingIds[e.id]=true; });
+          var added = 0;
+          parsed.forEach(function(p){
+            if(!existingIds[p.id]){
+              existing.push(p);
+              added++;
+            }
+          });
+          state[stateKey] = existing;
+          imported.push(sheetName+': added '+added+' new records ('+skipped+' skipped)');
+          return;
+        }
+        imported.push(sheetName+': imported '+parsed.length+' records'+(skipped?' ('+skipped+' empty rows skipped)':''));
+      });
+
+      prog.classList.remove('show');
+      goBtn.disabled = false;
+
+      if(!imported.length&&errors.length){
+        showImportResult('error','Import failed:\n'+errors.join('\n'));
+        return;
+      }
+
+      // Save and refresh
+      saveData();
+      var currentTab = document.querySelector('.section.active');
+      if(currentTab){
+        var t = currentTab.id.replace('tab-','');
+        var renders={wallets:renderWallets,future:renderFuturePlans,payments:renderPayments,
+          recurring:renderExpenses,investments:renderInvestments,overview:renderOverview};
+        if(renders[t]) renders[t]();
+      }
+      renderWallets(); // always refresh wallets for pill update
+      updateTopPill();
+
+      var summary = imported.join('\n');
+      if(errors.length) summary += '\n\nWarnings:\n'+errors.join('\n');
+      showImportResult('success','Import complete!\n\n'+summary);
+      document.getElementById('import-go-btn').textContent = 'Import Again';
+      document.getElementById('import-go-btn').disabled = false;
+      showToast('Import complete: '+imported.length+' sheet'+(imported.length!==1?'s':''));
+
+    }catch(err){
+      prog.classList.remove('show');
+      goBtn.disabled = false;
+      showImportResult('error','Unexpected error: '+err.message);
+      console.error('Import error:',err);
+    }
+  },80);
+}
+
+
+
+// ── Drag and Drop for import dropzone ────────────────────────────────────────
+(function(){
+  var dz = document.getElementById('import-dropzone');
+  if(!dz) return;
+  dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('drag-over');},{passive:false});
+  dz.addEventListener('dragleave',function(){dz.classList.remove('drag-over');});
+  dz.addEventListener('drop',function(e){
+    e.preventDefault();
+    dz.classList.remove('drag-over');
+    var file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if(file){
+      handleImportFile({target:{files:[file]}});
+    }
+  },{passive:false});
+})();
+
+// Close import modal on overlay click
+(function(){
+  var overlay = document.getElementById('import-modal-overlay');
+  if(overlay) overlay.addEventListener('click',function(e){
+    if(e.target===overlay) closeImportModal();
+  });
+})();
+
 </script>
 
 <!-- ════ MOBILE BOTTOM NAV ════ -->
@@ -2631,7 +3568,7 @@ renderWallets=function(){
       </div>
       <div class="export-sheet-item" onclick="toggleExportSheet('summary')">
         <input type="checkbox" id="es-summary" checked>
-        <label for="es-summary">&#x1F5FA; Financial Summary</label>
+        <label for="es-summary">&#x1F5FA; KPI Summary (Pivot-Ready)</label>
         <span class="sheet-count">1 record</span>
       </div>
     </div>
@@ -2652,5 +3589,56 @@ renderWallets=function(){
     <div class="del-confirm-cancel" onclick="cancelDelSheet()">Cancel</div>
   </div>
 </div>
+
+<!-- ════ IMPORT MODAL ════ -->
+<div class="import-modal-overlay" id="import-modal-overlay">
+  <div class="import-modal">
+    <button class="import-close" onclick="closeImportModal()">&#x2715;</button>
+    <div class="import-title">&#x1F4C2; Import from Excel</div>
+    <div class="import-sub">Import data back from a previously exported FinForecast .xlsx file. Each sheet maps directly to a data category.</div>
+
+    <div class="import-tip">
+      &#x26A0; Only import files exported from FinForecast Pro. Column headers must match exactly.<br>
+      Use <strong>Merge</strong> to add new records, or <strong>Replace</strong> to overwrite all existing data in that category.
+    </div>
+
+    <div class="import-dropzone" id="import-dropzone">
+      <input type="file" id="import-file-input" accept=".xlsx,.xls" onchange="handleImportFile(event)">
+      <div class="dz-icon">&#x1F4C1;</div>
+      <div class="dz-title">Tap to choose Excel file</div>
+      <div class="dz-sub">Supports .xlsx files exported from FinForecast Pro</div>
+    </div>
+
+    <div class="import-file-info" id="import-file-info">
+      <span style="font-size:20px">&#x1F4CA;</span>
+      <span class="import-file-name" id="import-file-name">-</span>
+      <span class="import-file-size" id="import-file-size">-</span>
+      <button class="btn btn-outline btn-sm" onclick="clearImportFile()" style="flex-shrink:0">&#x2715;</button>
+    </div>
+
+    <div class="import-progress" id="import-progress">
+      <div class="export-spinner"></div>
+      <span id="import-progress-text">Reading file...</span>
+    </div>
+
+    <div class="import-result" id="import-result"></div>
+
+    <div id="import-sheets-section" style="display:none">
+      <div class="import-sheets-title">Detected Sheets — Choose Import Mode</div>
+      <div class="import-sheet-list" id="import-sheet-list"></div>
+    </div>
+
+    <div class="import-preview" id="import-preview">
+      <div class="import-preview-title">Data Preview</div>
+      <div id="import-preview-table"></div>
+    </div>
+
+    <div class="import-actions">
+      <button class="btn btn-outline" onclick="closeImportModal()">Cancel</button>
+      <button class="import-go-btn" id="import-go-btn" onclick="runImport()" disabled>&#x1F4E5; Import Data</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
