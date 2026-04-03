@@ -2,10 +2,24 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FinForecast Pro — Complete Financial Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="FinForecast">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f5f2ee">
+<title>FinForecast Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" onerror="loadChartFallback()"></script>
+<script>
+function loadChartFallback(){
+  var s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js';
+  document.head.appendChild(s);
+}
+</script>
 <style>
 :root{
   --bg:#f5f2ee;--bg2:#ffffff;--bg3:#f0ece6;--bg4:#e8e2da;--bg5:#ddd7cd;
@@ -25,7 +39,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{font-size:15px}
-body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;min-height:100vh;line-height:1.6}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Helvetica Neue',Arial,sans-serif;min-height:100vh;line-height:1.6}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg3)}
 ::-webkit-scrollbar-thumb{background:var(--bg5);border-radius:3px}
@@ -238,8 +252,16 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-m)}
 .donut-wrap{position:relative;width:140px;height:140px;flex-shrink:0}
 
 /* TOAST */
-.toast{position:fixed;bottom:22px;right:22px;background:var(--text);color:#fff;padding:9px 16px;border-radius:var(--radius-sm);font-size:12px;z-index:2000;opacity:0;pointer-events:none;transition:opacity .3s;box-shadow:var(--shadow)}
+.toast{
+  position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));right:16px;
+  background:var(--text);color:#fff;padding:9px 16px;border-radius:var(--radius-sm);
+  font-size:12px;z-index:2000;opacity:0;pointer-events:none;
+  transition:opacity .3s;box-shadow:var(--shadow);max-width:calc(100vw - 32px);
+}
 .toast.show{opacity:1}
+@media(min-width:768px){
+  .toast{bottom:22px;right:22px;}
+}
 
 /* FORECAST BUDGET specific */
 .budget-month-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;transition:border .15s}
@@ -259,20 +281,162 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-m)}
 .perf-tab:hover:not(.active){background:var(--bg3);color:var(--text2)}
 
 /* Responsive */
-@media(max-width:960px){
-  .sidebar{width:52px}
-  .sidebar .logo-sub,.sidebar .nav-item span,.sidebar .nav-section,.sidebar-footer,.logo-pro{display:none}
-  .sidebar .logo-mark{font-size:13px}
-  .sidebar .nav-item{padding:9px;justify-content:center}
-  .main{margin-left:52px}
-  .metric-row{grid-template-columns:1fr 1fr}
+/* ── DESKTOP (Windows 1024px+) ── */
+@media(min-width:1280px){
+  .sidebar{width:260px}
+  .main{margin-left:260px}
+  .content{padding:28px 32px}
+  .metric-row{gap:16px}
+  .g2{gap:18px}
+  html{font-size:15px}
+}
+/* ── TABLET (768-1023px) ── */
+@media(max-width:1023px) and (min-width:768px){
+  .sidebar{width:200px}
+  .main{margin-left:200px}
+  .metric-row{grid-template-columns:1fr 1fr;gap:12px}
+}
+/* ── COLLAPSED SIDEBAR (below 768px) ── */
+@media(max-width:767px){
+  .sidebar{display:none}
+  .main{margin-left:0;padding-bottom:80px}
+  .topbar{padding:12px 16px}
+  .content{padding:14px}
+  .metric-row{grid-template-columns:1fr 1fr;gap:10px}
   .g2,.g3,.g4{grid-template-columns:1fr}
-  .payment-item{grid-template-columns:auto 1fr auto}
+  .payment-item{grid-template-columns:auto 1fr auto;gap:10px}
   .payment-item .payment-due,.payment-item .payment-actions{display:none}
   .expense-item{grid-template-columns:auto 1fr auto auto}
   .inv-portfolio-item{grid-template-columns:auto 1fr auto auto}
+  .wallet-grid{grid-template-columns:1fr 1fr}
+  .card{padding:14px}
+  .modal{padding:18px;margin:0}
+  .modal-bg{align-items:flex-end;padding:0}
+  .modal{border-radius:20px 20px 0 0;max-height:88vh}
+  .page-title{font-size:17px}
 }
-@media(max-width:560px){.content{padding:12px}.metric-row{grid-template-columns:1fr}}
+@media(max-width:420px){
+  .metric-row{grid-template-columns:1fr}
+  .wallet-grid{grid-template-columns:1fr}
+  .metric-value{font-size:18px}
+}
+/* ── MOBILE BOTTOM NAV ── */
+.mobile-nav{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:var(--bg2);border-top:1px solid var(--border);
+  padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+  display:none;grid-template-columns:repeat(5,1fr);gap:2px;
+}
+.mob-nav-item{
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 4px;border-radius:var(--radius-sm);cursor:pointer;
+  font-size:10px;color:var(--text3);transition:all .15s;-webkit-tap-highlight-color:transparent;
+}
+.mob-nav-item.active{color:var(--accent)}
+.mob-nav-item .mob-icon{font-size:20px;line-height:1}
+.mob-nav-item span{font-size:9px;letter-spacing:0.2px;text-align:center;line-height:1.2}
+@media(max-width:767px){
+  .mobile-nav{display:grid}
+}
+/* ── iOS SAFE AREAS ── */
+.topbar{padding-top:max(14px, calc(14px + env(safe-area-inset-top)))}
+.sidebar{padding-top:env(safe-area-inset-top)}
+@supports(padding:max(0px)){
+  .topbar{padding-left:max(26px, calc(26px + env(safe-area-inset-left)))}
+}
+/* ── WINDOWS SCROLLBAR STYLING ── */
+* { scrollbar-width:thin; scrollbar-color:var(--bg5) var(--bg3); }
+/* ── TOUCH OPTIMIZATIONS ── */
+.btn,.nav-item,.wallet-card,.inv-card,.mob-nav-item,.save-btn{
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+}
+input,select,textarea{font-size:16px!important}
+@media(min-width:768px){input,select,textarea{font-size:12px!important}}
+/* ── MORE BUTTON (mobile overflow nav) ── */
+.mob-more-menu{
+  position:fixed;bottom:calc(70px + env(safe-area-inset-bottom));right:12px;
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);z-index:300;min-width:200px;display:none;
+}
+.mob-more-menu.open{display:block;animation:fadeUp .15s ease}
+.mob-more-item{
+  display:flex;align-items:center;gap:10px;padding:11px 16px;
+  font-size:13px;color:var(--text2);cursor:pointer;border-bottom:1px solid var(--border);
+  -webkit-tap-highlight-color:transparent;
+}
+.mob-more-item:last-child{border:none}
+.mob-more-item:hover,.mob-more-item.active-more{background:var(--accent-l);color:var(--accent)}
+/* ── SWIPE HINT ── */
+.swipe-hint{display:none;text-align:center;font-size:10px;color:var(--text4);padding:6px;letter-spacing:0.5px}
+@media(max-width:767px){.swipe-hint{display:block}}
+/* ── DESKTOP FOCUS STYLES ── */
+@media(min-width:768px){
+  .nav-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+}
+/* ── PWA INSTALL BANNER ── */
+.pwa-banner{
+  display:none;position:fixed;bottom:calc(72px + env(safe-area-inset-bottom));
+  left:12px;right:12px;background:var(--accent);color:#fff;
+  border-radius:var(--radius);padding:12px 16px;z-index:250;
+  flex-direction:column;gap:6px;box-shadow:var(--shadow);
+}
+.pwa-banner.show{display:flex}
+.pwa-banner-title{font-size:13px;font-weight:600}
+.pwa-banner-sub{font-size:11px;opacity:0.85}
+.pwa-banner-actions{display:flex;gap:8px;margin-top:4px}
+.pwa-btn{padding:5px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:none;-webkit-tap-highlight-color:transparent}
+.pwa-btn-install{background:#fff;color:var(--accent)}
+.pwa-btn-dismiss{background:rgba(255,255,255,0.2);color:#fff}
+
+/* ── HAMBURGER BUTTON ── */
+.ham-btn{
+  display:none;flex-direction:column;justify-content:center;gap:5px;
+  width:36px;height:36px;background:transparent;border:none;cursor:pointer;
+  padding:6px;border-radius:var(--radius-sm);-webkit-tap-highlight-color:transparent;
+  flex-shrink:0;
+}
+.ham-btn span{display:block;height:2px;background:var(--text2);border-radius:2px;transition:all .2s}
+.ham-btn:hover span{background:var(--text)}
+@media(max-width:767px){.ham-btn{display:flex}}
+@media(min-width:768px){.ham-btn{display:none}}
+/* ── SIDEBAR SLIDE-IN (mobile) ── */
+.sidebar-overlay{
+  display:none;position:fixed;inset:0;background:rgba(28,24,20,0.4);z-index:99;
+}
+.sidebar-overlay.open{display:block}
+@media(max-width:767px){
+  .sidebar{
+    transform:translateX(-100%);transition:transform .25s cubic-bezier(.4,0,.2,1);
+    z-index:200;
+  }
+  .sidebar.open{transform:translateX(0);display:flex}
+}
+
+/* ── iOS STANDALONE (installed as app) ── */
+.ios-standalone .topbar{
+  padding-top:max(44px, calc(44px + env(safe-area-inset-top)));
+}
+.ios-standalone .sidebar{
+  padding-top:max(44px, calc(44px + env(safe-area-inset-top)));
+}
+.ios-standalone .main{
+  padding-bottom:calc(80px + env(safe-area-inset-bottom));
+}
+/* ── WINDOWS PLATFORM ── */
+.platform-windows .topbar{
+  -webkit-app-region:drag;
+}
+.platform-windows .topbar-right,.platform-windows .ham-btn{
+  -webkit-app-region:no-drag;
+}
+/* ── CHART WRAP MOBILE FIX ── */
+@media(max-width:767px){
+  .chart-wrap{height:180px!important}
+  .donut-wrap{width:120px;height:120px}
+  .metric-value{font-size:17px}
+  .g2{gap:10px}
+}
 </style>
 </head>
 <body>
@@ -305,13 +469,18 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-m)}
 <!-- ════ MAIN ════ -->
 <div class="main">
 <div class="topbar">
-  <div>
-    <div class="page-eyebrow" id="page-eyebrow">WALLETS</div>
-    <div class="page-title" id="page-title">My Wallets</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <button class="ham-btn" id="ham-btn" onclick="toggleSidebar()" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+    <div>
+      <div class="page-eyebrow" id="page-eyebrow">WALLETS</div>
+      <div class="page-title" id="page-title">My Wallets</div>
+    </div>
   </div>
   <div class="topbar-right">
-    <span class="total-pill" id="total-pill">Total: ₱0</span>
-    <button class="save-btn" onclick="saveData()">💾 Save</button>
+    <span class="total-pill" id="total-pill">Total: &#x20B1;0</span>
+    <button class="save-btn" onclick="saveData()">&#x1F4BE; Save</button>
   </div>
 </div>
 <div class="content">
@@ -484,10 +653,10 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-m)}
     <div class="metric blue"><div class="metric-label">Debt-to-Asset Ratio</div><div class="metric-value" id="pf-dta">0%</div></div>
   </div>
   <div class="perf-tabs">
-    <div class="perf-tab active" onclick="switchPerfTab('assets')">Asset Performance</div>
-    <div class="perf-tab" onclick="switchPerfTab('expenses')">Expense Performance</div>
-    <div class="perf-tab" onclick="switchPerfTab('investments')">Investment Forecast</div>
-    <div class="perf-tab" onclick="switchPerfTab('networth')">Net Worth Forecast</div>
+    <div class="perf-tab active" onclick="switchPerfTab('assets',event)">Asset Performance</div>
+    <div class="perf-tab" onclick="switchPerfTab('expenses',event)">Expense Performance</div>
+    <div class="perf-tab" onclick="switchPerfTab('investments',event)">Investment Forecast</div>
+    <div class="perf-tab" onclick="switchPerfTab('networth',event)">Net Worth Forecast</div>
   </div>
   <div id="perf-assets" class="perf-pane">
     <div class="g2">
@@ -610,6 +779,12 @@ textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-m)}
 <div class="toast" id="toast"></div>
 
 <script>
+window.onerror=function(msg,src,line,col,err){
+  if(msg&&msg.toString().indexOf('Script error')<0){
+    console.error('JS Error:',msg,'Line:',line,err);
+  }
+  return false;
+};
 // ═══════════════════════════════════════════════════════════
 // MARKET CATALOG — comprehensive investment options
 // ═══════════════════════════════════════════════════════════
@@ -692,15 +867,24 @@ const fmtD  = v => (v>=0?'+':'')+Math.round(v).toLocaleString('en-PH');
 const pct   = v => (Math.round(v*10)/10)+'%';
 const uid   = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const today = () => new Date().toISOString().split('T')[0];
-const g     = id => parseFloat(document.getElementById(id)?.value)||0;
+var g = function(id){ var el=document.getElementById(id); return el ? parseFloat(el.value)||0 : 0; };
 const addMonths = (d,n) => { const dt=new Date(d); dt.setMonth(dt.getMonth()+n); return dt; };
 const fmtDate   = d => { try{ return new Date(d+'T00:00:00').toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'}); }catch(e){return d;} };
 const daysUntil = d => Math.ceil((new Date(d+'T00:00:00')-new Date())/86400000);
 const toMonthly = e => e.amount/FREQ_MONTHS[e.frequency];
-const destroyChart = c => { if(c){try{c.destroy();}catch(e){}} return null; };
+const destroyChart = function(c){ if(c&&c.destroy){try{c.destroy();}catch(e){}} return null; };
 
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
-function saveData(){ try{ localStorage.setItem('finforecast_pro',JSON.stringify(state)); showToast('✓ Data saved successfully'); }catch(e){ showToast('⚠ Save failed — localStorage unavailable'); } }
+function saveData(){
+  try{
+    localStorage.setItem('finforecast_pro',JSON.stringify(state));
+    showToast('Data saved');
+    var el=document.getElementById('last-save-time');
+    if(el){el.textContent='Saved '+new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'});el.style.display='block';}
+  }catch(e){
+    showToast('Save failed - storage unavailable');
+  }
+}
 function loadData(){ try{ const d=localStorage.getItem('finforecast_pro'); if(d) state=JSON.parse(d); }catch(e){} }
 
 // ═══════════════════════════════════════════════════════════
@@ -727,10 +911,11 @@ function switchTab(t){
   const renders={wallets:renderWallets,future:renderFuturePlans,payments:renderPayments,recurring:renderExpenses,investments:renderInvestments,explore:renderMarkets,budget:renderBudget,performance:renderPerformance,overview:renderOverview};
   if(renders[t]) renders[t]();
 }
-function switchPerfTab(tab){
-  document.querySelectorAll('.perf-tab').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.perf-pane').forEach(el=>el.style.display='none');
-  event.target.classList.add('active');
+function switchPerfTab(tab,e){
+  document.querySelectorAll('.perf-tab').forEach(function(el){el.classList.remove('active');});
+  document.querySelectorAll('.perf-pane').forEach(function(el){el.style.display='none';});
+  var btn=e?e.currentTarget:document.querySelector('.perf-tab[onclick*="'+tab+'"]');
+  if(btn) btn.classList.add('active');
   document.getElementById('perf-'+tab).style.display='block';
   renderPerformancePane(tab);
 }
@@ -745,7 +930,8 @@ function populateWalletSelects(){
 function buildColorPicker(){ document.getElementById('mw-colors').innerHTML=WALLET_COLORS.map(c=>`<div class="color-opt${c===editingColor?' sel':''}" style="background:${c}" onclick="editingColor='${c}';buildColorPicker()"></div>`).join(''); }
 function buildIconPicker(){  document.getElementById('mw-icons').innerHTML=WALLET_ICONS.map(i=>`<div class="icon-opt${i===editingIcon?' sel':''}" onclick="editingIcon='${i}';buildIconPicker()">${i}</div>`).join(''); }
 
-function openModal(type,editId=null){
+function openModal(type,editId){
+  if(editId===undefined) editId=null;
   populateWalletSelects();
   if(type==='wallet'){
     editingColor=WALLET_COLORS[0]; editingIcon=WALLET_ICONS[0];
@@ -1222,7 +1408,7 @@ function renderPerformancePane(tab){
       {name:'Loan Liabilities',val:-loanTotal,color:'#8a2020'}
     ].map(a=>`<div class="bar-row"><span class="bar-label">${a.name}</span><div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(Math.abs(a.val)/totAssets*100)}%;background:${a.color}"></div></div><span class="bar-val">${fmt(a.val)}</span></div>`).join('');
     pfAssetChart=destroyChart(pfAssetChart);
-    const ctx=document.getElementById('pf-asset-chart')?.getContext('2d');
+    var _c0=document.getElementById('pf-asset-chart'); var ctx=_c0?_c0.getContext('2d'):null;
     if(ctx){
       const labels=[]; const assetData=[]; const liabData=[]; const nwData=[];
       for(let m=0;m<=6;m++){
@@ -1243,7 +1429,7 @@ function renderPerformancePane(tab){
     const catC={insurance:'#1a6b4a','car-insurance':'#1a4a7a',property:'#5a2a8a',subscription:'#0d6b6b',utilities:'#8a5a00',education:'#8a2060',hmo:'#8a2020',sss:'#6b7280',philhealth:'#1a6b4a',pagibig:'#1a4a7a',membership:'#8a5a00','loan-payments':'#8a2020',other:'#6b7280'};
     document.getElementById('pf-exp-bars').innerHTML=Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="bar-row"><span class="bar-label">${EXPENSE_ICONS[k]||'📋'} ${k.replace(/-/g,' ')}</span><div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(v/maxC*100)}%;background:${catC[k]||'#6b7280'}"></div></div><span class="bar-val">${fmt(v)}/mo</span></div>`).join('')||'<div class="tip">No expense data.</div>';
     pfExpChart=destroyChart(pfExpChart);
-    const ctx=document.getElementById('pf-exp-chart')?.getContext('2d');
+    var _c1=document.getElementById('pf-exp-chart'); var ctx=_c1?_c1.getContext('2d'):null;
     if(ctx){
       const labels=[],data=[];
       const hist=state.budgetHistory.slice(-3);
@@ -1263,7 +1449,7 @@ function renderPerformancePane(tab){
       return `<div class="bar-row"><span class="bar-label" style="min-width:110px">${i.name.slice(0,14)}</span><div class="bar-wrap"><div class="bar-fill" style="width:${Math.round(i.value/maxV*100)}%;background:${color}"></div></div><span class="bar-val" style="color:${gain>=0?'var(--accent)':'var(--red)'}">${gain>=0?'+':'-'}${Math.abs(Math.round(gain/i.cost*100))}% · ${fmt(i.value)}</span></div>`;
     }).join(''):'<div class="tip">No investment positions added.</div>';
     pfInvChart=destroyChart(pfInvChart);
-    const ctx=document.getElementById('pf-inv-chart')?.getContext('2d');
+    var _c2=document.getElementById('pf-inv-chart'); var ctx=_c2?_c2.getContext('2d'):null;
     if(ctx&&invs.length){
       const labels=[],data=[];
       let pv=invTotal;
@@ -1276,7 +1462,7 @@ function renderPerformancePane(tab){
     }
   } else if(tab==='networth'){
     pfNwChart=destroyChart(pfNwChart);
-    const ctx=document.getElementById('pf-nw-chart')?.getContext('2d');
+    var _c3=document.getElementById('pf-nw-chart'); var ctx=_c3?_c3.getContext('2d'):null;
     if(ctx){
       const labels=[],nwData=[],assetData=[],liabData=[];
       const monthlyGoalSave=state.futurePlans.reduce((s,p)=>s+p.monthly,0);
@@ -1408,13 +1594,298 @@ function seedDefaultData(){
 }
 
 // ═══════════════════════════════════════════════════════════
+// CROSS-PLATFORM & MOBILE FUNCTIONS
+// ═══════════════════════════════════════════════════════════
+
+// Mobile bottom nav tab switching
+const MOB_NAV_TABS=['wallets','investments','budget','overview'];
+function mobileSwitchTab(t){
+  switchTab(t);
+  // Update mobile nav active state
+  MOB_NAV_TABS.forEach(function(tab){
+    var el=document.getElementById('mob-'+tab);
+    if(el) el.classList.toggle('active',tab===t);
+  });
+  document.getElementById('mob-more').classList.toggle('active',!MOB_NAV_TABS.includes(t));
+  // Close more menu if open
+  document.getElementById('mob-more-menu').classList.remove('open');
+  // Close sidebar overlay
+  closeSidebar();
+}
+
+function toggleMobMore(){
+  var menu=document.getElementById('mob-more-menu');
+  menu.classList.toggle('open');
+  // Close on outside click
+  if(menu.classList.contains('open')){
+    setTimeout(function(){
+      document.addEventListener('click',function handler(e){
+        if(!menu.contains(e.target)&&!document.getElementById('mob-more').contains(e.target)){
+          menu.classList.remove('open');
+          document.removeEventListener('click',handler);
+        }
+      });
+    },10);
+  }
+}
+
+// Sidebar hamburger
+function toggleSidebar(){
+  var sb=document.querySelector('.sidebar');
+  var ov=document.getElementById('sidebar-overlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('open');
+  document.body.style.overflow=sb.classList.contains('open')?'hidden':'';
+}
+function closeSidebar(){
+  var sb=document.querySelector('.sidebar');
+  var ov=document.getElementById('sidebar-overlay');
+  sb.classList.remove('open');
+  ov.classList.remove('open');
+  document.body.style.overflow='';
+}
+
+// Override switchTab to also close sidebar on mobile
+var _origSwitchTab=switchTab;
+switchTab=function(t){
+  _origSwitchTab(t);
+  if(window.innerWidth<=767) closeSidebar();
+};
+
+// ─── PWA / ADD TO HOME SCREEN ─────────────────────────────────────────────
+var _deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();
+  _deferredPrompt=e;
+  // Show banner after 3s if not dismissed before
+  if(!localStorage.getItem('pwa_dismissed')){
+    setTimeout(function(){
+      document.getElementById('pwa-banner').classList.add('show');
+    },3000);
+  }
+});
+function installPWA(){
+  if(_deferredPrompt){
+    _deferredPrompt.prompt();
+    _deferredPrompt.userChoice.then(function(){
+      _deferredPrompt=null;
+      document.getElementById('pwa-banner').classList.remove('show');
+    });
+  } else {
+    // iOS: show manual instructions
+    alert('To install: tap Share then Add to Home Screen.');
+    document.getElementById('pwa-banner').classList.remove('show');
+  }
+}
+function dismissPWA(){
+  localStorage.setItem('pwa_dismissed','1');
+  document.getElementById('pwa-banner').classList.remove('show');
+}
+window.addEventListener('appinstalled',function(){
+  document.getElementById('pwa-banner').classList.remove('show');
+});
+
+// ─── SWIPE NAVIGATION (mobile left/right swipe) ───────────────────────────
+(function(){
+  var TAB_ORDER=['wallets','future','payments','recurring','investments','explore','budget','performance','overview'];
+  var touchStartX=0, touchStartY=0, touchEndX=0;
+  document.addEventListener('touchstart',function(e){
+    touchStartX=e.changedTouches[0].screenX;
+    touchStartY=e.changedTouches[0].screenY;
+  },{passive:true});
+  document.addEventListener('touchend',function(e){
+    touchEndX=e.changedTouches[0].screenX;
+    var dx=touchEndX-touchStartX;
+    var dy=Math.abs(e.changedTouches[0].screenY-touchStartY);
+    // Only swipe if horizontal movement > 60px and not a vertical scroll
+    if(Math.abs(dx)>60&&dy<80&&window.innerWidth<=767){
+      // Don't swipe if inside a scrollable element
+      var el=e.target;
+      var inScroll=false;
+      while(el&&el!==document.body){
+        if(el.scrollWidth>el.clientWidth){inScroll=true;break;}
+        el=el.parentElement;
+      }
+      if(inScroll) return;
+      // Don't swipe if modal open
+      if(document.querySelector('.modal-bg.open')) return;
+      var curTab=document.querySelector('.section.active');
+      if(!curTab) return;
+      var curId=curTab.id.replace('tab-','');
+      var idx=TAB_ORDER.indexOf(curId);
+      if(idx<0) return;
+      if(dx<0&&idx<TAB_ORDER.length-1) mobileSwitchTab(TAB_ORDER[idx+1]); // swipe left = next
+      if(dx>0&&idx>0) mobileSwitchTab(TAB_ORDER[idx-1]); // swipe right = prev
+    }
+  },{passive:true});
+})();
+
+// ─── KEYBOARD SHORTCUTS (Windows desktop) ────────────────────────────────
+document.addEventListener('keydown',function(e){
+  // Ctrl+S = save
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){
+    e.preventDefault();
+    saveData();
+    return;
+  }
+  // Escape = close modal
+  if(e.key==='Escape'){
+    var openModal=document.querySelector('.modal-bg.open');
+    if(openModal) openModal.classList.remove('open');
+    document.getElementById('mob-more-menu').classList.remove('open');
+    closeSidebar();
+    return;
+  }
+  // Ctrl+1-9 = switch tabs
+  if(e.ctrlKey&&e.key>='1'&&e.key<='9'){
+    var tabs=['wallets','future','payments','recurring','investments','explore','budget','performance','overview'];
+    var idx=parseInt(e.key)-1;
+    if(idx<tabs.length){ e.preventDefault(); switchTab(tabs[idx]); }
+    return;
+  }
+});
+
+// ─── AUTO-SAVE every 2 minutes ────────────────────────────────────────────
+setInterval(function(){
+  saveData();
+  // Silent auto-save — just update timestamp
+  var el=document.getElementById('last-save-time');
+  if(el) el.textContent='Auto-saved '+new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'});
+},120000);
+
+// ─── HANDLE VISIBILITY CHANGE (re-render when app comes to foreground) ────
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden){
+    var curTab=document.querySelector('.section.active');
+    if(curTab){
+      var t=curTab.id.replace('tab-','');
+      var renders={wallets:renderWallets,future:renderFuturePlans,payments:renderPayments,
+        recurring:renderExpenses,investments:renderInvestments,explore:renderMarkets,
+        budget:renderBudget,performance:renderPerformance,overview:renderOverview};
+      if(renders[t]) renders[t]();
+    }
+  }
+});
+
+// Double-tap zoom handled via touch-action:manipulation CSS
+
+// ─── DETECT PLATFORM & APPLY CLASSES ─────────────────────────────────────
+(function(){
+  var ua=navigator.userAgent;
+  var isIOS=/iPhone|iPad|iPod/.test(ua);
+  var isAndroid=/Android/.test(ua);
+  var isMac=/Mac/.test(ua)&&!isIOS;
+  var isWin=/Windows/.test(ua);
+  if(isIOS) document.documentElement.classList.add('platform-ios');
+  if(isAndroid) document.documentElement.classList.add('platform-android');
+  if(isWin) document.documentElement.classList.add('platform-windows');
+  if(isMac) document.documentElement.classList.add('platform-mac');
+  // iOS Safari: add standalone class when running as installed app
+  if(window.navigator.standalone) document.documentElement.classList.add('ios-standalone');
+  // Show iOS install tip if on iOS Safari not in standalone mode
+  if(isIOS&&!window.navigator.standalone&&!localStorage.getItem('pwa_dismissed')){
+    setTimeout(function(){
+      document.getElementById('pwa-banner').classList.add('show');
+    },4000);
+  }
+})();
+
+// ─── LAST SAVE INDICATOR in topbar ────────────────────────────────────────
+(function(){
+  var tr=document.querySelector('.topbar-right');
+  if(tr){
+    var span=document.createElement('span');
+    span.id='last-save-time';
+    span.style.cssText='font-size:10px;color:var(--text3);font-family:monospace;display:none';
+    tr.insertBefore(span,tr.firstChild);
+  }
+})();
+
+// ─── ONLINE/OFFLINE INDICATOR ─────────────────────────────────────────────
+function updateOnlineStatus(){
+  var online=navigator.onLine;
+  var pill=document.getElementById('total-pill');
+  if(pill){
+    pill.title=online?'Online':'Offline - using local data';
+  }
+}
+window.addEventListener('online',updateOnlineStatus);
+window.addEventListener('offline',updateOnlineStatus);
+
+// ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
-loadData();
-seedDefaultData();
-renderWallets();
-updateTopPill();
-document.querySelectorAll('.modal-bg').forEach(bg=>bg.addEventListener('click',e=>{ if(e.target===bg) bg.classList.remove('open'); }));
+// Wait for Chart.js to be available
+function initApp(){
+  if(typeof Chart==='undefined'){
+    setTimeout(initApp,100);
+    return;
+  }
+try{
+  loadData();
+  seedDefaultData();
+  renderWallets();
+  updateTopPill();
+  document.querySelectorAll('.modal-bg').forEach(function(bg){
+    bg.addEventListener('click',function(e){ if(e.target===bg) bg.classList.remove('open'); });
+  });
+  if(window.innerWidth<=767){
+    var mw=document.getElementById('mob-wallets');
+    if(mw) mw.classList.add('active');
+  }
+}catch(initErr){
+  console.error('FinForecast init error:',initErr);
+  // Show user-friendly error
+  var errDiv=document.createElement('div');
+  errDiv.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#8a2020;color:#fff;padding:14px 20px;border-radius:10px;font-size:13px;z-index:9999;max-width:90vw;text-align:center';
+  errDiv.textContent='Error loading app. Try clearing Safari cache and reloading.';
+  document.body.appendChild(errDiv);
+}
+} // end initApp
+if(document.readyState==='loading'){
+  document.addEventListener('DOMContentLoaded',initApp);
+} else {
+  initApp();
+}
 </script>
+
+<!-- ════ MOBILE BOTTOM NAV ════ -->
+<nav class="mobile-nav" id="mobile-nav">
+  <div class="mob-nav-item active" id="mob-wallets" onclick="mobileSwitchTab('wallets')">
+    <span class="mob-icon">🏦</span><span>Wallets</span>
+  </div>
+  <div class="mob-nav-item" id="mob-investments" onclick="mobileSwitchTab('investments')">
+    <span class="mob-icon">📈</span><span>Invest</span>
+  </div>
+  <div class="mob-nav-item" id="mob-budget" onclick="mobileSwitchTab('budget')">
+    <span class="mob-icon">📊</span><span>Budget</span>
+  </div>
+  <div class="mob-nav-item" id="mob-overview" onclick="mobileSwitchTab('overview')">
+    <span class="mob-icon">🗺</span><span>Overview</span>
+  </div>
+  <div class="mob-nav-item" id="mob-more" onclick="toggleMobMore()">
+    <span class="mob-icon">⋯</span><span>More</span>
+  </div>
+</nav>
+
+<!-- ════ MOBILE MORE MENU ════ -->
+<div class="mob-more-menu" id="mob-more-menu">
+  <div class="mob-more-item" onclick="mobileSwitchTab('future');toggleMobMore()">🎯 Future Plans</div>
+  <div class="mob-more-item" onclick="mobileSwitchTab('payments');toggleMobMore()">📆 Termed Payments</div>
+  <div class="mob-more-item" onclick="mobileSwitchTab('recurring');toggleMobMore()">🔁 Recurring Expenses</div>
+  <div class="mob-more-item" onclick="mobileSwitchTab('explore');toggleMobMore()">🔍 Explore Markets</div>
+  <div class="mob-more-item" onclick="mobileSwitchTab('performance');toggleMobMore()">⚡ Performance</div>
+</div>
+
+<!-- ════ PWA INSTALL BANNER ════ -->
+<div class="pwa-banner" id="pwa-banner">
+  <div class="pwa-banner-title">Add to Home Screen</div>
+  <div class="pwa-banner-sub">Install FinForecast Pro for quick access, just like an app.</div>
+  <div class="pwa-banner-actions">
+    <button class="pwa-btn pwa-btn-install" onclick="installPWA()">Install</button>
+    <button class="pwa-btn pwa-btn-dismiss" onclick="dismissPWA()">Not now</button>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 </body>
 </html>
