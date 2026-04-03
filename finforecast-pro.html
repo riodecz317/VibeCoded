@@ -437,6 +437,77 @@ input,select,textarea{font-size:16px!important}
   .metric-value{font-size:17px}
   .g2{gap:10px}
 }
+
+/* ── EXPORT MODAL ── */
+.export-modal-overlay{position:fixed;inset:0;background:rgba(28,24,20,0.5);z-index:1100;display:none;align-items:center;justify-content:center;padding:16px}
+.export-modal-overlay.open{display:flex;animation:modalIn .18s ease}
+.export-modal{background:var(--bg2);border-radius:var(--radius);padding:26px;width:100%;max-width:440px;box-shadow:0 8px 40px rgba(60,40,20,0.18);position:relative}
+.export-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px}
+.export-sub{font-size:12px;color:var(--text3);margin-bottom:18px}
+.export-sheet-list{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.export-sheet-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg3);border-radius:var(--radius-sm);border:1px solid var(--border);cursor:pointer;transition:all .15s}
+.export-sheet-item:hover{border-color:var(--border2);background:var(--bg4)}
+.export-sheet-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
+.export-sheet-item label{flex:1;font-size:13px;color:var(--text);cursor:pointer}
+.export-sheet-item .sheet-count{font-size:11px;color:var(--text3);font-family:'IBM Plex Mono',monospace}
+.export-actions{display:flex;gap:8px;justify-content:flex-end}
+.export-close{position:absolute;top:14px;right:14px;width:26px;height:26px;border-radius:6px;background:var(--bg3);border:none;cursor:pointer;font-size:14px;color:var(--text2);display:flex;align-items:center;justify-content:center}
+.export-close:hover{background:var(--bg4)}
+.export-btn-go{background:var(--accent);color:#fff;padding:8px 20px;border-radius:var(--radius-sm);font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:background .15s}
+.export-btn-go:hover{background:var(--accent2)}
+.export-btn-go:disabled{background:var(--bg5);color:var(--text3);cursor:not-allowed}
+.export-progress{display:none;align-items:center;gap:10px;padding:10px 12px;background:var(--accent-l);border-radius:var(--radius-sm);font-size:12px;color:var(--accent);margin-bottom:12px}
+.export-progress.show{display:flex}
+.export-spinner{width:14px;height:14px;border:2px solid var(--accent-m);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── SWIPE TO DELETE (iOS) ── */
+.swipe-item-wrap{position:relative;overflow:hidden;border-radius:var(--radius);margin-bottom:8px}
+.swipe-item-wrap .swipe-del-btn{
+  position:absolute;top:0;right:0;bottom:0;
+  width:80px;background:var(--red);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:600;cursor:pointer;
+  transform:translateX(100%);transition:transform .0s;
+  border-radius:0 var(--radius) var(--radius) 0;
+  flex-direction:column;gap:3px;
+  -webkit-tap-highlight-color:transparent;
+}
+.swipe-item-wrap .swipe-del-btn .del-icon{font-size:18px}
+.swipe-item-wrap .swipe-content{
+  transition:transform .25s cubic-bezier(.4,0,.2,1);
+  position:relative;z-index:1;
+  background:var(--bg2);
+  border-radius:var(--radius);
+}
+.swipe-item-wrap.swiped .swipe-content{transform:translateX(-80px)}
+.swipe-item-wrap.swiped .swipe-del-btn{transform:translateX(0)}
+/* Remove bottom margin from inner items since wrap handles it */
+.swipe-item-wrap .payment-item,
+.swipe-item-wrap .expense-item,
+.swipe-item-wrap .inv-portfolio-item{margin-bottom:0;border-radius:var(--radius)}
+/* Delete confirm overlay */
+.del-confirm-sheet{
+  position:fixed;bottom:0;left:0;right:0;z-index:1200;
+  background:var(--bg2);border-radius:20px 20px 0 0;
+  padding:20px 20px calc(20px + env(safe-area-inset-bottom));
+  box-shadow:0 -4px 24px rgba(60,40,20,0.12);
+  transform:translateY(100%);transition:transform .25s cubic-bezier(.4,0,.2,1);
+  display:block;
+}
+.del-confirm-sheet.open{transform:translateY(0)}
+.del-confirm-name{font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:var(--text);margin-bottom:4px;text-align:center}
+.del-confirm-sub{font-size:12px;color:var(--text3);text-align:center;margin-bottom:20px}
+.del-confirm-actions{display:flex;flex-direction:column;gap:8px}
+.del-confirm-delete{padding:14px;background:var(--red-l);color:var(--red);border:1px solid rgba(138,32,32,0.2);border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent}
+.del-confirm-cancel{padding:12px;background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;cursor:pointer;text-align:center;-webkit-tap-highlight-color:transparent}
+.del-sheet-overlay{position:fixed;inset:0;background:rgba(28,24,20,0.35);z-index:1199;display:none}
+.del-sheet-overlay.open{display:block}
+
+/* Export button in topbar */
+.export-btn{padding:6px 12px;border-radius:var(--radius-sm);background:var(--blue-l);color:var(--blue);border:1px solid rgba(26,74,122,0.2);font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.export-btn:hover{background:var(--blue-m)}
+@media(max-width:480px){.export-btn span.export-label{display:none}}
 </style>
 </head>
 <body>
@@ -480,6 +551,7 @@ input,select,textarea{font-size:16px!important}
   </div>
   <div class="topbar-right">
     <span class="total-pill" id="total-pill">Total: &#x20B1;0</span>
+    <button class="export-btn" onclick="openExportModal()" title="Export to Excel">&#x1F4CA; <span class="export-label">Export</span></button>
     <button class="save-btn" onclick="saveData()">&#x1F4BE; Save</button>
   </div>
 </div>
@@ -1847,6 +1919,639 @@ if(document.readyState==='loading'){
 } else {
   initApp();
 }
+
+// ═══════════════════════════════════════════════════════════
+// EXCEL EXPORT ENGINE (pure JS, no CDN, works offline)
+// Uses CSV-based XLSX-compatible format wrapped in XML
+// ═══════════════════════════════════════════════════════════
+
+function esc(v){
+  if(v===null||v===undefined) return '';
+  var s=String(v);
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function numVal(v){ return isNaN(v)||v===''?0:parseFloat(v)||0; }
+
+function xlsxDate(d){
+  // Excel date serial (days since 1900-01-01, with leap year bug)
+  if(!d) return '';
+  try{
+    var dt=new Date(d+'T00:00:00');
+    var epoch=new Date(1899,11,30);
+    return Math.round((dt-epoch)/86400000);
+  }catch(e){ return d; }
+}
+
+// Build a worksheet XML from array of rows (row = array of cells)
+// Each cell: {v:value, t:'n'|'s'|'d', b:bold, hdr:header}
+function buildSheet(rows){
+  if(!rows||!rows.length) return '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData></sheetData></worksheet>';
+  var cols = rows[0].length;
+  var sharedStrings = [];
+  var ssMap = {};
+  function getSS(s){
+    var key = String(s);
+    if(ssMap[key]===undefined){ ssMap[key]=sharedStrings.length; sharedStrings.push(key); }
+    return ssMap[key];
+  }
+  var rowsXml = '';
+  rows.forEach(function(row,ri){
+    var cells='';
+    row.forEach(function(cell,ci){
+      var col=String.fromCharCode(65+ci);
+      var ref=col+(ri+1);
+      var v=cell.v; var t=cell.t||'s'; var style=cell.hdr?1:(cell.b?2:0);
+      if(t==='n'){
+        cells+='<c r="'+ref+'" s="'+style+'"><v>'+numVal(v)+'</v></c>';
+      } else if(t==='d'){
+        var serial=xlsxDate(v);
+        if(serial) cells+='<c r="'+ref+'" s="3"><v>'+serial+'</v></c>';
+        else cells+='<c r="'+ref+'" t="s" s="'+style+'"><v>'+getSS(v||'')+'</v></c>';
+      } else {
+        cells+='<c r="'+ref+'" t="s" s="'+style+'"><v>'+getSS(String(v||''))+'</v></c>';
+      }
+    });
+    rowsXml+='<row r="'+(ri+1)+'">'+cells+'</row>';
+  });
+  var sharedXml='<?xml version="1.0" encoding="UTF-8"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="'+sharedStrings.length+'" uniqueCount="'+sharedStrings.length+'">'+sharedStrings.map(function(s){return '<si><t xml:space="preserve">'+esc(s)+'</t></si>';}).join('')+'</sst>';
+  var wsXml='<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+rowsXml+'</sheetData></worksheet>';
+  return {ws:wsXml, ss:sharedXml, ssArr:sharedStrings};
+}
+
+function hdr(v){ return {v:v,t:'s',hdr:true}; }
+function num(v){ return {v:v,t:'n'}; }
+function str(v){ return {v:v,t:'s'}; }
+function dat(v){ return {v:v,t:'d'}; }
+function bold(v){ return {v:v,t:'s',b:true}; }
+
+// ── Build data for each sheet ────────────────────────────────────────────────
+function buildWalletsSheet(){
+  var rows=[[hdr('Wallet Name'),hdr('Type'),hdr('Bank / Institution'),hdr('Balance (PHP)'),hdr('Note')]];
+  state.wallets.forEach(function(w){
+    rows.push([str(w.name),str(w.type),str(w.bank||''),num(w.balance),str(w.note||'')]);
+  });
+  rows.push([]);
+  rows.push([bold('TOTAL'),'','',num(state.wallets.reduce(function(s,w){return s+w.balance;},0)),'']);
+  return rows;
+}
+
+function buildPlansSheet(){
+  var rows=[[hdr('Plan Name'),hdr('Category'),hdr('Target (PHP)'),hdr('Saved (PHP)'),hdr('Remaining (PHP)'),hdr('Monthly Contrib.'),hdr('Progress %'),hdr('Target Date'),hdr('Source Wallet'),hdr('Note')]];
+  state.futurePlans.forEach(function(p){
+    var w=state.wallets.find(function(x){return x.id===p.walletId;});
+    var prog=p.target>0?Math.round(p.saved/p.target*100):0;
+    rows.push([str(p.name),str(p.category),num(p.target),num(p.saved),num(Math.max(p.target-p.saved,0)),num(p.monthly),num(prog),dat(p.date||''),str(w?w.name:''),str(p.note||'')]);
+  });
+  return rows;
+}
+
+function buildPaymentsSheet(){
+  var rows=[[hdr('Payment Name'),hdr('Type'),hdr('Total Balance (PHP)'),hdr('Monthly Payment (PHP)'),hdr('Months Remaining'),hdr('Interest Rate %'),hdr('Next Due Date'),hdr('Source Wallet'),hdr('Total Remaining Cost')]];
+  state.payments.forEach(function(p){
+    var w=state.wallets.find(function(x){return x.id===p.walletId;});
+    var totalCost=p.monthly*p.months;
+    rows.push([str(p.name),str(p.type),num(p.balance),num(p.monthly),num(p.months),num(p.interest||0),dat(p.due||''),str(w?w.name:''),num(totalCost)]);
+  });
+  rows.push([]);
+  rows.push([bold('TOTALS'),'',num(state.payments.reduce(function(s,p){return s+p.balance;},0)),num(state.payments.reduce(function(s,p){return s+p.monthly;},0)),'','','','','']);
+  return rows;
+}
+
+function buildExpensesSheet(){
+  var FREQ_MO={monthly:1,quarterly:3,'semi-annual':6,annual:12};
+  var rows=[[hdr('Expense Name'),hdr('Category'),hdr('Amount (PHP)'),hdr('Frequency'),hdr('Monthly Equiv. (PHP)'),hdr('Annual Cost (PHP)'),hdr('Next Due Date'),hdr('Provider'),hdr('Source Wallet'),hdr('Note')]];
+  state.expenses.forEach(function(e){
+    var w=state.wallets.find(function(x){return x.id===e.walletId;});
+    var mo=e.amount/(FREQ_MO[e.frequency]||1);
+    rows.push([str(e.name),str(e.category),num(e.amount),str(e.frequency),num(Math.round(mo*100)/100),num(Math.round(mo*1200)/100),dat(e.due||''),str(e.provider||''),str(w?w.name:''),str(e.note||'')]);
+  });
+  var totMo=state.expenses.reduce(function(s,e){return s+(e.amount/(FREQ_MO[e.frequency]||1));},0);
+  rows.push([]);
+  rows.push([bold('TOTALS'),'','','',num(Math.round(totMo*100)/100),num(Math.round(totMo*1200)/100),'','','','']);
+  return rows;
+}
+
+function buildInvestmentsSheet(){
+  var rows=[[hdr('Investment Name'),hdr('Asset Class'),hdr('Cost / Invested (PHP)'),hdr('Current Value (PHP)'),hdr('Unrealized Gain (PHP)'),hdr('Return %'),hdr('Annual Return %'),hdr('Monthly Addition (PHP)'),hdr('Platform'),hdr('Note')]];
+  state.investments.forEach(function(i){
+    var gain=i.value-i.cost;
+    var retPct=i.cost>0?Math.round(gain/i.cost*1000)/10:0;
+    rows.push([str(i.name),str(i.cls),num(i.cost),num(i.value),num(gain),num(retPct),num(i.annualReturn||0),num(i.monthly||0),str(i.platform||''),str(i.note||'')]);
+  });
+  rows.push([]);
+  var totalCost=state.investments.reduce(function(s,i){return s+i.cost;},0);
+  var totalVal=state.investments.reduce(function(s,i){return s+i.value;},0);
+  rows.push([bold('TOTALS'),'',num(totalCost),num(totalVal),num(totalVal-totalCost),'','',num(state.investments.reduce(function(s,i){return s+(i.monthly||0);},0)),'','']);
+  return rows;
+}
+
+function buildSummarySheet(){
+  var walletTotal=state.wallets.reduce(function(s,w){return s+w.balance;},0);
+  var invTotal=state.investments.reduce(function(s,i){return s+i.value;},0);
+  var invCost=state.investments.reduce(function(s,i){return s+i.cost;},0);
+  var loanTotal=state.payments.reduce(function(s,p){return s+p.balance;},0);
+  var goalSaved=state.futurePlans.reduce(function(s,p){return s+p.saved;},0);
+  var monthlyPay=state.payments.reduce(function(s,p){return s+p.monthly;},0);
+  var FREQ_MO={monthly:1,quarterly:3,'semi-annual':6,annual:12};
+  var monthlyExp=state.expenses.reduce(function(s,e){return s+(e.amount/(FREQ_MO[e.frequency]||1));},0);
+  var monthlyGoal=state.futurePlans.reduce(function(s,p){return s+p.monthly;},0);
+  var monthlyInv=state.investments.reduce(function(s,i){return s+(i.monthly||0);},0);
+  var netWorth=walletTotal+invTotal-loanTotal;
+  var today=new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});
+  return [
+    [hdr('FinForecast Pro — Financial Summary'),str('Generated: '+today)],
+    [],
+    [bold('ASSETS'),hdr('Amount (PHP)')],
+    [str('Cash & Wallet Balances'),num(walletTotal)],
+    [str('Investment Portfolio Value'),num(invTotal)],
+    [str('Total Assets'),num(walletTotal+invTotal)],
+    [],
+    [bold('LIABILITIES'),hdr('Amount (PHP)')],
+    [str('Outstanding Loan Balances'),num(loanTotal)],
+    [str('Goal Savings Allocated'),num(goalSaved)],
+    [],
+    [bold('NET WORTH'),num(netWorth)],
+    [str('Investment Unrealized Gain/Loss'),num(invTotal-invCost)],
+    [],
+    [bold('MONTHLY OUTFLOWS'),hdr('Amount (PHP)')],
+    [str('Loan / Debt Payments'),num(monthlyPay)],
+    [str('Recurring Expenses'),num(Math.round(monthlyExp*100)/100)],
+    [str('Savings Goals Contributions'),num(monthlyGoal)],
+    [str('Investment Additions'),num(monthlyInv)],
+    [bold('Total Monthly Outflow'),num(monthlyPay+monthlyExp+monthlyGoal+monthlyInv)],
+    [],
+    [bold('RECORD COUNTS'),hdr('Count')],
+    [str('Wallets'),num(state.wallets.length)],
+    [str('Future Plans'),num(state.futurePlans.length)],
+    [str('Termed Payments'),num(state.payments.length)],
+    [str('Recurring Expenses'),num(state.expenses.length)],
+    [str('Investment Positions'),num(state.investments.length)],
+  ];
+}
+
+// ── Build XLSX binary (OOXML ZIP) ─────────────────────────────────────────────
+// Pure JS XLSX writer — no library needed
+function buildXlsx(sheets){
+  // sheets = [{name, rows}]
+  // We output a multi-sheet XLSX using a simplified OOXML structure
+  // encoded as a data: URI using base64
+
+  // Styles XML — defines: 0=normal, 1=header(bold+fill), 2=bold, 3=date
+  var stylesXml='<?xml version="1.0" encoding="UTF-8"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1A6B4A"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="4"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="2" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="14" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs></styleSheet>';
+
+  // Shared strings — we collect from all sheets
+  var allSS = [];
+  var allSSMap = {};
+  function getSSGlobal(s){
+    var key=String(s);
+    if(allSSMap[key]===undefined){ allSSMap[key]=allSS.length; allSS.push(key); }
+    return allSSMap[key];
+  }
+
+  // Build worksheets
+  var wsXmls = sheets.map(function(sheet){
+    var rows=sheet.rows;
+    if(!rows||!rows.length) return '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData></sheetData></worksheet>';
+    var rowsXml='';
+    rows.forEach(function(row,ri){
+      if(!row||!row.length){rowsXml+='<row r="'+(ri+1)+'"></row>';return;}
+      var cells='';
+      row.forEach(function(cell,ci){
+        if(!cell){return;}
+        var col=''; var n=ci;
+        do{ col=String.fromCharCode(65+(n%26))+col; n=Math.floor(n/26)-1; }while(n>=0);
+        var ref=col+(ri+1);
+        var v=cell.v; var t=cell.t||'s';
+        var style=cell.hdr?1:(cell.b?2:0);
+        if(t==='n'){
+          cells+='<c r="'+ref+'" s="'+style+'"><v>'+numVal(v)+'</v></c>';
+        } else if(t==='d'){
+          var serial=xlsxDate(v);
+          if(serial){ cells+='<c r="'+ref+'" s="3"><v>'+serial+'</v></c>'; }
+          else { cells+='<c r="'+ref+'" t="s" s="'+style+'"><v>'+getSSGlobal(v||'')+'</v></c>'; }
+        } else {
+          cells+='<c r="'+ref+'" t="s" s="'+style+'"><v>'+getSSGlobal(String(v||''))+'</v></c>';
+        }
+      });
+      rowsXml+='<row r="'+(ri+1)+'">'+cells+'</row>';
+    });
+    return '<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>'+rowsXml+'</sheetData></worksheet>';
+  });
+
+  var ssXml='<?xml version="1.0" encoding="UTF-8"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="'+allSS.length+'" uniqueCount="'+allSS.length+'">'+allSS.map(function(s){return '<si><t xml:space="preserve">'+esc(s)+'</t></si>';}).join('')+'</sst>';
+
+  var workbookXml='<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+sheets.map(function(s,i){return '<sheet name="'+esc(s.name)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+2)+'"/>';}).join('')+'</sheets></workbook>';
+
+  var wbRels='<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId'+(sheets.length+2)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>'+sheets.map(function(s,i){return '<Relationship Id="rId'+(i+2)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>';}).join('')+'</Relationships>';
+
+  var rootRels='<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+
+  var contentTypes='<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+sheets.map(function(s,i){return '<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';}).join('')+'</Types>';
+
+  // Use JSZip-free approach: encode as a ZIP using a minimal pure-JS ZIP builder
+  return buildZip([
+    {name:'[Content_Types].xml', data:contentTypes},
+    {name:'_rels/.rels', data:rootRels},
+    {name:'xl/workbook.xml', data:workbookXml},
+    {name:'xl/_rels/workbook.xml.rels', data:wbRels},
+    {name:'xl/styles.xml', data:stylesXml},
+    {name:'xl/sharedStrings.xml', data:ssXml},
+  ].concat(wsXmls.map(function(ws,i){return {name:'xl/worksheets/sheet'+(i+1)+'.xml',data:ws};})));
+}
+
+// ── Minimal ZIP builder (pure JS, no dependencies) ─────────────────────────
+function buildZip(files){
+  // Encode string to UTF-8 Uint8Array
+  function toBytes(str){
+    var enc=new TextEncoder();
+    return enc.encode(str);
+  }
+  function crc32(buf){
+    var table=[];
+    for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++) c=c&1?(0xEDB88320^(c>>>1)):(c>>>1);table[n]=c;}
+    var crc=0xFFFFFFFF;
+    for(var i=0;i<buf.length;i++) crc=(crc>>>8)^table[(crc^buf[i])&0xFF];
+    return (crc^0xFFFFFFFF)>>>0;
+  }
+  function u16(v){return [v&0xFF,(v>>8)&0xFF];}
+  function u32(v){return [v&0xFF,(v>>8)&0xFF,(v>>16)&0xFF,(v>>24)&0xFF];}
+  function concat(arrays){
+    var total=arrays.reduce(function(s,a){return s+a.length;},0);
+    var out=new Uint8Array(total);
+    var off=0;
+    arrays.forEach(function(a){out.set(a,off);off+=a.length;});
+    return out;
+  }
+
+  var localHeaders=[];
+  var centralDirs=[];
+  var offset=0;
+
+  files.forEach(function(file){
+    var nameBytes=toBytes(file.name);
+    var dataBytes=toBytes(typeof file.data==='string'?file.data:file.data);
+    var crc=crc32(dataBytes);
+    var size=dataBytes.length;
+
+    // Local file header
+    var lh=new Uint8Array([
+      0x50,0x4B,0x03,0x04, // sig
+      20,0,                 // version needed
+      0,0,                  // flags
+      0,0,                  // compression (stored)
+    ].concat(u16(0)).concat(u16(0)) // mod time/date
+     .concat(u32(crc))
+     .concat(u32(size))
+     .concat(u32(size))
+     .concat(u16(nameBytes.length))
+     .concat(u16(0))         // extra field length
+    );
+    var localEntry=concat([lh,nameBytes,dataBytes]);
+    localHeaders.push(localEntry);
+
+    // Central directory header
+    var cd=new Uint8Array([
+      0x50,0x4B,0x01,0x02, // sig
+      20,0,                 // version made by
+      20,0,                 // version needed
+      0,0,                  // flags
+      0,0,                  // compression
+    ].concat(u16(0)).concat(u16(0)) // mod time/date
+     .concat(u32(crc))
+     .concat(u32(size))
+     .concat(u32(size))
+     .concat(u16(nameBytes.length))
+     .concat(u16(0))   // extra
+     .concat(u16(0))   // comment
+     .concat(u16(0))   // disk start
+     .concat(u16(0))   // int attr
+     .concat(u32(0))   // ext attr
+     .concat(u32(offset))
+    );
+    centralDirs.push(concat([cd,nameBytes]));
+    offset+=localEntry.length;
+  });
+
+  var cdOffset=offset;
+  var cdData=concat(centralDirs);
+  var eocd=new Uint8Array([
+    0x50,0x4B,0x05,0x06, // sig
+    0,0,                  // disk number
+    0,0,                  // disk with central dir
+  ].concat(u16(files.length))
+   .concat(u16(files.length))
+   .concat(u32(cdData.length))
+   .concat(u32(cdOffset))
+   .concat(u16(0))         // comment length
+  );
+
+  var zip=concat(localHeaders.concat([cdData,eocd]));
+
+  // Convert to base64
+  var binary='';
+  zip.forEach(function(b){binary+=String.fromCharCode(b);});
+  return btoa(binary);
+}
+
+// ── Export UI ────────────────────────────────────────────────────────────────
+function openExportModal(){
+  // Update counts
+  var counts={wallets:state.wallets.length,plans:state.futurePlans.length,payments:state.payments.length,expenses:state.expenses.length,investments:state.investments.length};
+  Object.keys(counts).forEach(function(k){
+    var el=document.getElementById('esc-'+k);
+    if(el) el.textContent=counts[k]+' record'+(counts[k]!==1?'s':'');
+  });
+  document.getElementById('export-modal-overlay').classList.add('open');
+}
+
+function closeExportModal(){
+  document.getElementById('export-modal-overlay').classList.remove('open');
+}
+
+function toggleExportSheet(id){
+  var cb=document.getElementById('es-'+id);
+  if(cb) cb.checked=!cb.checked;
+  updateExportBtn();
+}
+
+function updateExportBtn(){
+  var ids=['wallets','plans','payments','expenses','investments','summary'];
+  var any=ids.some(function(id){var el=document.getElementById('es-'+id); return el&&el.checked;});
+  document.getElementById('export-go-btn').disabled=!any;
+}
+
+function runExport(){
+  var prog=document.getElementById('export-progress');
+  var goBtn=document.getElementById('export-go-btn');
+  prog.classList.add('show');
+  goBtn.disabled=true;
+  document.getElementById('export-progress-text').textContent='Building spreadsheet...';
+
+  // Use setTimeout to let UI update before heavy work
+  setTimeout(function(){
+    try{
+      var sheets=[];
+      if(document.getElementById('es-wallets').checked) sheets.push({name:'Wallets',rows:buildWalletsSheet()});
+      if(document.getElementById('es-plans').checked) sheets.push({name:'Future Plans',rows:buildPlansSheet()});
+      if(document.getElementById('es-payments').checked) sheets.push({name:'Termed Payments',rows:buildPaymentsSheet()});
+      if(document.getElementById('es-expenses').checked) sheets.push({name:'Recurring Expenses',rows:buildExpensesSheet()});
+      if(document.getElementById('es-investments').checked) sheets.push({name:'Investments',rows:buildInvestmentsSheet()});
+      if(document.getElementById('es-summary').checked) sheets.push({name:'Financial Summary',rows:buildSummarySheet()});
+
+      if(!sheets.length){showToast('Select at least one sheet');return;}
+
+      document.getElementById('export-progress-text').textContent='Packaging file...';
+
+      var b64=buildXlsx(sheets);
+      var today=new Date().toISOString().split('T')[0];
+      var fname='FinForecast_'+today+'.xlsx';
+
+      // Create download link
+      var a=document.createElement('a');
+      a.href='data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,'+b64;
+      a.download=fname;
+      a.style.display='none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){document.body.removeChild(a);},1000);
+
+      prog.classList.remove('show');
+      goBtn.disabled=false;
+      closeExportModal();
+      showToast('Exported '+fname);
+    }catch(err){
+      console.error('Export error:',err);
+      prog.classList.remove('show');
+      goBtn.disabled=false;
+      showToast('Export failed: '+err.message);
+    }
+  },80);
+}
+
+// ═══════════════════════════════════════════════════════════
+// SWIPE-TO-DELETE & MOBILE DELETE CONFIRMATION
+// ═══════════════════════════════════════════════════════════
+
+var _delPending={col:null,id:null,fn:null,name:''};
+var _swipedWrap=null;
+
+function isMobile(){ return window.innerWidth<=767; }
+
+// Replace browser confirm() with native-feel bottom sheet on mobile
+function deleteItem(col,id,fn){
+  var item=state[col]&&state[col].find(function(x){return x.id===id;});
+  var name=item?(item.name||'this item'):'this item';
+  if(isMobile()){
+    _delPending={col:col,id:id,fn:fn,name:name};
+    document.getElementById('del-confirm-name').textContent='Delete "'+name+'"?';
+    document.getElementById('del-confirm-sub').textContent='This will be permanently removed.';
+    document.getElementById('del-sheet-overlay').classList.add('open');
+    document.getElementById('del-confirm-sheet').classList.add('open');
+  } else {
+    if(!confirm('Delete "'+name+'"?')) return;
+    state[col]=state[col].filter(function(x){return x.id!==id;});
+    saveData();
+    fn();
+    showToast('Deleted');
+  }
+}
+
+function confirmDelSheet(){
+  if(_delPending.col){
+    state[_delPending.col]=state[_delPending.col].filter(function(x){return x.id!==_delPending.id;});
+    saveData();
+    if(_delPending.fn) _delPending.fn();
+    showToast('Deleted');
+  }
+  cancelDelSheet();
+}
+
+function cancelDelSheet(){
+  document.getElementById('del-sheet-overlay').classList.remove('open');
+  document.getElementById('del-confirm-sheet').classList.remove('open');
+  // Reset any swiped item
+  if(_swipedWrap){ _swipedWrap.classList.remove('swiped'); _swipedWrap=null; }
+  _delPending={col:null,id:null,fn:null,name:''};
+}
+
+// swipeWrap removed - DOM manipulation approach used instead
+
+// ── Attach swipe listeners to all .swipe-item-wrap elements ─────────────────
+function attachSwipeListeners(){
+  if(!isMobile()) return;
+  document.querySelectorAll('.swipe-item-wrap').forEach(function(wrap){
+    var startX=0, startY=0, isDragging=false, isSwiping=false;
+    var content=wrap.querySelector('.swipe-content');
+    if(!content) return;
+
+    wrap.addEventListener('touchstart',function(e){
+      startX=e.touches[0].clientX;
+      startY=e.touches[0].clientY;
+      isDragging=true;
+      isSwiping=false;
+    },{passive:true});
+
+    wrap.addEventListener('touchmove',function(e){
+      if(!isDragging) return;
+      var dx=e.touches[0].clientX-startX;
+      var dy=Math.abs(e.touches[0].clientY-startY);
+      if(!isSwiping && Math.abs(dx)>8 && dy<Math.abs(dx)){
+        isSwiping=true;
+      }
+      if(isSwiping && dx<0){
+        var offset=Math.max(dx,-80);
+        content.style.transform='translateX('+offset+'px)';
+        content.style.transition='none';
+        wrap.querySelector('.swipe-del-btn').style.transform='translateX(calc(100% + '+offset+'px))';
+      }
+    },{passive:true});
+
+    wrap.addEventListener('touchend',function(e){
+      if(!isSwiping){isDragging=false;return;}
+      var dx=e.changedTouches[0].clientX-startX;
+      content.style.transition='';
+      wrap.querySelector('.swipe-del-btn').style.transition='';
+      content.style.transform='';
+      wrap.querySelector('.swipe-del-btn').style.transform='';
+      if(dx<-50){
+        // Close any other swiped item first
+        if(_swipedWrap&&_swipedWrap!==wrap) _swipedWrap.classList.remove('swiped');
+        wrap.classList.add('swiped');
+        _swipedWrap=wrap;
+      } else {
+        wrap.classList.remove('swiped');
+        if(_swipedWrap===wrap) _swipedWrap=null;
+      }
+      isDragging=false;
+      isSwiping=false;
+    },{passive:true});
+  });
+  // Close swiped item when tapping elsewhere
+  document.addEventListener('touchstart',function(e){
+    if(_swipedWrap&&!_swipedWrap.contains(e.target)){
+      _swipedWrap.classList.remove('swiped');
+      _swipedWrap=null;
+    }
+  },{passive:true});
+}
+
+// ── Patch render functions to use swipeWrap on mobile ────────────────────────
+// We intercept the list HTML for payments, expenses, investments, future plans, wallets
+var _origRenderPayments=renderPayments;
+renderPayments=function(){
+  _origRenderPayments();
+  if(!isMobile()) return;
+  var list=document.getElementById('payment-list');
+  if(!list) return;
+  var items=list.querySelectorAll('.payment-item');
+  items.forEach(function(item){
+    var onclick=item.querySelector('[onclick*="deleteItem"]');
+    if(!onclick) return;
+    var m=onclick.getAttribute('onclick').match(/deleteItem\('(\w+)','([^']+)',(\w+)\)/);
+    if(!m) return;
+    var wrap=document.createElement('div');
+    wrap.className='swipe-item-wrap';
+    wrap.id='sw-'+m[2];
+    var delBtn=document.createElement('div');
+    delBtn.className='swipe-del-btn';
+    delBtn.innerHTML='<div class="del-icon">&#x1F5D1;</div><div>Delete</div>';
+    delBtn.onclick=function(){deleteItem(m[1],m[2],eval(m[3]));};
+    var contentWrap=document.createElement('div');
+    contentWrap.className='swipe-content';
+    item.parentNode.insertBefore(wrap,item);
+    contentWrap.appendChild(item);
+    wrap.appendChild(delBtn);
+    wrap.appendChild(contentWrap);
+  });
+  attachSwipeListeners();
+};
+
+var _origRenderExpenses=renderExpenses;
+renderExpenses=function(){
+  _origRenderExpenses();
+  if(!isMobile()) return;
+  ['exp-monthly-list','exp-quarterly-list','exp-annual-list'].forEach(function(listId){
+    var list=document.getElementById(listId);
+    if(!list) return;
+    list.querySelectorAll('.expense-item').forEach(function(item){
+      var onclick=item.querySelector('[onclick*="deleteItem"]');
+      if(!onclick) return;
+      var m=onclick.getAttribute('onclick').match(/deleteItem\('(\w+)','([^']+)',(\w+)\)/);
+      if(!m) return;
+      var wrap=document.createElement('div');
+      wrap.className='swipe-item-wrap';
+      wrap.id='sw-'+m[2];
+      var delBtn=document.createElement('div');
+      delBtn.className='swipe-del-btn';
+      delBtn.innerHTML='<div class="del-icon">&#x1F5D1;</div><div>Delete</div>';
+      delBtn.onclick=function(){deleteItem(m[1],m[2],eval(m[3]));};
+      var contentWrap=document.createElement('div');
+      contentWrap.className='swipe-content';
+      item.parentNode.insertBefore(wrap,item);
+      contentWrap.appendChild(item);
+      wrap.appendChild(delBtn);
+      wrap.appendChild(contentWrap);
+    });
+  });
+  attachSwipeListeners();
+};
+
+var _origRenderInvestments=renderInvestments;
+renderInvestments=function(){
+  _origRenderInvestments();
+  if(!isMobile()) return;
+  var list=document.getElementById('invest-portfolio-list');
+  if(!list) return;
+  list.querySelectorAll('.inv-portfolio-item').forEach(function(item){
+    var onclick=item.querySelector('[onclick*="deleteItem"]');
+    if(!onclick) return;
+    var m=onclick.getAttribute('onclick').match(/deleteItem\('(\w+)','([^']+)',(\w+)\)/);
+    if(!m) return;
+    var wrap=document.createElement('div');
+    wrap.className='swipe-item-wrap';
+    wrap.id='sw-'+m[2];
+    var delBtn=document.createElement('div');
+    delBtn.className='swipe-del-btn';
+    delBtn.innerHTML='<div class="del-icon">&#x1F5D1;</div><div>Delete</div>';
+    delBtn.onclick=function(){deleteItem(m[1],m[2],eval(m[3]));};
+    var contentWrap=document.createElement('div');
+    contentWrap.className='swipe-content';
+    item.parentNode.insertBefore(wrap,item);
+    contentWrap.appendChild(item);
+    wrap.appendChild(delBtn);
+    wrap.appendChild(contentWrap);
+  });
+  attachSwipeListeners();
+};
+
+var _origRenderFuturePlans=renderFuturePlans;
+renderFuturePlans=function(){
+  _origRenderFuturePlans();
+  if(!isMobile()) return;
+  var grid=document.getElementById('future-grid');
+  if(!grid) return;
+  grid.querySelectorAll('.alloc-card').forEach(function(item){
+    // Future plan cards already have ✕ button - add long press for mobile
+    var btns=item.querySelectorAll('[onclick*="deleteItem"]');
+    btns.forEach(function(btn){
+      btn.innerHTML='&#x1F5D1;';
+      btn.setAttribute('title','Delete');
+    });
+  });
+};
+
+var _origRenderWallets=renderWallets;
+renderWallets=function(){
+  _origRenderWallets();
+  if(!isMobile()) return;
+  // Wallet delete buttons - make bigger on mobile
+  document.querySelectorAll('.wallet-card [onclick*="deleteItem"]').forEach(function(btn){
+    btn.innerHTML='&#x1F5D1; Delete';
+    btn.style.cssText='padding:8px 14px;font-size:12px';
+  });
+};
+
 </script>
 
 <!-- ════ MOBILE BOTTOM NAV ════ -->
@@ -1887,5 +2592,65 @@ if(document.readyState==='loading'){
   </div>
 </div>
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- ════ EXPORT MODAL ════ -->
+<div class="export-modal-overlay" id="export-modal-overlay">
+  <div class="export-modal">
+    <button class="export-close" onclick="closeExportModal()">&#x2715;</button>
+    <div class="export-title">&#x1F4CA; Export to Excel</div>
+    <div class="export-sub">Choose which sheets to include in the .xlsx file</div>
+    <div class="export-progress" id="export-progress">
+      <div class="export-spinner"></div>
+      <span id="export-progress-text">Preparing export...</span>
+    </div>
+    <div class="export-sheet-list">
+      <div class="export-sheet-item" onclick="toggleExportSheet('wallets')">
+        <input type="checkbox" id="es-wallets" checked>
+        <label for="es-wallets">&#x1F3E6; Wallets &amp; Balances</label>
+        <span class="sheet-count" id="esc-wallets">0 records</span>
+      </div>
+      <div class="export-sheet-item" onclick="toggleExportSheet('plans')">
+        <input type="checkbox" id="es-plans" checked>
+        <label for="es-plans">&#x1F3AF; Future Plans</label>
+        <span class="sheet-count" id="esc-plans">0 records</span>
+      </div>
+      <div class="export-sheet-item" onclick="toggleExportSheet('payments')">
+        <input type="checkbox" id="es-payments" checked>
+        <label for="es-payments">&#x1F4C6; Termed Payments</label>
+        <span class="sheet-count" id="esc-payments">0 records</span>
+      </div>
+      <div class="export-sheet-item" onclick="toggleExportSheet('expenses')">
+        <input type="checkbox" id="es-expenses" checked>
+        <label for="es-expenses">&#x1F501; Recurring Expenses</label>
+        <span class="sheet-count" id="esc-expenses">0 records</span>
+      </div>
+      <div class="export-sheet-item" onclick="toggleExportSheet('investments')">
+        <input type="checkbox" id="es-investments" checked>
+        <label for="es-investments">&#x1F4C8; Investment Portfolio</label>
+        <span class="sheet-count" id="esc-investments">0 records</span>
+      </div>
+      <div class="export-sheet-item" onclick="toggleExportSheet('summary')">
+        <input type="checkbox" id="es-summary" checked>
+        <label for="es-summary">&#x1F5FA; Financial Summary</label>
+        <span class="sheet-count">1 record</span>
+      </div>
+    </div>
+    <div class="export-actions">
+      <button class="btn btn-outline" onclick="closeExportModal()">Cancel</button>
+      <button class="export-btn-go" id="export-go-btn" onclick="runExport()">&#x1F4E5; Download Excel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ DELETE CONFIRM SHEET (mobile) ════ -->
+<div class="del-sheet-overlay" id="del-sheet-overlay" onclick="cancelDelSheet()"></div>
+<div class="del-confirm-sheet" id="del-confirm-sheet">
+  <div class="del-confirm-name" id="del-confirm-name">Delete item?</div>
+  <div class="del-confirm-sub" id="del-confirm-sub">This action cannot be undone.</div>
+  <div class="del-confirm-actions">
+    <div class="del-confirm-delete" id="del-confirm-btn" onclick="confirmDelSheet()">Delete</div>
+    <div class="del-confirm-cancel" onclick="cancelDelSheet()">Cancel</div>
+  </div>
+</div>
 </body>
 </html>
