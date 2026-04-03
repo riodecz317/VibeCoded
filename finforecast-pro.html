@@ -589,6 +589,125 @@ input,select,textarea{font-size:16px!important}
   .platform-android .export-modal{border-radius:20px 20px 0 0;max-height:90vh}
 }
 
+
+/* ── BUDGET HISTORY GRID ── */
+.bh-month-col{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.bh-month-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 12px 8px;border-bottom:1px solid var(--border);
+  background:var(--bg2);
+}
+.bh-month-label{font-size:12px;font-weight:600;color:var(--text);cursor:pointer}
+.bh-month-label input{
+  font-family:'Playfair Display',serif;font-size:12px;font-weight:600;
+  color:var(--text);border:none;background:transparent;outline:none;
+  width:80px;cursor:text;
+}
+.bh-month-total{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--amber)}
+.bh-month-actions{display:flex;gap:4px}
+.bh-clear-month{
+  font-size:10px;padding:2px 7px;border-radius:4px;border:1px solid var(--border2);
+  background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.bh-clear-month:hover{background:var(--red-l);color:var(--red);border-color:rgba(138,32,32,0.2)}
+.bh-cat-row{
+  display:flex;align-items:center;gap:8px;
+  padding:5px 10px;border-bottom:1px solid var(--border);
+  position:relative;
+}
+.bh-cat-row:last-child{border:none}
+.bh-cat-row:hover{background:var(--bg2)}
+.bh-cat-icon{font-size:13px;flex-shrink:0;width:18px;text-align:center}
+.bh-cat-name{font-size:11px;color:var(--text2);flex:1;text-transform:capitalize}
+.bh-cat-input{
+  width:80px;text-align:right;font-family:'IBM Plex Mono',monospace;
+  font-size:11px;padding:3px 6px;background:var(--bg2);
+  border:1px solid transparent;border-radius:4px;
+  color:var(--text);transition:border .15s;
+}
+.bh-cat-input:focus{border-color:var(--accent);background:var(--bg2)}
+.bh-cat-input:hover:not(:focus){border-color:var(--border2)}
+.bh-cat-clear{
+  width:18px;height:18px;border-radius:3px;border:none;
+  background:transparent;color:var(--text4);cursor:pointer;
+  font-size:11px;display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .15s;flex-shrink:0;
+  -webkit-tap-highlight-color:transparent;
+}
+.bh-cat-row:hover .bh-cat-clear{opacity:1}
+.bh-cat-clear:hover{background:var(--red-l);color:var(--red)}
+.bh-total-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 10px;background:var(--bg2);font-size:11px;
+  border-top:1px solid var(--border2);
+}
+/* Month badge colors */
+.bh-badge-1{background:rgba(26,74,122,0.1);color:var(--blue)}
+.bh-badge-2{background:rgba(138,90,0,0.1);color:var(--amber)}
+.bh-badge-3{background:rgba(26,107,74,0.1);color:var(--accent)}
+
+/* Budget view toggle tabs */
+.bh-tab-btn{
+  padding:4px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);
+  font-size:11px;cursor:pointer;background:transparent;color:var(--text3);
+  transition:all .15s;-webkit-tap-highlight-color:transparent;
+}
+.bh-tab-btn.active{background:var(--amber-l);color:var(--amber);border-color:rgba(138,90,0,0.2);font-weight:600}
+
+/* Optimizations */
+.opt-item{
+  display:flex;align-items:flex-start;gap:10px;
+  padding:10px 12px;background:var(--bg3);border-radius:var(--radius-sm);
+  border-left:3px solid var(--border2);margin-bottom:8px;
+  transition:border-color .15s;
+}
+.opt-item:last-child{margin:0}
+.opt-item.opt-save{border-left-color:var(--accent)}
+.opt-item.opt-warn{border-left-color:var(--amber)}
+.opt-item.opt-good{border-left-color:var(--blue)}
+.opt-item.opt-alert{border-left-color:var(--red)}
+.opt-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.opt-body{flex:1}
+.opt-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.opt-desc{font-size:11px;color:var(--text3);line-height:1.5}
+.opt-action{
+  margin-top:6px;font-size:10px;font-weight:600;color:var(--accent);
+  cursor:pointer;display:inline-block;-webkit-tap-highlight-color:transparent;
+}
+.opt-action:hover{text-decoration:underline}
+.opt-saving{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;
+  padding:2px 8px;border-radius:20px;margin-left:6px;
+}
+.opt-saving.pos{background:var(--accent-l);color:var(--accent)}
+.opt-saving.neg{background:var(--red-l);color:var(--red)}
+.opt-saving.neutral{background:var(--blue-l);color:var(--blue)}
+
+/* Cross-table view */
+#bf-cross-table input{
+  width:80px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:11px;
+  padding:2px 5px;border:1px solid transparent;border-radius:3px;background:transparent;
+}
+#bf-cross-table input:focus{border-color:var(--accent);background:var(--bg2)}
+
+/* Edit labels modal */
+.label-edit-modal{
+  position:fixed;inset:0;background:rgba(28,24,20,0.45);z-index:1200;
+  display:none;align-items:center;justify-content:center;padding:20px;
+}
+.label-edit-modal.open{display:flex;animation:modalIn .15s ease}
+.label-edit-inner{
+  background:var(--bg2);border-radius:var(--radius);padding:22px;
+  width:100%;max-width:340px;box-shadow:var(--shadow);
+}
+.label-edit-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px}
+
+/* Mobile: stack months vertically */
+@media(max-width:600px){
+  #bf-history{grid-template-columns:1fr !important}
+}
+
 </style>
 </head>
 <body>
@@ -768,31 +887,82 @@ input,select,textarea{font-size:16px!important}
 <!-- ══════════════ BUDGET FORECAST ══════════════ -->
 <div id="tab-budget" class="section">
   <div class="metric-row">
-    <div class="metric amber"><div class="metric-label">Avg Monthly Expense</div><div class="metric-value" id="bf-avg">₱0</div><div class="metric-sub">3-month average</div></div>
-    <div class="metric red"><div class="metric-label">Projected Next Month</div><div class="metric-value" id="bf-next">₱0</div><div class="metric-sub" id="bf-trend-sub">—</div></div>
-    <div class="metric blue"><div class="metric-label">Budget Surplus</div><div class="metric-value" id="bf-surplus">₱0</div><div class="metric-sub">Income minus forecast</div></div>
-    <div class="metric green"><div class="metric-label">Recommended Reserve</div><div class="metric-value" id="bf-reserve">₱0</div><div class="metric-sub">10% budget buffer</div></div>
+    <div class="metric amber"><div class="metric-label">Avg Monthly Expense</div><div class="metric-value" id="bf-avg">&#x20B1;0</div><div class="metric-sub">3-month average</div></div>
+    <div class="metric red"><div class="metric-label">Projected Next Month</div><div class="metric-value" id="bf-next">&#x20B1;0</div><div class="metric-sub" id="bf-trend-sub">&#x2014;</div></div>
+    <div class="metric blue"><div class="metric-label">Budget Surplus</div><div class="metric-value" id="bf-surplus">&#x20B1;0</div><div class="metric-sub">Income minus forecast</div></div>
+    <div class="metric green"><div class="metric-label">Recommended Reserve</div><div class="metric-value" id="bf-reserve">&#x20B1;0</div><div class="metric-sub">10% budget buffer</div></div>
   </div>
-  <div class="g2" style="margin-bottom:16px">
-    <div class="card">
-      <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--amber)"></div>3-Month Expense History</div></div>
-      <div class="field-row" style="margin-bottom:12px"><span class="field-label">Monthly income (₱)</span><div class="field-input"><input type="number" id="bf-income" value="85000" oninput="renderBudget()"></div></div>
-      <div id="bf-history"></div>
-      <div class="tip info" style="margin-top:12px">Enter or adjust monthly totals for each category below. The forecast projects Month 4 using weighted 3-month trend analysis.</div>
+
+  <!-- Income row -->
+  <div class="card" style="margin-bottom:14px;padding:14px 18px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:12px;color:var(--text2);font-weight:500;min-width:120px">Monthly Income (&#x20B1;)</span>
+      <div style="flex:1;min-width:140px"><input type="number" id="bf-income" value="85000" oninput="renderBudget()" style="font-size:13px"></div>
+      <button class="btn btn-outline btn-sm" onclick="autofillFromExpenses()" title="Populate from your saved Recurring Expenses">&#x1F504; Auto-fill from Expenses</button>
+      <button class="btn btn-outline btn-sm" onclick="clearAllBudgetHistory()" title="Zero out all months">&#x1F5D1; Clear All</button>
     </div>
+  </div>
+
+  <!-- 3-column month grid -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title" style="margin-bottom:12px">
+      <div class="card-title-left"><div class="pip" style="background:var(--amber)"></div>3-Month Expense History</div>
+      <div style="display:flex;gap:6px" id="bf-month-tabs">
+        <button class="bh-tab-btn active" onclick="setBudgetView('grid')" id="bh-view-grid">&#x22EE;&#x22EE; Grid</button>
+        <button class="bh-tab-btn" onclick="setBudgetView('table')" id="bh-view-table">&#x2637; Table</button>
+      </div>
+    </div>
+
+    <!-- GRID VIEW (default) -->
+    <div id="bf-grid-view">
+      <div id="bf-history" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+    </div>
+
+    <!-- TABLE VIEW -->
+    <div id="bf-table-view" style="display:none">
+      <div style="overflow-x:auto">
+        <table class="sum-table" id="bf-cross-table">
+          <thead><tr id="bf-cross-head"></tr></thead>
+          <tbody id="bf-cross-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--text3);flex:1">Forecast uses weighted average: Month 3 = 50%, Month 2 = 30%, Month 1 = 20%</span>
+      <button class="btn btn-outline btn-sm" onclick="setBudgetLabels()" title="Rename month labels">&#x270F; Edit Labels</button>
+    </div>
+  </div>
+
+  <!-- Optimizations panel -->
+  <div class="card" style="margin-bottom:14px" id="bf-optimize-card">
+    <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--accent)"></div>&#x1F9E0; Optimization Suggestions</div>
+      <span style="font-size:11px;color:var(--text3)" id="bf-opt-count"></span>
+    </div>
+    <div id="bf-optimizations"></div>
+  </div>
+
+  <!-- Forecast table + charts -->
+  <div class="g2" style="margin-bottom:14px">
     <div class="card">
       <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--red)"></div>Expense Trend Chart</div></div>
       <div class="chart-wrap" style="height:200px"><canvas id="budget-trend-chart"></canvas></div>
     </div>
+    <div class="card">
+      <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--purple)"></div>Category Forecast vs Actual</div></div>
+      <div class="chart-wrap" style="height:200px"><canvas id="budget-cat-chart"></canvas></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--purple)"></div>Category-Level Budget Forecast</div></div>
+    <div style="overflow-x:auto">
+      <table class="sum-table">
+        <thead><tr><th>Category</th><th class="num">Month 1</th><th class="num">Month 2</th><th class="num">Month 3</th><th class="num">Forecast M4</th><th class="num">Trend</th><th class="num">Recommended Budget</th><th class="num">vs Last Month</th></tr></thead>
+        <tbody id="budget-table"></tbody>
+      </table>
+    </div>
   </div>
   <div class="card">
-    <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--purple)"></div>Category-Level Budget Forecast</div></div>
-    <table class="sum-table">
-      <thead><tr><th>Category</th><th class="num">Month 1</th><th class="num">Month 2</th><th class="num">Month 3</th><th class="num">Forecast M4</th><th class="num">Trend</th><th class="num">Recommended Budget</th></tr></thead>
-      <tbody id="budget-table"></tbody>
-    </table>
-  </div>
-  <div class="card" style="margin-top:16px">
     <div class="card-title"><div class="card-title-left"><div class="pip" style="background:var(--teal)"></div>6-Month Budget Projection</div></div>
     <div class="chart-wrap" style="height:220px"><canvas id="budget-6mo-chart"></canvas></div>
   </div>
@@ -1411,120 +1581,448 @@ function renderMarkets(){
 // RENDER — BUDGET FORECAST (3-month rolling analysis)
 // ═══════════════════════════════════════════════════════════
 function renderBudget(){
-  // Ensure budgetHistory has 3 months of data per category
-  const cats=['insurance','hmo','subscriptions','utilities','food','transport','education','other'];
-  if(!state.budgetHistory.length){
-    // Seed from current expenses
-    const baseMonthly=state.expenses.reduce((s,e)=>s+toMonthly(e),0)+state.payments.reduce((s,p)=>s+p.monthly,0);
-    state.budgetHistory=[-2,-1,0].map(offset=>({
-      month:offset,
-      label:addMonths(new Date(),offset).toLocaleString('default',{month:'short',year:'numeric'}),
-      total:baseMonthly*(0.9+Math.random()*0.2),
-      cats:cats.reduce((o,c)=>{
-        const base=state.expenses.filter(e=>e.category===c).reduce((s,e)=>s+toMonthly(e),0)||Math.random()*3000;
-        o[c]=Math.round(base*(0.85+Math.random()*0.3));
-        return o;
-      },{})
-    }));
+  var CATS=['insurance','hmo','subscriptions','utilities','food','transport','education','other'];
+  var CAT_LABELS={insurance:'Insurance',hmo:'HMO/Health',subscriptions:'Subscriptions',
+    utilities:'Utilities',food:'Food/Groceries',transport:'Transport',
+    education:'Education',other:'Other'};
+  // Seed budgetHistory from recurring expenses if empty
+  if(!state.budgetHistory||!state.budgetHistory.length){
+    var baseMonthly=state.expenses.reduce(function(s,e){return s+toMonthly(e);},0)
+                  +state.payments.reduce(function(s,p){return s+p.monthly;},0);
+    state.budgetHistory=[-2,-1,0].map(function(offset){
+      return {
+        month:offset,
+        label:addMonths(new Date(),offset).toLocaleString('default',{month:'short',year:'numeric'}),
+        cats:CATS.reduce(function(o,c){
+          var base=state.expenses.filter(function(e){return e.category===c;})
+                     .reduce(function(s,e){return s+toMonthly(e);},0)||0;
+          o[c]=Math.round(base*(0.9+Math.random()*0.2));
+          return o;
+        },{})
+      };
+    });
+    state.budgetHistory.forEach(function(h){
+      h.total=Object.values(h.cats).reduce(function(s,v){return s+v;},0);
+    });
   }
-  const hist=state.budgetHistory.slice(-3);
-  // Weighted forecast (most recent month gets 50%, prev 30%, oldest 20%)
-  const weights=[0.2,0.3,0.5];
-  const income=g('bf-income')||85000;
-  // Build history input rows
+  var hist=state.budgetHistory.slice(-3);
+  var currentView=window._budgetView||'grid';
+
+  // ── GRID VIEW ────────────────────────────────────────────────
+  var BADGE=['bh-badge-1','bh-badge-2','bh-badge-3'];
   document.getElementById('bf-history').innerHTML=hist.map(function(h,hi){
-    var catRows=cats.map(function(c){
-      return '<div class="field-row" style="margin-bottom:6px">'
-        +'<span class="field-label" style="min-width:100px;font-size:11px">'+(EXPENSE_ICONS[c]||'?')+' '+c+'</span>'
-        +'<div class="field-input"><input type="number" id="bh_'+hi+'_'+c+'" value="'+(h.cats[c]||0)+'" oninput="updateBudgetHistory('+hi+',\''+c+'\',this.value)" style="font-size:11px;padding:5px 8px"></div>'
+    var catRows=CATS.map(function(c){
+      var val=h.cats[c]||0;
+      return '<div class="bh-cat-row">'
+        +'<span class="bh-cat-icon">'+(EXPENSE_ICONS[c]||'?')+'</span>'
+        +'<span class="bh-cat-name">'+CAT_LABELS[c]+'</span>'
+        +'<input class="bh-cat-input" type="number" id="bh_'+hi+'_'+c+'" value="'+val
+        +'" oninput="updateBudgetHistory('+hi+',\''+c+'\',this.value)" min="0" step="100">'
+        +'<button class="bh-cat-clear" onclick="clearBudgetCat('+hi+',\''+c+'\')" title="Clear '+CAT_LABELS[c]+'">\xd7</button>'
         +'</div>';
     }).join('');
-    return '<div style="margin-bottom:10px">'
-      +'<div style="font-size:10px;font-weight:600;color:var(--text3);margin-bottom:6px;text-transform:uppercase">'+h.label+'</div>'
+    return '<div class="bh-month-col">'
+      +'<div class="bh-month-header">'
+        +'<span class="badge '+BADGE[hi]+'" style="font-size:10px">M'+(hi+1)+'</span>'
+        +'<span class="bh-month-label" id="bh_lbl_'+hi+'">'+h.label+'</span>'
+        +'<button class="bh-clear-month" onclick="clearBudgetMonth('+hi+')" title="Zero out this month">Clear</button>'
+      +'</div>'
       +catRows
-      +'<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid var(--border);font-size:11px;margin-top:4px">'
-      +'<span style="color:var(--text2);font-weight:500">Month total</span>'
-      +'<span style="font-family:monospace;font-weight:600" id="bh_total_'+hi+'">'+fmt(h.total)+'</span>'
-      +'</div></div>';
+      +'<div class="bh-total-row">'
+        +'<span style="color:var(--text2);font-weight:500;font-size:11px">Total</span>'
+        +'<span class="bh-month-total" id="bh_total_'+hi+'">'+fmt(h.total)+'</span>'
+      +'</div>'
+      +'</div>';
   }).join('');
+
+  // ── TABLE / CROSS VIEW ────────────────────────────────────────
+  var thead='<th style="min-width:110px">Category</th>';
+  hist.forEach(function(h,hi){ thead+='<th class="num" style="min-width:90px">'+h.label+'</th>'; });
+  thead+='<th class="num">Forecast</th>';
+  document.getElementById('bf-cross-head').innerHTML=thead;
+
+  var tbody='';
+  CATS.forEach(function(c){
+    var row='<tr><td>'+EXPENSE_ICONS[c]+' '+CAT_LABELS[c]+'</td>';
+    hist.forEach(function(h,hi){
+      row+='<td class="num"><input type="number" value="'+(h.cats[c]||0)+'" min="0" step="100"'
+          +' oninput="updateBudgetHistory('+hi+',\''+c+'\',this.value)" style="width:80px;text-align:right">'
+          +'</td>';
+    });
+    // Forecast cell (read-only, computed later)
+    row+='<td class="num" id="bfc_'+c+'">-</td></tr>';
+    tbody+=row;
+  });
+  // Totals row
+  var totRow='<tr style="border-top:2px solid var(--border2)"><td class="bold">TOTAL</td>';
+  hist.forEach(function(h,hi){
+    totRow+='<td class="num bold" id="bht_cross_'+hi+'">'+fmt(h.total)+'</td>';
+  });
+  totRow+='<td class="num bold" id="bht_cross_fc">-</td></tr>';
+  tbody+=totRow;
+  document.getElementById('bf-cross-body').innerHTML=tbody;
+
+  // Show correct view
+  setBudgetView(currentView, true);
   computeBudgetForecast();
 }
 
 function updateBudgetHistory(hi,cat,val){
-  if(!state.budgetHistory[hi]) return;
+  if(!state.budgetHistory||!state.budgetHistory[hi]) return;
   state.budgetHistory[hi].cats[cat]=parseFloat(val)||0;
-  state.budgetHistory[hi].total=Object.values(state.budgetHistory[hi].cats).reduce((s,v)=>s+v,0);
-  const el=document.getElementById('bh_total_'+hi);
+  state.budgetHistory[hi].total=Object.values(state.budgetHistory[hi].cats).reduce(function(s,v){return s+v;},0);
+  // Update total display in both views
+  var el=document.getElementById('bh_total_'+hi);
   if(el) el.textContent=fmt(state.budgetHistory[hi].total);
+  var el2=document.getElementById('bht_cross_'+hi);
+  if(el2) el2.textContent=fmt(state.budgetHistory[hi].total);
   computeBudgetForecast();
 }
 
-function computeBudgetForecast(){
-  const hist=state.budgetHistory.slice(-3);
-  const weights=[0.2,0.3,0.5];
-  const income=g('bf-income')||85000;
-  const cats=['insurance','hmo','subscriptions','utilities','food','transport','education','other'];
-  if(hist.length<1) return;
-  // Category forecasts
-  const catForecasts={};
-  cats.forEach(c=>{
-    const vals=hist.map(h=>h.cats[c]||0);
-    catForecasts[c]=Math.round(vals.reduce((s,v,i)=>s+v*(weights[i]||weights[weights.length-1]),0));
+function clearBudgetCat(hi,cat){
+  if(!state.budgetHistory||!state.budgetHistory[hi]) return;
+  state.budgetHistory[hi].cats[cat]=0;
+  state.budgetHistory[hi].total=Object.values(state.budgetHistory[hi].cats).reduce(function(s,v){return s+v;},0);
+  // Update input in grid view
+  var inp=document.getElementById('bh_'+hi+'_'+cat);
+  if(inp) inp.value=0;
+  var el=document.getElementById('bh_total_'+hi);
+  if(el) el.textContent=fmt(state.budgetHistory[hi].total);
+  computeBudgetForecast();
+  showToast('Cleared '+cat+' for Month '+(hi+1));
+}
+
+function clearBudgetMonth(hi){
+  if(!state.budgetHistory||!state.budgetHistory[hi]) return;
+  var CATS=['insurance','hmo','subscriptions','utilities','food','transport','education','other'];
+  CATS.forEach(function(c){
+    state.budgetHistory[hi].cats[c]=0;
+    var inp=document.getElementById('bh_'+hi+'_'+c);
+    if(inp) inp.value=0;
   });
-  const forecastTotal=Object.values(catForecasts).reduce((s,v)=>s+v,0);
-  const avgTotal=hist.length>0?hist.reduce((s,h)=>s+h.total,0)/hist.length:0;
-  const trend=hist.length>=2?(hist[hist.length-1].total-hist[0].total)/hist[0].total*100:0;
-  const surplus=income-forecastTotal;
+  state.budgetHistory[hi].total=0;
+  var el=document.getElementById('bh_total_'+hi);
+  if(el) el.textContent=fmt(0);
+  computeBudgetForecast();
+  showToast('Cleared Month '+(hi+1));
+}
+
+function clearAllBudgetHistory(){
+  if(!confirm('Clear all 3 months of expense history?')) return;
+  if(!state.budgetHistory) return;
+  var CATS=['insurance','hmo','subscriptions','utilities','food','transport','education','other'];
+  state.budgetHistory.forEach(function(h,hi){
+    CATS.forEach(function(c){
+      h.cats[c]=0;
+      var inp=document.getElementById('bh_'+hi+'_'+c);
+      if(inp) inp.value=0;
+    });
+    h.total=0;
+    var el=document.getElementById('bh_total_'+hi);
+    if(el) el.textContent=fmt(0);
+  });
+  computeBudgetForecast();
+  showToast('All history cleared');
+}
+
+function autofillFromExpenses(){
+  if(!state.budgetHistory||!state.budgetHistory.length) return;
+  var CATS=['insurance','hmo','subscriptions','utilities','food','transport','education','other'];
+  // Build from recurring expenses
+  var fromExpenses={};
+  CATS.forEach(function(c){
+    fromExpenses[c]=Math.round(state.expenses
+      .filter(function(e){return e.category===c;})
+      .reduce(function(s,e){return s+toMonthly(e);},0));
+  });
+  // Also add payment monthly amounts to 'other' if no category match
+  var payTotal=state.payments.reduce(function(s,p){return s+p.monthly;},0);
+  // Apply to all 3 months
+  state.budgetHistory.forEach(function(h,hi){
+    CATS.forEach(function(c){
+      h.cats[c]=fromExpenses[c]||0;
+      var inp=document.getElementById('bh_'+hi+'_'+c);
+      if(inp) inp.value=h.cats[c];
+    });
+    h.total=Object.values(h.cats).reduce(function(s,v){return s+v;},0);
+    var el=document.getElementById('bh_total_'+hi);
+    if(el) el.textContent=fmt(h.total);
+  });
+  computeBudgetForecast();
+  showToast('Auto-filled from Recurring Expenses');
+}
+
+function setBudgetView(view, silent){
+  window._budgetView=view;
+  document.getElementById('bf-grid-view').style.display=view==='grid'?'block':'none';
+  document.getElementById('bf-table-view').style.display=view==='table'?'block':'none';
+  var g=document.getElementById('bh-view-grid');
+  var t=document.getElementById('bh-view-table');
+  if(g){ g.classList.toggle('active',view==='grid'); }
+  if(t){ t.classList.toggle('active',view==='table'); }
+}
+
+function setBudgetLabels(){
+  // Simple inline edit - click each label to rename
+  var hist=state.budgetHistory?state.budgetHistory.slice(-3):[];
+  hist.forEach(function(h,hi){
+    var span=document.getElementById('bh_lbl_'+hi);
+    if(!span) return;
+    // Make editable on click
+    span.contentEditable=true;
+    span.style.cssText='font-size:12px;font-weight:600;color:var(--accent);border-bottom:1px dashed var(--accent);outline:none;min-width:60px;display:inline-block';
+    span.focus();
+    // Save on blur
+    span.onblur=function(){
+      var newLabel=span.textContent.trim();
+      if(newLabel&&state.budgetHistory[hi]){
+        state.budgetHistory[hi].label=newLabel;
+      }
+      span.contentEditable=false;
+      span.style.cssText='';
+    };
+    // Save on Enter
+    span.onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();span.blur();}};
+  });
+  showToast('Click any month label to rename it');
+}
+
+function computeBudgetForecast(){
+  var hist=state.budgetHistory?state.budgetHistory.slice(-3):[];
+  var weights=[0.2,0.3,0.5];
+  var income=g('bf-income')||85000;
+  var CATS=['insurance','hmo','subscriptions','utilities','food','transport','education','other'];
+  var CAT_LABELS={insurance:'Insurance',hmo:'HMO/Health',subscriptions:'Subscriptions',
+    utilities:'Utilities',food:'Food/Groceries',transport:'Transport',
+    education:'Education',other:'Other'};
+  if(!hist.length) return;
+
+  var catForecasts={};
+  CATS.forEach(function(c){
+    var vals=hist.map(function(h){return h.cats[c]||0;});
+    catForecasts[c]=Math.round(vals.reduce(function(s,v,i){return s+v*(weights[i]||weights[weights.length-1]);},0));
+    // Update cross-table forecast cells
+    var fc=document.getElementById('bfc_'+c);
+    if(fc) fc.textContent=fmt(catForecasts[c]);
+  });
+
+  var forecastTotal=Object.values(catForecasts).reduce(function(s,v){return s+v;},0);
+  var avgTotal=hist.reduce(function(s,h){return s+h.total;},0)/hist.length;
+  var trend=hist.length>=2&&hist[0].total>0?(hist[hist.length-1].total-hist[0].total)/hist[0].total*100:0;
+  var surplus=income-forecastTotal;
+
+  var fcTotEl=document.getElementById('bht_cross_fc');
+  if(fcTotEl) fcTotEl.textContent=fmt(forecastTotal);
+
   document.getElementById('bf-avg').textContent=fmt(avgTotal);
   document.getElementById('bf-next').textContent=fmt(forecastTotal);
   document.getElementById('bf-surplus').textContent=fmt(surplus);
   document.getElementById('bf-surplus').style.color=surplus>=0?'var(--blue)':'var(--red)';
   document.getElementById('bf-reserve').textContent=fmt(forecastTotal*0.1);
-  document.getElementById('bf-trend-sub').textContent=trend>=0?`▲ ${Math.round(trend*10)/10}% vs 3mo ago`:`▼ ${Math.abs(Math.round(trend*10)/10)}% vs 3mo ago`;
-  // Budget table
-  let tableHTML='';
-  cats.forEach(c=>{
-    const vals=hist.map(h=>h.cats[c]||0);
-    const forecast=catForecasts[c];
-    const avg=vals.reduce((s,v)=>s+v,0)/Math.max(vals.length,1);
-    const trendPct=vals.length>=2&&vals[0]>0?(vals[vals.length-1]-vals[0])/vals[0]*100:0;
-    const trendClass=Math.abs(trendPct)<3?'same':trendPct>0?'up':'down';
-    const trendIcon=Math.abs(trendPct)<3?'→':trendPct>0?'↑':'↓';
-    const recommended=Math.round(forecast*1.1);
-    tableHTML+=`<tr>
-      <td>${EXPENSE_ICONS[c]||'📋'} ${c}</td>
-      '+vals.map(function(v){return '<td class="num">'+fmt(v)+'</td>';}).join('')+'
-      ${vals.length<3?'<td class="num" style="color:var(--text3)">—</td>'.repeat(3-vals.length):''}
-      <td class="num bold">${fmt(forecast)}</td>
-      <td class="num ${trendClass}" style="font-family:'IBM Plex Mono',monospace">${trendIcon} ${Math.abs(Math.round(trendPct*10)/10)}%</td>
-      <td class="num" style="color:var(--blue)">${fmt(recommended)}</td>
-    </tr>`;
+  var trendEl=document.getElementById('bf-trend-sub');
+  if(trendEl) trendEl.textContent=trend>=0?('\u25b2 '+Math.round(trend*10)/10+'% vs 3mo ago'):('\u25bc '+Math.abs(Math.round(trend*10)/10)+'% vs 3mo ago');
+
+  // ── BUDGET TABLE ─────────────────────────────────────────────
+  var tableHTML='';
+  CATS.forEach(function(c){
+    var vals=hist.map(function(h){return h.cats[c]||0;});
+    var forecast=catForecasts[c];
+    var trendPct=vals.length>=2&&vals[0]>0?(vals[vals.length-1]-vals[0])/vals[0]*100:0;
+    var trendClass=Math.abs(trendPct)<3?'same':trendPct>0?'up':'down';
+    var trendIcon=Math.abs(trendPct)<3?'\u2192':trendPct>0?'\u2191':'\u2193';
+    var recommended=Math.round(forecast*1.1);
+    var vsLast=vals.length>=2?vals[vals.length-1]-vals[vals.length-2]:0;
+    var vsLastTxt=(vsLast>0?'+':'')+fmt(vsLast);
+    var vsLastCol=vsLast>0?'neg':'pos';
+    tableHTML+='<tr>'
+      +'<td>'+(EXPENSE_ICONS[c]||'?')+' '+CAT_LABELS[c]+'</td>'
+      +vals.map(function(v){return '<td class="num">'+fmt(v)+'</td>';}).join('')
+      +(vals.length<3?'<td class="num" style="color:var(--text3)">\u2014</td>'.repeat(3-vals.length):'')
+      +'<td class="num bold">'+fmt(forecast)+'</td>'
+      +'<td class="num '+trendClass+'" style="font-family:monospace">'+trendIcon+' '+Math.abs(Math.round(trendPct*10)/10)+'%</td>'
+      +'<td class="num" style="color:var(--blue)">'+fmt(recommended)+'</td>'
+      +'<td class="num '+(vals.length>=2?vsLastCol:'')+'">'+vsLastTxt+'</td>'
+      +'</tr>';
   });
-  tableHTML+=`<tr style="border-top:2px solid var(--border2)"><td class="bold">TOTAL</td>${hist.map(function(h){return '<td class="num bold">'+fmt(h.total)+'</td>';}).join('')}${hist.length<3?'<td class="num">—</td>'.repeat(3-hist.length):''}<td class="num bold">${fmt(forecastTotal)}</td><td class="num ${trend>=0?'up':'down'}">${trend>=0?'↑':'↓'} ${Math.abs(Math.round(trend*10)/10)}%</td><td class="num bold" style="color:var(--blue)">${fmt(Math.round(forecastTotal*1.1))}</td></tr>`;
+  // Totals row
+  tableHTML+='<tr style="border-top:2px solid var(--border2)">'
+    +'<td class="bold">TOTAL</td>'
+    +hist.map(function(h){return '<td class="num bold">'+fmt(h.total)+'</td>';}).join('')
+    +(hist.length<3?'<td></td>'.repeat(3-hist.length):'')
+    +'<td class="num bold">'+fmt(forecastTotal)+'</td>'
+    +'<td class="num '+(trend>=0?'up':'down')+'">'+Math.round(trend*10)/10+'%</td>'
+    +'<td class="num" style="color:var(--blue)">'+fmt(Math.round(forecastTotal*1.1))+'</td>'
+    +'<td></td>'
+    +'</tr>';
   document.getElementById('budget-table').innerHTML=tableHTML;
-  // Trend chart
+
+  // ── OPTIMIZATION SUGGESTIONS ─────────────────────────────────
+  renderBudgetOptimizations(hist, catForecasts, income, surplus, trend, CATS, CAT_LABELS);
+
+  // ── TREND CHART ───────────────────────────────────────────────
   budgetTrendChart=destroyChart(budgetTrendChart);
-  const tCtx=document.getElementById('budget-trend-chart').getContext('2d');
-  const tLabels=[...hist.map(h=>h.label),'Forecast'];
-  const tData=[...hist.map(h=>Math.round(h.total)),Math.round(forecastTotal)];
-  budgetTrendChart=new Chart(tCtx,{type:'line',data:{labels:tLabels,datasets:[{label:'Monthly Expenses',data:tData,borderColor:'#8a5a00',backgroundColor:'rgba(138,90,0,0.08)',borderWidth:2,fill:true,tension:0.3,pointRadius:4,pointBackgroundColor:['#8a5a00','#8a5a00','#8a5a00','#1a6b4a'],borderDash:[[],[],[],[4,4]]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'₱'+c.raw.toLocaleString('en-PH')}}},scales:{x:{ticks:{color:'#9a8e82',font:{size:10}},grid:{color:'rgba(60,40,20,0.06)'}},y:{ticks:{color:'#9a8e82',font:{size:10},callback:v=>'₱'+Math.round(v/1000)+'k'},grid:{color:'rgba(60,40,20,0.06)'}}}}});
-  // 6-month projection
-  budget6moChart=destroyChart(budget6moChart);
-  const b6Ctx=document.getElementById('budget-6mo-chart').getContext('2d');
-  const b6Labels=[],expData=[],incomeData=[],surplusData=[];
-  const incomeGrowth=0.004; // ~5% annual
-  let projIncome=income;
-  let projExpense=forecastTotal;
-  const expGrowth=trend>0?trend/100/12:0.004;
-  for(let m=1;m<=6;m++){
-    b6Labels.push(addMonths(new Date(),m).toLocaleString('default',{month:'short',year:'numeric'}));
-    projIncome*=(1+incomeGrowth);
-    projExpense*=(1+expGrowth);
-    expData.push(Math.round(projExpense));
-    incomeData.push(Math.round(projIncome));
-    surplusData.push(Math.round(projIncome-projExpense));
+  var tCtx=document.getElementById('budget-trend-chart');
+  if(tCtx){
+    var tLabels=hist.map(function(h){return h.label;}).concat(['Forecast M4']);
+    var tData=hist.map(function(h){return Math.round(h.total);}).concat([Math.round(forecastTotal)]);
+    budgetTrendChart=new Chart(tCtx,{type:'line',data:{labels:tLabels,datasets:[{
+      label:'Monthly Expenses',data:tData,borderColor:'#8a5a00',
+      backgroundColor:'rgba(138,90,0,0.07)',borderWidth:2,fill:true,tension:0.3,
+      pointRadius:4,pointBackgroundColor:['#8a5a00','#8a5a00','#8a5a00','#1a6b4a'],
+      segment:{borderDash:function(ctx){return ctx.p1DataIndex===3?[5,5]:[];}},
+    }]},options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return '\u20b1'+c.raw.toLocaleString('en-PH');}}}},
+      scales:{x:{ticks:{color:'#9a8e82',font:{size:10}},grid:{color:'rgba(60,40,20,0.06)'}},
+              y:{ticks:{color:'#9a8e82',font:{size:10},callback:function(v){return '\u20b1'+Math.round(v/1000)+'k';}},grid:{color:'rgba(60,40,20,0.06)'}}}
+    }});
   }
-  budget6moChart=new Chart(b6Ctx,{type:'bar',data:{labels:b6Labels,datasets:[{label:'Income',data:incomeData,backgroundColor:'rgba(26,74,122,0.5)',borderRadius:4,borderSkipped:false},{label:'Expenses',data:expData,backgroundColor:'rgba(138,90,0,0.6)',borderRadius:4,borderSkipped:false},{label:'Surplus',data:surplusData,backgroundColor:surplusData.map(v=>v>=0?'rgba(26,107,74,0.7)':'rgba(138,32,32,0.7)'),borderRadius:4,borderSkipped:false,type:'line',borderColor:'#1a6b4a',borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{color:'#5a5047',font:{size:10},boxWidth:10}}},scales:{x:{ticks:{color:'#9a8e82',font:{size:10}},grid:{color:'rgba(60,40,20,0.06)'}},y:{ticks:{color:'#9a8e82',font:{size:10},callback:v=>'₱'+Math.round(v/1000)+'k'},grid:{color:'rgba(60,40,20,0.06)'}}}}});
+
+  // ── CATEGORY BAR CHART ────────────────────────────────────────
+  var catChartEl=document.getElementById('budget-cat-chart');
+  if(catChartEl&&typeof Chart!=='undefined'){
+    var existingChart=Chart.getChart(catChartEl);
+    if(existingChart) existingChart.destroy();
+    var catLabels=CATS.map(function(c){return CAT_LABELS[c];});
+    var lastVals=CATS.map(function(c){return hist.length?hist[hist.length-1].cats[c]||0:0;});
+    var fcVals=CATS.map(function(c){return catForecasts[c]||0;});
+    new Chart(catChartEl,{type:'bar',data:{labels:catLabels,datasets:[
+      {label:'Last Month',data:lastVals,backgroundColor:'rgba(138,90,0,0.4)',borderRadius:3,borderSkipped:false},
+      {label:'Forecast',data:fcVals,backgroundColor:'rgba(26,107,74,0.5)',borderRadius:3,borderSkipped:false}
+    ]},options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:'#5a5047',font:{size:10},boxWidth:10}}},
+      scales:{x:{ticks:{color:'#9a8e82',font:{size:9},maxRotation:35},grid:{display:false}},
+              y:{ticks:{color:'#9a8e82',font:{size:10},callback:function(v){return '\u20b1'+Math.round(v/1000)+'k';}},grid:{color:'rgba(60,40,20,0.06)'}}}
+    }});
+  }
+
+  // ── 6-MONTH PROJECTION ────────────────────────────────────────
+  budget6moChart=destroyChart(budget6moChart);
+  var b6Ctx=document.getElementById('budget-6mo-chart');
+  if(b6Ctx){
+    var b6Labels=[],expData=[],incomeData=[],surplusData=[];
+    var incomeGrowth=0.004;
+    var projIncome=income;
+    var projExpense=forecastTotal;
+    var expGrowth=trend>0?trend/100/12:0.004;
+    for(var m=1;m<=6;m++){
+      b6Labels.push(addMonths(new Date(),m).toLocaleString('default',{month:'short',year:'numeric'}));
+      projIncome*=(1+incomeGrowth);
+      projExpense*=(1+expGrowth);
+      expData.push(Math.round(projExpense));
+      incomeData.push(Math.round(projIncome));
+      surplusData.push(Math.round(projIncome-projExpense));
+    }
+    budget6moChart=new Chart(b6Ctx,{type:'bar',data:{labels:b6Labels,datasets:[
+      {label:'Income',data:incomeData,backgroundColor:'rgba(26,74,122,0.5)',borderRadius:4,borderSkipped:false},
+      {label:'Expenses',data:expData,backgroundColor:'rgba(138,90,0,0.6)',borderRadius:4,borderSkipped:false},
+      {label:'Surplus',data:surplusData,backgroundColor:surplusData.map(function(v){return v>=0?'rgba(26,107,74,0.7)':'rgba(138,32,32,0.7)';}),borderRadius:4,borderSkipped:false,type:'line',borderColor:'#1a6b4a',borderWidth:2}
+    ]},options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:true,labels:{color:'#5a5047',font:{size:10},boxWidth:10}}},
+      scales:{x:{ticks:{color:'#9a8e82',font:{size:10}},grid:{color:'rgba(60,40,20,0.06)'}},
+              y:{ticks:{color:'#9a8e82',font:{size:10},callback:function(v){return '\u20b1'+Math.round(v/1000)+'k';}},grid:{color:'rgba(60,40,20,0.06)'}}}
+    }});
+  }
+}
+
+function renderBudgetOptimizations(hist, catForecasts, income, surplus, trend, CATS, CAT_LABELS){
+  var opts=[];
+  var forecastTotal=Object.values(catForecasts).reduce(function(s,v){return s+v;},0);
+
+  // 1. SPENDING TREND
+  if(trend>5){
+    opts.push({type:'warn',icon:'\ud83d\udcc8',title:'Spending trending up '+Math.round(trend*10)/10+'% over 3 months',
+      desc:'Your total expenses have increased from Month 1 to Month 3. Review the fastest-growing categories below.',saving:null});
+  } else if(trend<-3){
+    opts.push({type:'good',icon:'\ud83d\udcc9',title:'Great — spending down '+Math.abs(Math.round(trend*10)/10)+'% over 3 months',
+      desc:'Your cost-cutting is working. Keep the momentum and consider redirecting the savings to investments.',saving:null});
+  }
+
+  // 2. BUDGET SURPLUS WARNING
+  if(surplus<0){
+    opts.push({type:'alert',icon:'\u26a0\ufe0f',title:'Projected deficit next month',
+      desc:'Your forecasted expenses (\u20b1'+fmt(forecastTotal)+') exceed your income (\u20b1'+fmt(income)+'). Identify categories to reduce before month-end.',
+      saving:Math.abs(surplus),action:'Review top spending categories'});
+  } else if(surplus>0&&surplus<income*0.1){
+    opts.push({type:'warn',icon:'\ud83d\udcb0',title:'Tight surplus — only '+Math.round(surplus/income*100)+'% buffer',
+      desc:'Your projected surplus is very thin. Any unexpected expense could push you into deficit. Aim for at least 20% surplus.',saving:null});
+  }
+
+  // 3. HIGH CATEGORY SPEND
+  CATS.forEach(function(c){
+    if(!hist.length) return;
+    var last=hist[hist.length-1].cats[c]||0;
+    var avg=hist.reduce(function(s,h){return s+((h.cats[c]||0));},0)/hist.length;
+    var pctOfIncome=last/income*100;
+    // Flag if a single category is >25% of income
+    if(pctOfIncome>25){
+      opts.push({type:'warn',icon:'\ud83d\udea8',title:CAT_LABELS[c]+' is '+Math.round(pctOfIncome)+'% of your income',
+        desc:'This category alone consumes a large portion of your income. Consider if this is essential or can be restructured.',
+        saving:Math.round(last*0.15),action:'Apply 15% reduction target'});
+    }
+    // Flag if growing fast month-over-month
+    if(hist.length>=2){
+      var prev=hist[hist.length-2].cats[c]||0;
+      if(prev>0&&((last-prev)/prev)>0.2&&last>2000){
+        opts.push({type:'warn',icon:'\ud83d\udce3',title:CAT_LABELS[c]+' jumped '+Math.round((last-prev)/prev*100)+'% last month',
+          desc:'This category increased significantly from Month 2 to Month 3. Was this a one-time spike or a new recurring cost?',
+          saving:last-prev,action:'Check if this is recurring'});
+      }
+    }
+  });
+
+  // 4. SUBSCRIPTION OPTIMIZATION
+  var subFc=catForecasts['subscriptions']||0;
+  var subAvg=hist.reduce(function(s,h){return s+(h.cats['subscriptions']||0);},0)/Math.max(hist.length,1);
+  if(subAvg>1500){
+    opts.push({type:'save',icon:'\ud83d\udcf1',title:'Review subscriptions for unused services',
+      desc:'Your average subscription spend is \u20b1'+fmt(subAvg)+'/month. Auditing for unused apps, streaming services, or annual plans paid monthly could free up budget.',
+      saving:Math.round(subAvg*0.2),action:'Audit subscriptions'});
+  }
+
+  // 5. INSURANCE OPTIMIZATION
+  var insFc=catForecasts['insurance']||0;
+  if(insFc>5000){
+    opts.push({type:'save',icon:'\ud83d\udee1',title:'Consider consolidating insurance policies',
+      desc:'Insurance at \u20b1'+fmt(insFc)+'/month is significant. Check if bundling life + health policies or switching to annual payment offers a discount.',
+      saving:Math.round(insFc*0.08),action:'Compare bundled plans'});
+  }
+
+  // 6. SAVINGS RATE
+  var savingsRate=surplus/income*100;
+  if(surplus>0&&savingsRate<20){
+    opts.push({type:'save',icon:'\ud83c\udfaf',title:'Savings rate at '+Math.round(savingsRate)+'% — target 20%',
+      desc:'Financial best practice is saving 20% of income. You need \u20b1'+fmt(income*0.2-surplus)+' more in monthly savings to hit that target.',
+      saving:null,action:'Adjust expense categories'});
+  }
+
+  // 7. EMERGENCY FUND CHECK
+  var emFund=state.futurePlans?state.futurePlans.find(function(p){return p.category==='emergency';}):null;
+  if(!emFund||emFund.saved<forecastTotal*3){
+    opts.push({type:'good',icon:'\ud83c\udfe6',title:'Emergency fund needs attention',
+      desc:'Your emergency fund should cover at least 3 months of expenses (\u20b1'+fmt(forecastTotal*3)+'). '+(emFund?'Current balance: \u20b1'+fmt(emFund.saved)+'.':'No emergency fund plan found.'),
+      saving:null,action:'Go to Future Plans'});
+  }
+
+  // 8. GOOD NEWS — no issues
+  if(!opts.length){
+    opts.push({type:'good',icon:'\u2705',title:'Budget looks healthy!',
+      desc:'No major spending concerns detected. Your expenses are stable, surplus is adequate, and trends are positive. Keep it up.',saving:null});
+  }
+
+  var optCount=opts.filter(function(o){return o.type!=='good';}).length;
+  var countEl=document.getElementById('bf-opt-count');
+  if(countEl) countEl.textContent=optCount>0?(optCount+' suggestion'+(optCount!==1?'s':'')):'All clear';
+
+  document.getElementById('bf-optimizations').innerHTML=opts.map(function(o){
+    return '<div class="opt-item opt-'+o.type+'">'
+      +'<div class="opt-icon">'+o.icon+'</div>'
+      +'<div class="opt-body">'
+        +'<div class="opt-title">'+o.title+(o.saving?'<span class="opt-saving pos">Save '+fmt(o.saving)+'/mo</span>':'')+'</div>'
+        +'<div class="opt-desc">'+o.desc+'</div>'
+        +(o.action?'<div class="opt-action">\u2192 '+o.action+'</div>':'')
+      +'</div>'
+      +'</div>';
+  }).join('');
 }
 
 // ═══════════════════════════════════════════════════════════
