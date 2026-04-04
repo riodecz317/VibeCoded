@@ -1,79 +1,74 @@
-# 🚀 VibeCoded — Data, Productivity & Financial Tools
+# 🚀 VibeCoded — Practical Tools for Productivity & Financial Clarity
 
-A collection of lightweight web apps focused on **cash flow intelligence, productivity optimization, and performance tracking** — built for practical, real-world use.
-
-🔗 **Live Hub (GitHub Pages):**
+🔗 **Live Site:**
 https://riodecz317.github.io/VibeCoded/
 
----
+A collection of lightweight, browser-based tools designed to help you:
 
-# 🧠 What This Repo Is About
-
-This repository contains **browser-based tools** designed to:
-
-* 💰 Improve financial decision-making
-* 📊 Provide clear performance insights
-* ⚡ Maximize productivity and execution
-* 🤖 Lay the foundation for automation systems
+* 💰 Understand and manage cash flow
+* 📊 Track performance and results
+* ⚡ Improve productivity and execution
+* 🤖 Build toward automation-driven workflows
 
 ---
 
-# 📦 Featured Applications
+# 🧠 About This Project
+
+**VibeCoded** is a growing suite of tools built with a simple philosophy:
+
+> ⚡ *Practical tools > complex systems*
+
+Everything runs directly in the browser — no setup, no install — making it fast, accessible, and usable anytime.
+
+---
+
+# 📦 Applications
 
 ## 📊 FinForecast Pro
 
-💡 *Understand your cash flow. Identify growth opportunities.*
+💡 *Cash flow visibility + smarter financial decisions*
 
-🔗 **Live Demo:**
+🔗 **Open App:**
 https://riodecz317.github.io/VibeCoded/finforecast-pro.html
 
-📂 **Source Code:**
-https://github.com/riodecz317/VibeCoded/blob/main/finforecast-pro.html
+### 🔍 What it does:
 
-### 🔍 Features
-
-* Cash flow tracking and projections
-* Budget visibility and allocation logic
-* Investment opportunity insights
-* Simple financial planning interface
+* Tracks income and expenses
+* Visualizes cash flow
+* Helps identify investment opportunities
+* Supports financial planning decisions
 
 ---
 
-## 📋 Kanban Productivity System
+## 📋 Kanban Productivity Tool
 
-💡 *Turn tasks into measurable output.*
+💡 *From tasks → execution → results*
 
-🔗 **Live Demo:**
+🔗 **Open App:**
 https://riodecz317.github.io/VibeCoded/kanban.html
 
-📂 **Source Code:**
-https://github.com/riodecz317/VibeCoded/blob/main/kanban.html
+### 🔍 What it does:
 
-### 🔍 Features
-
-* Task tracking with workflow stages
-* Focus on output and execution
-* Lightweight and fast UI
-* Personal productivity system
+* Organizes tasks into workflow stages
+* Keeps focus on output (not just activity)
+* Improves execution discipline
+* Lightweight productivity system
 
 ---
 
-## 📈 Performance Review Tool
+## 📈 Performance Review System
 
-💡 *Track results. Measure impact. Improve performance.*
+💡 *Measure what actually matters*
 
-🔗 **Live Demo:**
+🔗 **Open App:**
 https://riodecz317.github.io/VibeCoded/performance-review.html
 
-📂 **Source Code:**
-https://github.com/riodecz317/VibeCoded/blob/main/performance-review.html
+### 🔍 What it does:
 
-### 🔍 Features
-
-* Performance tracking framework
-* Output and results evaluation
-* Structured review system
-* Useful for personal or team assessments
+* Tracks performance metrics
+* Evaluates output and results
+* Structures review and improvement cycles
+* Useful for personal or team evaluation
 
 ---
 
@@ -81,33 +76,41 @@ https://github.com/riodecz317/VibeCoded/blob/main/performance-review.html
 
 * HTML / CSS / JavaScript (Vanilla)
 * GitHub Pages (deployment)
-* LocalStorage (client-side persistence)
-* Designed for simplicity and usability
+* LocalStorage (data persistence)
 
 ---
 
-# ⚙️ Design Philosophy
+# ⚙️ Why This Approach Works
 
-* Minimal setup — runs directly in the browser
-* Practical over complex
-* Focused on **real-world usability**
-* Built as modular tools that can evolve into a larger system
+Unlike heavy tools or SaaS platforms, these apps:
+
+* Load instantly
+* Require no login
+* Store data locally
+* Focus on usability over complexity
+
+This makes them ideal for:
+
+* Analysts
+* Freelancers
+* Builders
+* Anyone who wants simple but effective systems
 
 ---
 
 # 🚧 Roadmap
 
-## 🤖 Automation Layer (Planned)
+## 🤖 Automation Layer (Next Phase)
 
-* Employee screening system (OIG / SAM)
-* Automated data ingestion (Excel → Web app)
-* Dashboard integration (Power BI / Web)
+* Employee screening tool (OIG / SAM)
+* Excel → Web automation
+* Dashboard integration (Power BI)
 
-## 🔗 Future Integrations
+## 🔗 Future Enhancements
 
-* API-based data syncing
-* Cloud storage for persistence
-* Multi-user capability
+* Cloud sync (optional)
+* Multi-device access
+* Data export/import features
 
 ---
 
@@ -117,28 +120,37 @@ To build a **connected ecosystem of tools** combining:
 
 * Financial intelligence
 * Productivity systems
-* Performance analytics
-* Automation pipelines
+* Performance tracking
+* Automation workflows
 
 ---
 
-# 🤝 Collaboration / Use Cases
+# 🤝 Use Cases
 
-These tools are useful for:
-
-* Analysts (Power BI / Excel users)
-* Freelancers managing workload & finances
-* Small teams needing lightweight systems
-* Anyone who wants structured decision-making tools
+* 📊 Data analysts (Power BI / Excel users)
+* 💼 Professionals managing workload & KPIs
+* 💰 Individuals tracking finances and growth
+* 🚀 Builders creating personal systems
 
 ---
 
 # ⭐ Support
 
-If you find this useful:
+If this project helps you:
 
 * ⭐ Star the repo
 * 🍴 Fork and customize
 * 💡 Suggest improvements
+
+---
+
+# 🧩 Author
+
+Built by **Rio Decz**
+Focused on:
+
+* Data analytics
+* Automation
+* Business systems
 
 ---
