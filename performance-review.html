@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Performance Review Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Epilogue:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+[data-theme="light"] {
+  --bg: #f5f3ef; --bg2: #eceae4; --surface: #ffffff; --surface2: #f9f7f4;
+  --border: #e2ddd6; --border2: #d5cfc6; --text: #1c1917; --text2: #44403c; --muted: #78716c;
+  --accent: #c2410c; --accent-l: #fff7ed;
+  --green: #15803d; --green-bg: #f0fdf4; --blue: #1d4ed8; --blue-bg: #eff6ff;
+  --gold: #b45309; --gold-bg: #fffbeb; --purple: #7c3aed; --purple-bg: #faf5ff; --red-bg: #fff1f2;
+  --sh: 0 1px 3px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.05);
+  --sh-md: 0 4px 12px rgba(0,0,0,.08),0 12px 32px rgba(0,0,0,.06);
+  --sh-lg: 0 8px 24px rgba(0,0,0,.1),0 24px 64px rgba(0,0,0,.08);
+}
+[data-theme="dark"] {
+  --bg: #0f1117; --bg2: #161820; --surface: #1a1d27; --surface2: #1e2232;
+  --border: #2a2f40; --border2: #343a4e; --text: #e8eaf2; --text2: #b0b4c8; --muted: #6b7290;
+  --accent: #f97316; --accent-l: rgba(249,115,22,.1);
+  --green: #4ade80; --green-bg: rgba(74,222,128,.1); --blue: #60a5fa; --blue-bg: rgba(96,165,250,.1);
+  --gold: #fbbf24; --gold-bg: rgba(251,191,36,.1); --purple: #a78bfa; --purple-bg: rgba(167,139,250,.1); --red-bg: rgba(248,113,113,.1);
+  --sh: 0 2px 8px rgba(0,0,0,.35); --sh-md: 0 4px 20px rgba(0,0,0,.45); --sh-lg: 0 12px 40px rgba(0,0,0,.55);
+}
+[data-theme="warm"] {
+  --bg: #fdf6ec; --bg2: #f7ede0; --surface: #fffdf9; --surface2: #fdf6ec;
+  --border: #e8d9c5; --border2: #d9c5a8; --text: #2d1f0e; --text2: #5c3d1e; --muted: #9c7a56;
+  --accent: #b45309; --accent-l: #fef3c7;
+  --green: #166534; --green-bg: #f0fdf4; --blue: #1e40af; --blue-bg: #eff6ff;
+  --gold: #92400e; --gold-bg: #fef3c7; --purple: #6d28d9; --purple-bg: #f5f3ff; --red-bg: #fff1f2;
+  --sh: 0 1px 3px rgba(45,31,14,.08),0 4px 16px rgba(45,31,14,.06);
+  --sh-md: 0 4px 12px rgba(45,31,14,.1); --sh-lg: 0 8px 24px rgba(45,31,14,.12);
+}
+[data-theme="slate"] {
+  --bg: #f1f5f9; --bg2: #e2e8f0; --surface: #ffffff; --surface2: #f8fafc;
+  --border: #cbd5e1; --border2: #94a3b8; --text: #0f172a; --text2: #334155; --muted: #64748b;
+  --accent: #0f766e; --accent-l: #f0fdfa;
+  --green: #047857; --green-bg: #ecfdf5; --blue: #1d4ed8; --blue-bg: #eff6ff;
+  --gold: #b45309; --gold-bg: #fffbeb; --purple: #7c3aed; --purple-bg: #faf5ff; --red-bg: #fff1f2;
+  --sh: 0 1px 3px rgba(15,23,42,.07),0 4px 16px rgba(15,23,42,.05);
+  --sh-md: 0 4px 12px rgba(15,23,42,.08); --sh-lg: 0 8px 24px rgba(15,23,42,.1);
+}
+
+body { font-family:'Epilogue',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; font-size:13px; transition:background .25s,color .25s; }
+
+header { display:flex; align-items:center; justify-content:space-between; padding:0 28px; height:62px; background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:100; gap:14px; flex-wrap:wrap; box-shadow:var(--sh); }
+.logo-wrap { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.logo-icon { width:34px; height:34px; background:var(--accent); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:17px; color:#fff; flex-shrink:0; }
+.app-title { font-family:'Playfair Display',serif; font-size:17px; font-weight:700; letter-spacing:-.2px; white-space:nowrap; }
+.app-sub { font-size:10px; color:var(--muted); letter-spacing:.4px; text-transform:uppercase; }
+.header-mid { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.header-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+
+select, input[type="text"], input[type="number"] { font-family:'Epilogue',sans-serif; font-size:12px; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:6px 10px; border-radius:7px; outline:none; cursor:pointer; transition:border-color .2s; }
+select:hover, select:focus, input:focus { border-color:var(--accent); }
+.btn { font-family:'Epilogue',sans-serif; font-size:12px; font-weight:500; padding:7px 14px; border-radius:7px; border:1px solid var(--border); background:var(--surface); color:var(--text2); cursor:pointer; transition:all .2s; white-space:nowrap; display:inline-flex; align-items:center; gap:5px; }
+.btn:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-l); }
+.btn-acc { background:var(--accent)!important; color:#fff!important; border-color:var(--accent)!important; }
+.btn-acc:hover { opacity:.88; }
+.btn-sm { padding:5px 10px; font-size:11px; }
+
+.theme-bar { display:flex; align-items:center; gap:3px; background:var(--bg2); border:1px solid var(--border); border-radius:8px; padding:3px 6px; }
+.theme-bar span { font-size:10px; color:var(--muted); margin-right:3px; }
+.td { width:22px; height:22px; border-radius:5px; cursor:pointer; border:2px solid transparent; transition:all .18s; }
+.td:hover { transform:scale(1.12); }
+.td.on { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-l); }
+.td[data-t="light"] { background:linear-gradient(135deg,#f5f3ef 50%,#ffffff 50%); }
+.td[data-t="dark"]  { background:linear-gradient(135deg,#0f1117 50%,#1a1d27 50%); }
+.td[data-t="warm"]  { background:linear-gradient(135deg,#fdf6ec 50%,#e8d9c5 50%); }
+.td[data-t="slate"] { background:linear-gradient(135deg,#f1f5f9 50%,#cbd5e1 50%); }
+
+.tab-nav { display:flex; padding:0 28px; background:var(--surface); border-bottom:1px solid var(--border); overflow-x:auto; }
+.tbn { font-family:'Epilogue',sans-serif; font-size:12px; font-weight:500; padding:12px 17px; border:none; background:none; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .2s,border-color .2s; white-space:nowrap; }
+.tbn:hover { color:var(--text); }
+.tbn.on { color:var(--accent); border-bottom-color:var(--accent); }
+
+.page { display:none; padding:26px 28px; max-width:1380px; }
+.page.on { display:block; }
+
+.sec-lbl { font-size:10px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:1.2px; margin-bottom:15px; display:flex; align-items:center; gap:8px; }
+.sec-lbl::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(168px,1fr)); gap:12px; margin-bottom:22px; }
+.kpi { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 20px; box-shadow:var(--sh); position:relative; overflow:hidden; transition:transform .2s,box-shadow .2s; }
+.kpi:hover { transform:translateY(-2px); box-shadow:var(--sh-md); }
+.kpi-bar { position:absolute; top:0; left:0; right:0; height:3px; background:var(--kc,var(--accent)); border-radius:12px 12px 0 0; }
+.kpi-ico { font-size:18px; margin-bottom:8px; }
+.kpi-lbl { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; font-weight:600; margin-bottom:5px; }
+.kpi-val { font-family:'Playfair Display',serif; font-size:30px; font-weight:700; line-height:1; }
+.kpi-sub { font-size:11px; color:var(--muted); margin-top:5px; }
+
+.crow { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px; }
+.crow.w { grid-template-columns:2fr 1fr; }
+.cc { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px 22px; box-shadow:var(--sh); transition:box-shadow .2s; }
+.cc:hover { box-shadow:var(--sh-md); }
+.ct { font-family:'Playfair Display',serif; font-size:15px; font-weight:600; margin-bottom:3px; }
+.cs { font-size:11px; color:var(--muted); margin-bottom:14px; }
+
+.bl { display:flex; flex-direction:column; gap:9px; }
+.br { display:flex; align-items:center; gap:10px; }
+.bl-lbl { font-size:11px; color:var(--text2); min-width:96px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.bt { flex:1; height:7px; background:var(--bg2); border-radius:99px; overflow:hidden; }
+.bf { height:100%; border-radius:99px; transition:width .7s cubic-bezier(.4,0,.2,1); }
+.bv { font-size:11px; font-weight:600; min-width:30px; text-align:right; }
+
+.sc-ex { color:var(--green)!important; } .sc-gd { color:var(--blue)!important; } .sc-av { color:var(--gold)!important; } .sc-lo { color:var(--accent)!important; }
+.bdg { font-size:10px; font-weight:600; padding:2px 8px; border-radius:20px; display:inline-block; }
+.bg { background:var(--green-bg); color:var(--green); } .bb { background:var(--blue-bg); color:var(--blue); } .bo { background:var(--gold-bg); color:var(--gold); } .br2 { background:var(--red-bg); color:var(--accent); }
+
+table.dt { width:100%; border-collapse:collapse; }
+.dt th { font-size:10px; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); padding:8px 12px; text-align:left; border-bottom:2px solid var(--border); font-weight:600; }
+.dt td { padding:10px 12px; border-bottom:1px solid var(--border); font-size:12px; vertical-align:middle; }
+.dt tr:last-child td { border-bottom:none; }
+.dt tbody tr:hover td { background:var(--bg2); }
+
+.av { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; flex-shrink:0; }
+.av-lg { width:46px; height:46px; font-size:15px; }
+
+.qtabs { display:flex; gap:6px; margin-bottom:20px; flex-wrap:wrap; }
+.qtab { font-family:'Epilogue',sans-serif; font-size:12px; font-weight:500; padding:6px 14px; border-radius:20px; border:1px solid var(--border); background:var(--surface); color:var(--muted); cursor:pointer; transition:all .2s; }
+.qtab.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+.qtab:hover:not(.on) { border-color:var(--accent); color:var(--accent); }
+
+.tl { padding-left:22px; position:relative; }
+.tl::before { content:''; position:absolute; left:7px; top:6px; bottom:6px; width:1px; background:var(--border); }
+.tli { position:relative; margin-bottom:13px; }
+.tli::before { content:''; position:absolute; left:-18px; top:5px; width:8px; height:8px; border-radius:50%; background:var(--accent); border:2px solid var(--surface); }
+.tli-d { font-size:10px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+.tli-b { font-size:12px; margin-top:2px; line-height:1.5; }
+
+.nc { background:var(--surface2); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 8px 8px 0; padding:12px 14px; margin-bottom:10px; }
+.nc-m { display:flex; justify-content:space-between; font-size:10px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.4px; margin-bottom:5px; }
+.nc-t { font-size:12px; color:var(--text2); line-height:1.55; }
+
+.cg { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.ci { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:14px 16px; }
+.ci-h { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+.ci-n { font-size:13px; font-weight:600; }
+.ci-w { font-size:12px; font-weight:700; color:var(--accent); }
+.ci-d { font-size:11px; color:var(--muted); margin-bottom:10px; line-height:1.5; }
+.ci-inp { font-family:'Epilogue',sans-serif; font-size:12px; font-weight:600; background:var(--surface); border:1px solid var(--border); color:var(--text); padding:5px 8px; border-radius:6px; outline:none; width:70px; text-align:center; transition:border-color .2s; }
+.ci-inp:focus { border-color:var(--accent); }
+
+input[type="range"] { -webkit-appearance:none; width:100%; height:4px; border-radius:99px; background:var(--bg2); outline:none; cursor:pointer; }
+input[type="range"]::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:var(--accent); cursor:pointer; border:2px solid var(--surface); box-shadow:0 0 0 2px var(--accent-l); }
+
+.modal-ov { position:fixed; inset:0; background:rgba(28,25,23,.45); backdrop-filter:blur(4px); display:flex; align-items:center; justify-content:center; z-index:200; animation:fi .2s; }
+@keyframes fi { from{opacity:0} to{opacity:1} }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:28px 30px; width:560px; max-width:95vw; max-height:92vh; overflow-y:auto; box-shadow:var(--sh-lg); animation:pi .25s cubic-bezier(.34,1.56,.64,1); }
+@keyframes pi { from{transform:scale(.94) translateY(12px);opacity:0} to{transform:scale(1) translateY(0);opacity:1} }
+.modal h2 { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; margin-bottom:3px; }
+.modal-sub { font-size:11px; color:var(--muted); margin-bottom:20px; }
+.fld { margin-bottom:13px; }
+.fld label { display:block; font-size:10px; font-weight:600; color:var(--muted); margin-bottom:5px; text-transform:uppercase; letter-spacing:.6px; }
+.fld input,.fld select,.fld textarea { width:100%; font-family:'Epilogue',sans-serif; font-size:12px; background:var(--bg2); border:1px solid var(--border); color:var(--text); padding:8px 12px; border-radius:8px; outline:none; transition:border-color .2s; }
+.fld textarea { resize:vertical; min-height:68px; }
+.fld input:focus,.fld select:focus,.fld textarea:focus { border-color:var(--accent); }
+.modal-acts { display:flex; justify-content:flex-end; gap:8px; margin-top:22px; padding-top:16px; border-top:1px solid var(--border); }
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+.iz { border:2px dashed var(--border2); border-radius:10px; padding:22px; text-align:center; color:var(--muted); cursor:pointer; transition:all .2s; margin-top:10px; }
+.iz:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-l); }
+
+.empty { text-align:center; padding:56px 24px; color:var(--muted); }
+.empty-ico { font-size:38px; opacity:.3; margin-bottom:12px; }
+.empty h3 { font-family:'Playfair Display',serif; font-size:18px; font-weight:600; margin-bottom:6px; }
+.empty p { font-size:12px; line-height:1.65; max-width:320px; margin:0 auto; }
+
+.toast { position:fixed; bottom:22px; right:22px; background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--green); color:var(--text); padding:11px 16px; border-radius:9px; font-size:12px; font-weight:500; z-index:9999; transform:translateY(80px); opacity:0; transition:all .35s cubic-bezier(.34,1.56,.64,1); box-shadow:var(--sh-md); pointer-events:none; }
+.toast.on { transform:translateY(0); opacity:1; }
+
+.hm { display:grid; grid-template-columns:repeat(12,1fr); gap:5px; }
+.hmc { aspect-ratio:1; border-radius:4px; }
+.hml { display:grid; grid-template-columns:repeat(12,1fr); gap:5px; margin-top:4px; }
+.hmll { font-size:9px; color:var(--muted); text-align:center; font-weight:500; }
+
+.emp-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 20px; cursor:pointer; transition:all .2s; box-shadow:var(--sh); }
+.emp-card:hover { transform:translateY(-2px); box-shadow:var(--sh-md); border-color:var(--accent); }
+
+.ig { background:var(--accent-l); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:0 8px 8px 0; padding:12px 14px; margin-bottom:14px; }
+.ig-t { font-size:11px; font-weight:700; color:var(--accent); margin-bottom:6px; text-transform:uppercase; letter-spacing:.5px; }
+.ig ol { padding-left:16px; }
+.ig li { font-size:11px; color:var(--text2); line-height:1.75; }
+.ig code { background:var(--bg2); border-radius:3px; padding:1px 5px; font-size:11px; color:var(--accent); }
+
+.rs-row { display:flex; border-radius:10px; overflow:hidden; border:1px solid var(--border); margin:14px 0 16px; }
+.rsc { flex:1; padding:12px 8px; text-align:center; border-right:1px solid var(--border); }
+.rsc:last-child { border-right:none; }
+.rsc-s { font-family:'Playfair Display',serif; font-size:16px; font-weight:700; }
+.rsc-l { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; margin-top:3px; }
+
+.sr-row { display:flex; align-items:center; gap:10px; }
+.sr-num { font-family:'Playfair Display',serif; font-size:20px; font-weight:700; min-width:36px; text-align:center; }
+
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+
+@media(max-width:800px) {
+  .crow,.crow.w { grid-template-columns:1fr; }
+  .cg { grid-template-columns:1fr; }
+  header { height:auto; padding:12px 16px; }
+  .page { padding:16px; }
+  .tab-nav { padding:0 16px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    <div class="logo-icon">📊</div>
+    <div><div class="app-title">Performance Review</div><div class="app-sub">Analytics Dashboard</div></div>
+  </div>
+  <div class="header-mid">
+    <select id="empFilter" onchange="applyF()"><option value="all">All Employees</option></select>
+    <select id="yrFilter" onchange="applyF()"><option value="2025">2025</option><option value="2024">2024</option><option value="2023">2023</option></select>
+  </div>
+  <div class="header-right">
+    <div class="theme-bar">
+      <span>Theme</span>
+      <div class="td on" data-t="light" onclick="setTheme('light')" title="Light"></div>
+      <div class="td" data-t="warm"  onclick="setTheme('warm')"  title="Warm"></div>
+      <div class="td" data-t="slate" onclick="setTheme('slate')" title="Slate"></div>
+      <div class="td" data-t="dark"  onclick="setTheme('dark')"  title="Dark"></div>
+    </div>
+    <button class="btn" onclick="openImport()">⬆ Import Excel</button>
+    <button class="btn btn-acc" onclick="openReview()">＋ New Review</button>
+  </div>
+</header>
+
+<div class="tab-nav">
+  <button class="tbn on" onclick="switchTab('overview',this)">Overview</button>
+  <button class="tbn" onclick="switchTab('quarterly',this)">Quarterly</button>
+  <button class="tbn" onclick="switchTab('annual',this)">Annual</button>
+  <button class="tbn" onclick="switchTab('employees',this)">Employees</button>
+  <button class="tbn" onclick="switchTab('criteria',this)">Criteria</button>
+</div>
+
+<!-- OVERVIEW -->
+<div class="page on" id="pg-overview">
+  <div class="sec-lbl">Performance Snapshot</div>
+  <div class="kpi-grid" id="kpiG"></div>
+  <div class="crow w">
+    <div class="cc"><div class="ct">Score Trend</div><div class="cs">Average weighted score by month</div><canvas id="trendC" height="110"></canvas></div>
+    <div class="cc"><div class="ct">Score Distribution</div><div class="cs">Reviews by performance band</div><div id="donutW" style="margin-top:6px"></div></div>
+  </div>
+  <div class="crow">
+    <div class="cc"><div class="ct">Top Performers</div><div class="cs">Average score per employee</div><div class="bl" id="topB"></div></div>
+    <div class="cc"><div class="ct">Criteria Averages</div><div class="cs">Company-wide average per criterion</div><div class="bl" id="critB"></div></div>
+  </div>
+  <div class="cc"><div class="ct">Activity Heatmap</div><div class="cs">Score intensity by month</div><div class="hm" id="hm" style="margin-top:10px"></div><div class="hml" id="hml"></div></div>
+</div>
+
+<!-- QUARTERLY -->
+<div class="page" id="pg-quarterly">
+  <div class="sec-lbl">Quarterly Analysis</div>
+  <div class="qtabs" id="qtabs">
+    <button class="qtab on" onclick="setQ('Q1',this)">Q1 · Jan–Mar</button>
+    <button class="qtab" onclick="setQ('Q2',this)">Q2 · Apr–Jun</button>
+    <button class="qtab" onclick="setQ('Q3',this)">Q3 · Jul–Sep</button>
+    <button class="qtab" onclick="setQ('Q4',this)">Q4 · Oct–Dec</button>
+  </div>
+  <div id="qC"></div>
+</div>
+
+<!-- ANNUAL -->
+<div class="page" id="pg-annual">
+  <div class="sec-lbl">Annual Performance Report</div>
+  <div id="annC"></div>
+</div>
+
+<!-- EMPLOYEES -->
+<div class="page" id="pg-employees">
+  <div class="sec-lbl">Employee Profiles</div>
+  <div id="empG"></div>
+</div>
+
+<!-- CRITERIA -->
+<div class="page" id="pg-criteria">
+  <div class="sec-lbl">Review Criteria Configuration</div>
+  <div class="cc" style="margin-bottom:16px">
+    <div class="ct">Criteria & Weights</div>
+    <div class="cs">Adjust weights to match your organization. Total must equal 100%.</div>
+    <div class="cg" id="critG"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+      <div style="flex:1;font-size:12px;color:var(--muted)">Total: <span id="twt" style="font-weight:700">0%</span></div>
+      <button class="btn btn-sm" onclick="resetCrit()">Reset</button>
+      <button class="btn btn-acc btn-sm" onclick="saveCrit()">Save Criteria</button>
+    </div>
+  </div>
+  <div class="cc">
+    <div class="ct">Rating Scale Reference</div>
+    <div class="rs-row">
+      <div class="rsc" style="background:var(--green-bg)"><div class="rsc-s sc-ex">5.0</div><div class="rsc-l" style="color:var(--green)">Exceptional</div></div>
+      <div class="rsc" style="background:var(--blue-bg)"><div class="rsc-s sc-gd">4.0</div><div class="rsc-l" style="color:var(--blue)">Exceeds</div></div>
+      <div class="rsc" style="background:var(--gold-bg)"><div class="rsc-s sc-av">3.0</div><div class="rsc-l" style="color:var(--gold)">Meets</div></div>
+      <div class="rsc" style="background:var(--red-bg)"><div class="rsc-s sc-lo">2.0</div><div class="rsc-l" style="color:var(--accent)">Developing</div></div>
+      <div class="rsc" style="background:var(--bg2)"><div class="rsc-s" style="color:var(--muted)">1.0</div><div class="rsc-l" style="color:var(--muted)">Unsat.</div></div>
+    </div>
+    <table class="dt">
+      <thead><tr><th>Range</th><th>Rating</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="sc-ex" style="font-weight:700">4.5–5.0</td><td><span class="bdg bg">Exceptional</span></td><td style="color:var(--muted)">Consistently exceeds all expectations; role model for peers</td></tr>
+        <tr><td class="sc-gd" style="font-weight:700">3.5–4.4</td><td><span class="bdg bb">Exceeds</span></td><td style="color:var(--muted)">Regularly exceeds expectations in most areas</td></tr>
+        <tr><td class="sc-av" style="font-weight:700">2.5–3.4</td><td><span class="bdg bo">Meets</span></td><td style="color:var(--muted)">Consistently meets expectations; solid performer</td></tr>
+        <tr><td class="sc-lo" style="font-weight:700">1.5–2.4</td><td><span class="bdg br2">Developing</span></td><td style="color:var(--muted)">Partially meets expectations; improvement plan recommended</td></tr>
+        <tr><td style="color:var(--muted);font-weight:700">1.0–1.4</td><td><span class="bdg br2">Unsat.</span></td><td style="color:var(--muted)">Does not meet minimum expectations</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- REVIEW MODAL -->
+<div id="rvMod" class="modal-ov" style="display:none" onclick="if(event.target===this)closeReview()">
+  <div class="modal">
+    <h2>New Performance Review</h2>
+    <div class="modal-sub">Record a quarterly or annual review for an employee</div>
+    <div class="g2">
+      <div class="fld"><label>Employee Name</label><input id="rEmp" type="text" placeholder="Full name" list="empDL"></div>
+      <div class="fld"><label>Department / Role</label><input id="rRole" type="text" placeholder="e.g. Engineering"></div>
+    </div>
+    <div class="g2">
+      <div class="fld"><label>Review Period</label>
+        <select id="rPer">
+          <option value="Q1-2025">Q1 2025</option><option value="Q2-2025">Q2 2025</option>
+          <option value="Q3-2025">Q3 2025</option><option value="Q4-2025">Q4 2025</option>
+          <option value="Annual-2025">Annual 2025</option>
+          <option value="Q1-2024">Q1 2024</option><option value="Q2-2024">Q2 2024</option>
+          <option value="Q3-2024">Q3 2024</option><option value="Q4-2024">Q4 2024</option>
+          <option value="Annual-2024">Annual 2024</option>
+        </select>
+      </div>
+      <div class="fld"><label>Reviewer</label><input id="rRvr" type="text" placeholder="Reviewer name"></div>
+    </div>
+    <div class="sec-lbl" style="margin-bottom:12px">Scores <span style="font-size:10px;font-weight:400;text-transform:none;letter-spacing:0">(1=Unsatisfactory → 5=Exceptional)</span></div>
+    <div id="rvFields"></div>
+    <div class="fld" style="margin-top:10px"><label>Notes / Comments</label><textarea id="rNotes" placeholder="Key observations, achievements, areas for improvement…"></textarea></div>
+    <div class="g2">
+      <div class="fld"><label>Tasks Total</label><input id="rTT" type="number" min="0" placeholder="e.g. 20"></div>
+      <div class="fld"><label>Tasks Completed</label><input id="rTD" type="number" min="0" placeholder="e.g. 18"></div>
+    </div>
+    <div class="modal-acts">
+      <button class="btn" onclick="closeReview()">Cancel</button>
+      <button class="btn btn-acc" onclick="saveReview()">Save Review</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div id="impMod" class="modal-ov" style="display:none" onclick="if(event.target===this)closeImport()">
+  <div class="modal" style="width:610px">
+    <h2>Import from Excel</h2>
+    <div class="modal-sub">Upload an .xlsx, .xls, or .csv file to populate performance data</div>
+    <div class="ig">
+      <div class="ig-t">📋 Expected Column Names</div>
+      <ol>
+        <li>Required: <code>Employee</code> (or <code>Name</code>) and <code>Period</code> (e.g. <code>Q1-2025</code>)</li>
+        <li>Optional: <code>Role</code>, <code>Reviewer</code>, <code>Notes</code>, <code>TasksTotal</code>, <code>TasksDone</code></li>
+        <li>Score columns (1–5): <code>TaskCompletion</code>, <code>Quality</code>, <code>Collaboration</code>, <code>Initiative</code>, <code>Punctuality</code>, <code>Goals</code></li>
+        <li>Or a single <code>Score</code> / <code>Overall</code> column — it will be applied to all criteria</li>
+        <li>Download the template below, fill it in Excel, and re-upload</li>
+      </ol>
+    </div>
+    <div class="iz" id="dropZone" onclick="document.getElementById('xlsxF').click()">
+      <div style="font-size:28px;margin-bottom:8px">📂</div>
+      <div style="font-size:13px;font-weight:500;margin-bottom:3px">Click to upload or drag & drop</div>
+      <div style="font-size:11px;color:var(--muted)">Supports .xlsx · .xls · .csv</div>
+      <input type="file" id="xlsxF" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(event)">
+    </div>
+    <div id="impPrev" style="margin-top:14px"></div>
+    <div class="modal-acts">
+      <button class="btn" onclick="dlTemplate()">⬇ Template</button>
+      <button class="btn" onclick="closeImport()">Cancel</button>
+      <button class="btn btn-acc" id="impBtn" style="display:none" onclick="doImport()">Import Data</button>
+    </div>
+  </div>
+</div>
+
+<!-- EMPLOYEE DETAIL MODAL -->
+<div id="empMod" class="modal-ov" style="display:none" onclick="if(event.target===this)closeEmpMod()">
+  <div class="modal" style="width:640px">
+    <div id="empModB"></div>
+    <div class="modal-acts">
+      <button class="btn" onclick="closeEmpMod()">Close</button>
+      <button class="btn btn-acc" onclick="reviewForEmp()">Add Review</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="empDL"></datalist>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let reviews=[], importRows=[], selQ='Q1', empF='all', yrF='2025', empModal=null;
+const SK='perfRv4';
+
+let criteria=[
+  {id:'task_completion',name:'Task Completion',weight:25,desc:'Tasks completed on time'},
+  {id:'quality',name:'Work Quality',weight:25,desc:'Quality and accuracy of delivered work'},
+  {id:'collaboration',name:'Collaboration',weight:15,desc:'Teamwork and communication'},
+  {id:'initiative',name:'Initiative',weight:15,desc:'Proactiveness and self-direction'},
+  {id:'punctuality',name:'Punctuality',weight:10,desc:'Meeting deadlines and time management'},
+  {id:'goals',name:'Goal Achievement',weight:10,desc:'Progress toward agreed goals'},
+];
+
+// ── THEME ─────────────────────────────────────────────────────────────────────
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  document.querySelectorAll('.td').forEach(d=>d.classList.toggle('on',d.dataset.t===t));
+  localStorage.setItem('prvTheme',t);
+  // re-render active tab after theme change (charts use CSS vars)
+  setTimeout(()=>{ const a=document.querySelector('.tbn.on'); if(a)a.click(); },50);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function ws(s){ let t=0,w=0; criteria.forEach(c=>{ if(s[c.id]!=null){t+=s[c.id]*c.weight;w+=c.weight;} }); return w?(t/w):0; }
+function wsFmt(s){ return ws(s).toFixed(2); }
+function sc(s){ s=+s; if(s>=4.5)return'sc-ex'; if(s>=3.5)return'sc-gd'; if(s>=2.5)return'sc-av'; return'sc-lo'; }
+function bdg(s){ s=+s;
+  if(s>=4.5)return'<span class="bdg bg">Exceptional</span>';
+  if(s>=3.5)return'<span class="bdg bb">Exceeds</span>';
+  if(s>=2.5)return'<span class="bdg bo">Meets</span>';
+  if(s>=1.5)return'<span class="bdg br2">Developing</span>';
+  return'<span class="bdg br2">Unsat.</span>';
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function nc(n){ if(!n)return'#78716c'; const p=['#c2410c','#1d4ed8','#15803d','#b45309','#7c3aed','#0f766e','#be185d','#0369a1']; let h=0; for(let i=0;i<n.length;i++)h=(h*31+n.charCodeAt(i))&0xfffffff; return p[Math.abs(h)%p.length]; }
+function ini(n){ return (n||'?').split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2); }
+function emps(){ return[...new Set(reviews.map(r=>r.employee))].filter(Boolean).sort(); }
+function filt(){ return reviews.filter(r=>(empF==='all'||r.employee===empF)&&r.period.includes(yrF)); }
+function pq(p){ if(p.startsWith('Q1'))return'Q1'; if(p.startsWith('Q2'))return'Q2'; if(p.startsWith('Q3'))return'Q3'; if(p.startsWith('Q4'))return'Q4'; return'Annual'; }
+function uid(){ return'r'+Date.now()+Math.random().toString(36).slice(2,6); }
+function toast(msg,c){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.borderLeftColor=c||'var(--green)';
+  t.classList.add('on'); setTimeout(()=>t.classList.remove('on'),3200);
+}
+function cssVar(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+// ── PERSIST ───────────────────────────────────────────────────────────────────
+function save(){ try{localStorage.setItem(SK,JSON.stringify({reviews,criteria}));}catch(e){} }
+function loadSt(){
+  try{ const r=localStorage.getItem(SK); if(!r)return false; const s=JSON.parse(r); if(s.reviews)reviews=s.reviews; if(s.criteria)criteria=s.criteria; return true; }
+  catch(e){return false;}
+}
+function seed(){
+  reviews=[
+    {id:'r1',employee:'Alex Rivera',role:'Frontend Engineer',period:'Q1-2025',reviewer:'Maria Santos',scores:{task_completion:4.5,quality:4.2,collaboration:4.8,initiative:4.0,punctuality:3.8,goals:4.3},notes:'Exceptional on dashboard redesign. Mentored two junior devs.',date:'2025-03-31',kanban:{total:18,done:16}},
+    {id:'r2',employee:'Alex Rivera',role:'Frontend Engineer',period:'Q2-2025',reviewer:'Maria Santos',scores:{task_completion:4.8,quality:4.5,collaboration:4.6,initiative:4.4,punctuality:4.2,goals:4.7},notes:'Led the component library initiative.',date:'2025-06-30',kanban:{total:22,done:21}},
+    {id:'r3',employee:'Jordan Kim',role:'Backend Engineer',period:'Q1-2025',reviewer:'Maria Santos',scores:{task_completion:3.8,quality:4.3,collaboration:3.5,initiative:3.9,punctuality:3.2,goals:3.7},notes:'Good technical output. Needs better communication.',date:'2025-03-31',kanban:{total:14,done:10}},
+    {id:'r4',employee:'Jordan Kim',role:'Backend Engineer',period:'Q2-2025',reviewer:'Maria Santos',scores:{task_completion:4.1,quality:4.4,collaboration:3.9,initiative:4.1,punctuality:3.8,goals:4.0},notes:'Improved communication. API refactor ahead of schedule.',date:'2025-06-30',kanban:{total:16,done:14}},
+    {id:'r5',employee:'Priya Nair',role:'Product Designer',period:'Q1-2025',reviewer:'Liam Park',scores:{task_completion:5.0,quality:4.9,collaboration:4.7,initiative:4.8,punctuality:4.6,goals:5.0},notes:'Outstanding. Delivered design system 2 weeks early.',date:'2025-03-31',kanban:{total:20,done:20}},
+    {id:'r6',employee:'Priya Nair',role:'Product Designer',period:'Q2-2025',reviewer:'Liam Park',scores:{task_completion:4.8,quality:4.7,collaboration:4.9,initiative:4.6,punctuality:4.5,goals:4.8},notes:'User testing sessions yielded critical insights.',date:'2025-06-30',kanban:{total:18,done:17}},
+    {id:'r7',employee:'Marco De Luca',role:'QA Engineer',period:'Q1-2025',reviewer:'Liam Park',scores:{task_completion:2.5,quality:3.0,collaboration:3.2,initiative:2.2,punctuality:2.0,goals:2.4},notes:'Missed 4 of 6 sprint deadlines. PIP recommended.',date:'2025-03-31',kanban:{total:12,done:6}},
+    {id:'r8',employee:'Marco De Luca',role:'QA Engineer',period:'Q2-2025',reviewer:'Liam Park',scores:{task_completion:3.2,quality:3.5,collaboration:3.4,initiative:2.8,punctuality:3.0,goals:3.1},notes:'Improvement shown following PIP.',date:'2025-06-30',kanban:{total:14,done:10}},
+  ];
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tbn').forEach(b=>b.classList.remove('on'));
+  document.getElementById('pg-'+name).classList.add('on');
+  btn.classList.add('on');
+  renderT(name);
+}
+function renderT(n){ if(n==='overview')rOv(); else if(n==='quarterly')rQ(); else if(n==='annual')rAnn(); else if(n==='employees')rEmps(); else if(n==='criteria')rCrit(); }
+function applyF(){ empF=document.getElementById('empFilter').value; yrF=document.getElementById('yrFilter').value; const a=document.querySelector('.tbn.on'); const t=a?.getAttribute('onclick')?.match(/'(\w+)'/)?.[1]||'overview'; renderT(t); }
+
+// ── OVERVIEW ──────────────────────────────────────────────────────────────────
+function rOv(){
+  const data=filt(), es=[...new Set(data.map(r=>r.employee))];
+  const ss=data.map(r=>ws(r.scores)), avg=ss.length?(ss.reduce((a,b)=>a+b,0)/ss.length).toFixed(2):'—';
+  const tot=data.reduce((a,r)=>a+(r.kanban?.total||0),0), done=data.reduce((a,r)=>a+(r.kanban?.done||0),0);
+  const comp=tot?Math.round(done/tot*100):0, tops=ss.length?Math.max(...ss).toFixed(2):'—';
+
+  document.getElementById('kpiG').innerHTML=`
+    <div class="kpi" style="--kc:var(--accent)"><div class="kpi-bar"></div><div class="kpi-ico">🎯</div><div class="kpi-lbl">Avg Score</div><div class="kpi-val ${sc(avg)}">${avg}</div><div class="kpi-sub">weighted average</div></div>
+    <div class="kpi" style="--kc:var(--blue)"><div class="kpi-bar"></div><div class="kpi-ico">👥</div><div class="kpi-lbl">Employees</div><div class="kpi-val">${es.length}</div><div class="kpi-sub">in current view</div></div>
+    <div class="kpi" style="--kc:var(--green)"><div class="kpi-bar"></div><div class="kpi-ico">✅</div><div class="kpi-lbl">Task Rate</div><div class="kpi-val ${sc(comp/20)}">${comp}%</div><div class="kpi-sub">${done}/${tot} tasks</div></div>
+    <div class="kpi" style="--kc:var(--gold)"><div class="kpi-bar"></div><div class="kpi-ico">📋</div><div class="kpi-lbl">Reviews</div><div class="kpi-val">${data.length}</div><div class="kpi-sub">recorded entries</div></div>
+    <div class="kpi" style="--kc:var(--purple)"><div class="kpi-bar"></div><div class="kpi-ico">🏆</div><div class="kpi-lbl">Top Score</div><div class="kpi-val ${sc(tops)}">${tops}</div><div class="kpi-sub">highest individual</div></div>`;
+
+  // Trend canvas
+  const canvas=document.getElementById('trendC');
+  const W=Math.max(canvas.parentElement.clientWidth-44,200);
+  canvas.width=W; canvas.height=110;
+  const ctx=canvas.getContext('2d');
+  const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const md=MN.map((_,i)=>{ const mrs=data.filter(r=>new Date(r.date).getMonth()===i); const s=mrs.map(r=>ws(r.scores)); return s.length?s.reduce((a,b)=>a+b,0)/s.length:0; });
+  const cH=95, bW=(W/12)-6;
+  ctx.clearRect(0,0,W,cH+20);
+  const G=cssVar('--green'),B=cssVar('--blue'),GO=cssVar('--gold'),A=cssVar('--accent'),BG2=cssVar('--bg2'),MU=cssVar('--muted'),TX=cssVar('--text');
+  md.forEach((v,i)=>{
+    const x=i*(W/12)+3, h=v?(v/5)*cH*.88:3, y=cH-h;
+    ctx.fillStyle=v>=4.5?G:v>=3.5?B:v>=2.5?GO:v>0?A:BG2;
+    ctx.globalAlpha=v>0?1:.4;
+    ctx.beginPath(); ctx.roundRect(x,y,bW,h,[3,3,0,0]); ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.fillStyle=MU; ctx.font='9px Epilogue,sans-serif'; ctx.textAlign='center';
+    ctx.fillText(MN[i].slice(0,1),x+bW/2,cH+14);
+    if(v>0){ ctx.fillStyle=TX; ctx.font='bold 9px Epilogue,sans-serif'; ctx.fillText(v.toFixed(1),x+bW/2,y-3); }
+  });
+
+  // Donut
+  const bands=[{l:'Exceptional (≥4.5)',c:G,n:0},{l:'Exceeds (3.5–4.4)',c:B,n:0},{l:'Meets (2.5–3.4)',c:GO,n:0},{l:'Developing (<2.5)',c:A,n:0}];
+  ss.forEach(v=>{ if(v>=4.5)bands[0].n++; else if(v>=3.5)bands[1].n++; else if(v>=2.5)bands[2].n++; else bands[3].n++; });
+  const tot2=ss.length||1; let ang=-Math.PI/2, paths='';
+  const R=42,cx=55,cy=55, SUR=cssVar('--surface'),BG2v=cssVar('--bg2'),MUv=cssVar('--muted'),TXv=cssVar('--text');
+  bands.forEach(b=>{ const a=(b.n/tot2)*Math.PI*2; if(!a)return; const x1=cx+R*Math.cos(ang),y1=cy+R*Math.sin(ang),x2=cx+R*Math.cos(ang+a),y2=cy+R*Math.sin(ang+a); paths+=`<path d="M${cx},${cy} L${x1},${y1} A${R},${R},0,${a>Math.PI?1:0},1,${x2},${y2} Z" fill="${b.c}" opacity=".85"/>`; ang+=a; });
+  document.getElementById('donutW').innerHTML=`
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <svg width="110" height="110" viewBox="0 0 110 110" style="flex-shrink:0">
+        <circle cx="${cx}" cy="${cy}" r="${R}" fill="${BG2v}"/>${paths}
+        <circle cx="${cx}" cy="${cy}" r="26" fill="${SUR}"/>
+        <text x="${cx}" y="${cy-3}" text-anchor="middle" font-family="Playfair Display,serif" font-size="16" font-weight="700" fill="${TXv}">${tot2}</text>
+        <text x="${cx}" y="${cy+12}" text-anchor="middle" font-family="Epilogue,sans-serif" font-size="9" fill="${MUv}">reviews</text>
+      </svg>
+      <div style="display:flex;flex-direction:column;gap:7px;flex:1">${bands.map(b=>`<div style="display:flex;align-items:center;gap:7px;font-size:11px"><div style="width:8px;height:8px;border-radius:2px;background:${b.c};flex-shrink:0"></div><span style="color:var(--muted)">${b.l}</span><span style="margin-left:auto;font-weight:600;color:var(--text)">${b.n}</span></div>`).join('')}
+      </div>
+    </div>`;
+
+  // Top performers
+  const ea=es.map(e=>{ const s=data.filter(r=>r.employee===e).map(r=>ws(r.scores)); return{n:e,a:s.length?s.reduce((x,y)=>x+y,0)/s.length:0}; }).sort((a,b)=>b.a-a.a).slice(0,6);
+  document.getElementById('topB').innerHTML=ea.length?ea.map(e=>`<div class="br"><div class="bl-lbl">${esc(e.n.split(' ')[0])}</div><div class="bt"><div class="bf" style="width:${e.a/5*100}%;background:${nc(e.n)}"></div></div><div class="bv ${sc(e.a)}">${e.a.toFixed(1)}</div></div>`).join(''):`<div style="color:var(--muted);text-align:center;padding:20px;font-size:12px">No data yet</div>`;
+
+  // Criteria bars
+  document.getElementById('critB').innerHTML=criteria.map(c=>{ const v=data.map(r=>r.scores[c.id]).filter(v=>v!=null); const a=v.length?v.reduce((x,y)=>x+y,0)/v.length:0; return`<div class="br"><div class="bl-lbl">${esc(c.name)}</div><div class="bt"><div class="bf" style="width:${a/5*100}%;background:${nc(c.id)}"></div></div><div class="bv ${sc(a)}">${a.toFixed(2)}</div></div>`; }).join('');
+
+  // Heatmap
+  const MNAMES=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const hv=MNAMES.map((_,i)=>{ const mr=data.filter(r=>new Date(r.date).getMonth()===i); if(!mr.length)return 0; return mr.map(r=>ws(r.scores)).reduce((a,b)=>a+b,0)/mr.length/5; });
+  document.getElementById('hm').innerHTML=hv.map((v,i)=>{ const c=v===0?'var(--bg2)':v>0.7?`rgba(21,128,61,${.3+v*.65})`:v>0.4?`rgba(180,83,9,${.3+v*.65})`:`rgba(194,65,12,${.3+v*.65})`; return`<div class="hmc" style="background:${c}" title="${MNAMES[i]}: ${v?(v*5).toFixed(1):0}/5.0"></div>`; }).join('');
+  document.getElementById('hml').innerHTML=MNAMES.map(m=>`<div class="hmll">${m.slice(0,1)}</div>`).join('');
+}
+
+// ── QUARTERLY ─────────────────────────────────────────────────────────────────
+function setQ(q,btn){ selQ=q; document.querySelectorAll('.qtab').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); rQ(); }
+function rQ(){
+  const qr=filt().filter(r=>pq(r.period)===selQ), el=document.getElementById('qC');
+  if(!qr.length){ el.innerHTML=`<div class="empty"><div class="empty-ico">📊</div><h3>No reviews for ${selQ} ${yrF}</h3><p>Add reviews manually or import an Excel file for this period.</p></div>`; return; }
+  const ss=qr.map(r=>ws(r.scores)), avg=(ss.reduce((a,b)=>a+b,0)/ss.length).toFixed(2);
+  const tot=qr.reduce((a,r)=>a+(r.kanban?.total||0),0), done=qr.reduce((a,r)=>a+(r.kanban?.done||0),0);
+  const ca=criteria.map(c=>{ const v=qr.map(r=>r.scores[c.id]).filter(v=>v!=null); return{...c,a:v.length?v.reduce((x,y)=>x+y,0)/v.length:0}; });
+  el.innerHTML=`
+    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));margin-bottom:20px">
+      <div class="kpi" style="--kc:var(--accent)"><div class="kpi-bar"></div><div class="kpi-ico">🎯</div><div class="kpi-lbl">Quarter Avg</div><div class="kpi-val ${sc(avg)}">${avg}</div><div class="kpi-sub">${selQ} ${yrF}</div></div>
+      <div class="kpi" style="--kc:var(--blue)"><div class="kpi-bar"></div><div class="kpi-ico">📋</div><div class="kpi-lbl">Reviews</div><div class="kpi-val">${qr.length}</div><div class="kpi-sub">entries</div></div>
+      <div class="kpi" style="--kc:var(--green)"><div class="kpi-bar"></div><div class="kpi-ico">✅</div><div class="kpi-lbl">Tasks Done</div><div class="kpi-val">${done}</div><div class="kpi-sub">of ${tot}</div></div>
+    </div>
+    <div class="crow">
+      <div class="cc"><div class="ct">Criteria Breakdown</div><div class="cs">Avg per criterion this quarter</div><div class="bl">${ca.map(c=>`<div class="br"><div class="bl-lbl">${esc(c.name)}</div><div class="bt"><div class="bf" style="width:${c.a/5*100}%;background:${nc(c.id)}"></div></div><div class="bv ${sc(c.a)}">${c.a.toFixed(1)}</div></div>`).join('')}</div></div>
+      <div class="cc"><div class="ct">Rankings — ${selQ} ${yrF}</div><div class="cs">Sorted by weighted score</div>
+        <table class="dt"><thead><tr><th>#</th><th>Employee</th><th>Score</th><th>Rating</th></tr></thead>
+        <tbody>${[...qr].sort((a,b)=>ws(b.scores)-ws(a.scores)).map((r,i)=>{ const s=ws(r.scores); return`<tr><td style="color:var(--muted);font-weight:700">${i+1}</td><td><div style="display:flex;align-items:center;gap:8px"><div class="av" style="background:${nc(r.employee)}">${ini(r.employee)}</div>${esc(r.employee)}</div></td><td><span class="${sc(s)}" style="font-weight:700;font-size:14px">${s.toFixed(2)}</span></td><td>${bdg(s)}</td></tr>`; }).join('')}</tbody></table>
+      </div>
+    </div>
+    <div class="cc" style="margin-top:15px"><div class="ct">Detailed Scores</div>
+      <table class="dt"><thead><tr><th>Employee</th><th>Role</th>${criteria.map(c=>`<th>${esc(c.name.split(' ')[0])}</th>`).join('')}<th>Overall</th><th>Rating</th></tr></thead>
+      <tbody>${qr.map(r=>{ const s=ws(r.scores); return`<tr><td style="font-weight:600">${esc(r.employee)}</td><td style="color:var(--muted)">${esc(r.role)}</td>${criteria.map(c=>`<td><span class="${sc(r.scores[c.id]||0)}">${(r.scores[c.id]||0).toFixed(1)}</span></td>`).join('')}<td><span class="${sc(s)}" style="font-weight:700;font-size:14px">${s.toFixed(2)}</span></td><td>${bdg(s)}</td></tr>`; }).join('')}</tbody></table>
+    </div>`;
+}
+
+// ── ANNUAL ────────────────────────────────────────────────────────────────────
+function rAnn(){
+  const data=filt(), el=document.getElementById('annC'), es=[...new Set(data.map(r=>r.employee))];
+  if(!data.length){ el.innerHTML=`<div class="empty"><div class="empty-ico">📋</div><h3>No data for ${yrF}</h3><p>Add quarterly reviews or import an Excel file.</p></div>`; return; }
+  const rows=es.map(e=>{ const er=data.filter(r=>r.employee===e); const ss=er.map(r=>ws(r.scores)); const a=ss.length?ss.reduce((x,y)=>x+y,0)/ss.length:0; const t=er.reduce((x,r)=>x+(r.kanban?.total||0),0),d=er.reduce((x,r)=>x+(r.kanban?.done||0),0); const qs=['Q1','Q2','Q3','Q4'].map(q=>{ const qr=er.find(r=>pq(r.period)===q); return qr?ws(qr.scores):null; }); return{e,role:er[0]?.role||'',a,t,d,qs,er}; }).sort((a,b)=>b.a-a.a);
+  const BD=cssVar('--border'),MU=cssVar('--muted'),SU=cssVar('--surface');
+  const W=380,H=148,mL=28,mR=12,mT=12,mB=22,iW=W-mL-mR,iH=H-mT-mB;
+  let svg=`<svg width="100%" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  [1,2,3,4,5].forEach(v=>{ const y=mT+iH-((v/5)*iH); svg+=`<line x1="${mL}" y1="${y}" x2="${W-mR}" y2="${y}" stroke="${BD}" stroke-width="1"/><text x="${mL-4}" y="${y+3}" text-anchor="end" font-size="8" fill="${MU}">${v}</text>`; });
+  ['Q1','Q2','Q3','Q4'].forEach((q,i)=>{ svg+=`<text x="${mL+i*(iW/3)}" y="${H-4}" text-anchor="middle" font-size="9" fill="${MU}">${q}</text>`; });
+  rows.slice(0,6).forEach(r=>{ const c=nc(r.e); let pts=[]; r.qs.forEach((s,i)=>{ if(s!=null)pts.push({x:mL+i*(iW/3),y:mT+iH-((s/5)*iH)}); }); if(pts.length>1)svg+=`<polyline points="${pts.map(p=>`${p.x},${p.y}`).join(' ')}" fill="none" stroke="${c}" stroke-width="2" opacity=".85" stroke-linejoin="round"/>`; pts.forEach(p=>svg+=`<circle cx="${p.x}" cy="${p.y}" r="4" fill="${c}" stroke="${SU}" stroke-width="2"/>`); });
+  svg+=`</svg>`;
+  const legend=rows.slice(0,6).map(r=>`<div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)"><div style="width:14px;height:2px;background:${nc(r.e)};border-radius:1px"></div>${esc(r.e.split(' ')[0])}</div>`).join('');
+
+  el.innerHTML=`
+    <div class="cc" style="margin-bottom:16px"><div class="ct">Annual Summary — ${yrF}</div>
+      <table class="dt"><thead><tr><th>#</th><th>Employee</th><th>Role</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Avg</th><th>Tasks</th><th>Rating</th><th></th></tr></thead>
+      <tbody>${rows.map((r,i)=>`<tr>
+        <td style="color:var(--muted);font-weight:700">${i+1}</td>
+        <td><div style="display:flex;align-items:center;gap:8px"><div class="av" style="background:${nc(r.e)}">${ini(r.e)}</div><span style="font-weight:600">${esc(r.e)}</span></div></td>
+        <td style="color:var(--muted);font-size:11px">${esc(r.role)}</td>
+        ${r.qs.map(q=>q!=null?`<td><span class="${sc(q)}" style="font-weight:600">${q.toFixed(1)}</span></td>`:'<td style="color:var(--muted)">—</td>').join('')}
+        <td><span class="${sc(r.a)}" style="font-weight:700;font-size:15px">${r.a.toFixed(2)}</span></td>
+        <td style="color:var(--muted)">${r.d}/${r.t}</td>
+        <td>${bdg(r.a)}</td>
+        <td><button class="btn btn-sm" onclick="openEmpD('${esc(r.e)}')">View</button></td>
+      </tr>`).join('')}</tbody></table>
+    </div>
+    <div class="crow">
+      <div class="cc"><div class="ct">Score Progression</div><div class="cs">Q1→Q4 trend per employee</div>${svg}<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">${legend}</div></div>
+      <div class="cc"><div class="ct">Annual Criteria Avgs</div><div class="cs">Across all employees & quarters</div><div class="bl" style="margin-top:8px">${criteria.map(c=>{ const v=data.map(r=>r.scores[c.id]).filter(v=>v!=null); const a=v.length?v.reduce((x,y)=>x+y,0)/v.length:0; return`<div class="br"><div class="bl-lbl">${esc(c.name)}</div><div class="bt"><div class="bf" style="width:${a/5*100}%;background:${nc(c.id)}"></div></div><div class="bv ${sc(a)}">${a.toFixed(2)}</div></div>`; }).join('')}</div></div>
+    </div>
+    <div class="cc" style="margin-top:15px"><div class="ct">Review Notes</div><div style="margin-top:12px">${data.filter(r=>r.notes).map(r=>`<div class="nc"><div class="nc-m"><span>${esc(r.employee)} · ${esc(r.period)}</span><span>Reviewer: ${esc(r.reviewer||'N/A')}</span></div><div class="nc-t">${esc(r.notes)}</div></div>`).join('')||'<div style="color:var(--muted);font-size:12px">No notes recorded.</div>'}</div></div>`;
+}
+
+// ── EMPLOYEES ─────────────────────────────────────────────────────────────────
+function rEmps(){
+  const all=emps(), el=document.getElementById('empG');
+  if(!all.length){ el.innerHTML=`<div class="empty"><div class="empty-ico">👤</div><h3>No employees yet</h3><p>Add reviews to see employee profiles here.</p></div>`; return; }
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(286px,1fr));gap:14px">${all.map(e=>{ const er=reviews.filter(r=>r.employee===e); const ss=er.map(r=>ws(r.scores)); const a=ss.length?ss.reduce((x,y)=>x+y,0)/ss.length:0; const t=er.reduce((x,r)=>x+(r.kanban?.total||0),0),d=er.reduce((x,r)=>x+(r.kanban?.done||0),0); return`<div class="emp-card" onclick="openEmpD('${esc(e)}')"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px"><div class="av av-lg" style="background:${nc(e)}">${ini(e)}</div><div style="flex:1"><div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700">${esc(e)}</div><div style="font-size:11px;color:var(--muted)">${esc(er[0]?.role||'')}</div></div><div style="text-align:right"><div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700" class="${sc(a)}">${a.toFixed(2)}</div><div style="font-size:10px;color:var(--muted)">avg score</div></div></div><div class="br" style="margin-bottom:7px"><div class="bl-lbl" style="min-width:80px;font-size:11px;color:var(--muted)">Completion</div><div class="bt"><div class="bf" style="width:${t?d/t*100:0}%;background:var(--green)"></div></div><div class="bv sc-gd">${t?Math.round(d/t*100):0}%</div></div><div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px">${bdg(a)}<span style="font-size:11px;color:var(--muted)">${er.length} review${er.length!==1?'s':''}</span></div></div>`; }).join('')}</div>`;
+}
+
+let curEmp=null;
+function openEmpD(e){
+  curEmp=e;
+  const er=reviews.filter(r=>r.employee===e).sort((a,b)=>a.period.localeCompare(b.period));
+  const ss=er.map(r=>ws(r.scores)), a=ss.length?ss.reduce((x,y)=>x+y,0)/ss.length:0;
+  const t=er.reduce((x,r)=>x+(r.kanban?.total||0),0),d=er.reduce((x,r)=>x+(r.kanban?.done||0),0);
+  const ca=criteria.map(c=>{ const v=er.map(r=>r.scores[c.id]).filter(v=>v!=null); return{...c,a:v.length?v.reduce((x,y)=>x+y,0)/v.length:0}; });
+  document.getElementById('empModB').innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+      <div class="av" style="width:54px;height:54px;font-size:18px;font-weight:700;background:${nc(e)}">${ini(e)}</div>
+      <div style="flex:1"><div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700">${esc(e)}</div><div style="font-size:12px;color:var(--muted)">${esc(er[0]?.role||'')}</div></div>
+      <div style="text-align:right"><div style="font-family:'Playfair Display',serif;font-size:36px;font-weight:700" class="${sc(a)}">${a.toFixed(2)}</div><div style="font-size:10px;color:var(--muted)">overall avg</div><div style="margin-top:4px">${bdg(a)}</div></div>
+    </div>
+    <div class="g2" style="margin-bottom:16px">
+      <div><div class="sec-lbl" style="margin-bottom:10px">Criteria Scores</div><div class="bl">${ca.map(c=>`<div class="br"><div class="bl-lbl">${esc(c.name)}</div><div class="bt"><div class="bf" style="width:${c.a/5*100}%;background:${nc(c.id)}"></div></div><div class="bv ${sc(c.a)}">${c.a.toFixed(1)}</div></div>`).join('')}</div></div>
+      <div><div class="sec-lbl" style="margin-bottom:10px">Review Timeline</div><div class="tl">${er.map(r=>{ const s=ws(r.scores); return`<div class="tli"><div class="tli-d">${r.period} · ${esc(r.reviewer||'N/A')}</div><div class="tli-b"><span class="${sc(s)}" style="font-weight:700">${s.toFixed(2)}</span> ${bdg(s)}${r.notes?`<br><span style="color:var(--muted);font-size:11px">${esc(r.notes)}</span>`:''}</div></div>`;}).join('')||'<div style="color:var(--muted);font-size:12px">No reviews yet.</div>'}</div></div>
+    </div>
+    <div class="sec-lbl" style="margin-bottom:10px">Task Stats</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">${[{v:d,l:'Completed',c:'var(--green)'},{v:t,l:'Assigned',c:'var(--blue)'},{v:t?Math.round(d/t*100):0,l:'Rate %',c:'var(--accent)'},{v:er.length,l:'Reviews',c:'var(--purple)'}].map(x=>`<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center"><div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700;color:${x.c}">${x.v}</div><div style="font-size:10px;color:var(--muted);margin-top:3px">${x.l}</div></div>`).join('')}</div>`;
+  document.getElementById('empMod').style.display='flex';
+}
+function closeEmpMod(){ document.getElementById('empMod').style.display='none'; }
+function reviewForEmp(){ closeEmpMod(); openReview(curEmp); }
+
+// ── CRITERIA ──────────────────────────────────────────────────────────────────
+function rCrit(){
+  document.getElementById('critG').innerHTML=criteria.map((c,i)=>`<div class="ci"><div class="ci-h"><div class="ci-n">${esc(c.name)}</div><div class="ci-w" id="cw_${c.id}">${c.weight}%</div></div><div class="ci-d">${esc(c.desc)}</div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--muted)">Weight:</span><input class="ci-inp" type="number" min="0" max="100" value="${c.weight}" id="cinp_${c.id}" oninput="updWt(${i},this.value)"><span style="font-size:11px;color:var(--muted)">%</span></div></div>`).join('');
+  updTW();
+}
+function updWt(i,v){ criteria[i].weight=parseInt(v)||0; const el=document.getElementById('cw_'+criteria[i].id); if(el)el.textContent=criteria[i].weight+'%'; updTW(); }
+function updTW(){ const tot=criteria.reduce((a,c)=>a+c.weight,0); const el=document.getElementById('twt'); el.textContent=tot+'%'; el.style.color=tot===100?'var(--green)':tot>100?'var(--accent)':'var(--gold)'; }
+function saveCrit(){ const t=criteria.reduce((a,c)=>a+c.weight,0); if(t!==100){alert('Weights must total 100%. Current: '+t+'%');return;} save(); toast('Criteria saved!'); }
+function resetCrit(){ criteria=[{id:'task_completion',name:'Task Completion',weight:25,desc:'Tasks completed on time'},{id:'quality',name:'Work Quality',weight:25,desc:'Quality and accuracy of delivered work'},{id:'collaboration',name:'Collaboration',weight:15,desc:'Teamwork and communication'},{id:'initiative',name:'Initiative',weight:15,desc:'Proactiveness and self-direction'},{id:'punctuality',name:'Punctuality',weight:10,desc:'Meeting deadlines and time management'},{id:'goals',name:'Goal Achievement',weight:10,desc:'Progress toward agreed goals'}]; rCrit(); toast('Criteria reset.'); }
+
+// ── REVIEW MODAL ──────────────────────────────────────────────────────────────
+function openReview(preEmp){
+  document.getElementById('rvFields').innerHTML=criteria.map(c=>`<div class="fld" style="margin-bottom:10px"><label>${esc(c.name)} <span style="text-transform:none;letter-spacing:0;font-weight:400;color:var(--muted)">(weight: ${c.weight}%)</span></label><div class="sr-row"><span style="font-size:11px;color:var(--muted)">1</span><input type="range" min="1" max="5" step="0.1" value="3" id="sc_${c.id}" oninput="document.getElementById('sv_${c.id}').textContent=parseFloat(this.value).toFixed(1)" style="accent-color:${nc(c.id)}"><span style="font-size:11px;color:var(--muted)">5</span><div class="sr-num" id="sv_${c.id}">3.0</div></div></div>`).join('');
+  if(preEmp){ document.getElementById('rEmp').value=preEmp; const er=reviews.filter(r=>r.employee===preEmp); if(er[0])document.getElementById('rRole').value=er[0].role; }
+  else{ document.getElementById('rEmp').value=''; document.getElementById('rRole').value=''; }
+  ['rRvr','rNotes','rTT','rTD'].forEach(id=>{ const el=document.getElementById(id); if(el)el.value=''; });
+  document.getElementById('rvMod').style.display='flex';
+}
+function closeReview(){ document.getElementById('rvMod').style.display='none'; }
+function saveReview(){
+  const e=document.getElementById('rEmp').value.trim(); if(!e){alert('Employee name required.');return;}
+  const scores={}; criteria.forEach(c=>{scores[c.id]=parseFloat(document.getElementById('sc_'+c.id).value);});
+  const tt=parseInt(document.getElementById('rTT').value)||0, td=parseInt(document.getElementById('rTD').value)||0;
+  reviews.push({id:uid(),employee:e,role:document.getElementById('rRole').value.trim(),period:document.getElementById('rPer').value,reviewer:document.getElementById('rRvr').value.trim(),scores,notes:document.getElementById('rNotes').value.trim(),date:new Date().toISOString().slice(0,10),kanban:{total:tt,done:td}});
+  save(); updEmpFilter(); closeReview(); toast('Review saved for '+e+'!'); rOv();
+}
+
+// ── EXCEL IMPORT ──────────────────────────────────────────────────────────────
+function openImport(){ document.getElementById('impMod').style.display='flex'; document.getElementById('impPrev').innerHTML=''; document.getElementById('impBtn').style.display='none'; importRows=[]; }
+function closeImport(){ document.getElementById('impMod').style.display='none'; }
+
+window.addEventListener('DOMContentLoaded',()=>{
+  const z=document.getElementById('dropZone');
+  if(z){ z.addEventListener('dragover',e=>{e.preventDefault();z.style.borderColor='var(--accent)';}); z.addEventListener('dragleave',()=>z.style.borderColor=''); z.addEventListener('drop',e=>{e.preventDefault();z.style.borderColor='';const f=e.dataTransfer.files[0];if(f)pFile(f);}); }
+});
+
+function handleFile(e){ const f=e.target.files[0]; if(f)pFile(f); }
+function pFile(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:file.name.endsWith('.csv')?'string':'array'});
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+      prevImport(rows);
+    }catch(err){ document.getElementById('impPrev').innerHTML=`<div style="color:var(--accent);font-size:12px;padding:10px;background:var(--red-bg);border-radius:8px">⚠ ${esc(err.message)}</div>`; }
+  };
+  file.name.endsWith('.csv')?reader.readAsText(file):reader.readAsArrayBuffer(file);
+}
+function prevImport(rows){
+  if(!rows.length){ document.getElementById('impPrev').innerHTML='<div style="color:var(--accent);font-size:12px">No data rows found.</div>'; return; }
+  importRows=rows;
+  const keys=Object.keys(rows[0]);
+  document.getElementById('impPrev').innerHTML=`
+    <div style="font-size:11px;font-weight:600;color:var(--green);margin-bottom:8px">✓ Found ${rows.length} row(s). Columns: ${keys.map(k=>`<code style="background:var(--bg2);padding:1px 5px;border-radius:3px;font-size:10px">${esc(k)}</code>`).join(' ')}</div>
+    <div style="overflow-x:auto;max-height:150px;border:1px solid var(--border);border-radius:8px"><table class="dt" style="font-size:11px"><thead><tr>${keys.slice(0,8).map(k=>`<th>${esc(k)}</th>`).join('')}</tr></thead><tbody>${rows.slice(0,4).map(r=>`<tr>${keys.slice(0,8).map(k=>`<td>${esc(String(r[k]||'').slice(0,28))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  document.getElementById('impBtn').style.display='';
+}
+function fCol(row,...ns){ const ks=Object.keys(row); for(const n of ns){ const h=ks.find(k=>k.toLowerCase().replace(/[\s_-]/g,'')=== n.toLowerCase().replace(/[\s_-]/g,'')); if(h)return row[h]; } return undefined; }
+function doImport(){
+  if(!importRows.length)return;
+  let added=0,skipped=0;
+  importRows.forEach(row=>{
+    const e=String(fCol(row,'Employee','Name','EmployeeName','')||'').trim(); if(!e){skipped++;return;}
+    const scores={};
+    const cm={task_completion:['TaskCompletion','Completion'],quality:['Quality','WorkQuality'],collaboration:['Collaboration','Teamwork'],initiative:['Initiative'],punctuality:['Punctuality','Timeliness'],goals:['Goals','GoalAchievement']};
+    let hasCrit=false;
+    criteria.forEach(c=>{ const v=parseFloat(fCol(row,...(cm[c.id]||[c.name]))||0); if(v>0){scores[c.id]=Math.min(5,v);hasCrit=true;} });
+    if(!hasCrit){ const ov=parseFloat(fCol(row,'Score','Overall','OverallScore','Rating','')||0); criteria.forEach(c=>{scores[c.id]=ov>0?Math.min(5,ov):3;}); }
+    const tt=parseInt(fCol(row,'TasksTotal','TotalTasks','Tasks','')||0)||0, td=parseInt(fCol(row,'TasksDone','DoneTasks','Completed','')||0)||0;
+    reviews.push({id:uid(),employee:e,role:String(fCol(row,'Role','Department','Title','')||'').trim(),period:String(fCol(row,'Period','ReviewPeriod','Quarter','')||'Q1-'+yrF).trim(),reviewer:String(fCol(row,'Reviewer','Manager','')||'').trim(),scores,notes:String(fCol(row,'Notes','Comments','Feedback','')||'').trim(),date:new Date().toISOString().slice(0,10),kanban:{total:tt,done:td}});
+    added++;
+  });
+  save(); updEmpFilter(); closeImport();
+  toast(`Imported ${added} review${added!==1?'s':''}.${skipped?` (${skipped} skipped.)`:''}`, added>0?'var(--green)':'var(--accent)');
+  rOv();
+}
+function dlTemplate(){
+  const wb=XLSX.utils.book_new();
+  const hdr=['Employee','Role','Period','Reviewer','Notes','TasksTotal','TasksDone','TaskCompletion','Quality','Collaboration','Initiative','Punctuality','Goals'];
+  const ex=['Jane Doe','Engineering','Q1-2025','John Smith','Strong quarter. Led the redesign.',20,18,4.5,4.2,4.0,3.8,4.1,4.3];
+  const ws=XLSX.utils.aoa_to_sheet([hdr,ex]);
+  ws['!cols']=hdr.map(()=>({wch:18}));
+  XLSX.utils.book_append_sheet(wb,ws,'Reviews');
+  const inst=[['Column','Description','Example'],['Employee','Full name','Jane Doe'],['Role','Dept or title','Engineering'],['Period','Q1-2025, Q2-2025, Q3-2025, Q4-2025, Annual-2025','Q1-2025'],['Reviewer','Reviewer name','John Smith'],['Notes','Comments','Strong quarter'],['TasksTotal','Total tasks','20'],['TasksDone','Completed tasks','18'],['TaskCompletion','Score 1–5','4.5'],['Quality','Score 1–5','4.2'],['Collaboration','Score 1–5','4.0'],['Initiative','Score 1–5','3.8'],['Punctuality','Score 1–5','4.1'],['Goals','Score 1–5','4.3'],['','',''],['Score','Rating',''],['5.0','Exceptional',''],['4.0','Exceeds',''],['3.0','Meets',''],['2.0','Developing',''],['1.0','Unsatisfactory','']];
+  const ws2=XLSX.utils.aoa_to_sheet(inst); ws2['!cols']=[{wch:20},{wch:50},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Instructions');
+  XLSX.writeFile(wb,'PerformanceReview_Template.xlsx');
+  toast('Template downloaded!');
+}
+
+function updEmpFilter(){
+  const sel=document.getElementById('empFilter'), cur=sel.value, all=emps();
+  sel.innerHTML='<option value="all">All Employees</option>'+all.map(e=>`<option value="${esc(e)}"${e===cur?' selected':''}>${esc(e)}</option>`).join('');
+  document.getElementById('empDL').innerHTML=all.map(e=>`<option value="${esc(e)}">`).join('');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+const t=localStorage.getItem('prvTheme')||'light';
+setTheme(t);
+const hasData=loadSt();
+if(!hasData)seed();
+updEmpFilter();
+rOv();
+</script>
+</body>
+</html>
