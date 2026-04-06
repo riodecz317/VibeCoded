@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rio Decz</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f0ece4;
+    --surface: #faf8f4;
+    --border: #d6cfc3;
+    --text: #1a1612;
+    --muted: #7a7168;
+    --accent: #c84b2f;
+    --accent-light: #f5e8e4;
+    --col-w: 280px;
+    --radius: 6px;
+    --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: auto;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    background: var(--surface);
+    border-bottom: 1.5px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    cursor: pointer;
+    transition: opacity .2s;
+  }
+  .logo:hover { opacity: .75; }
+  .logo::after { content: ' ✎'; font-size: 13px; color: var(--muted); opacity: 0; transition: opacity .2s; }
+  .logo:hover::after { opacity: 1; }
+
+  .logo-rename-input {
+    font-family: 'Fraunces', serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--accent);
+    outline: none;
+    min-width: 120px;
+    max-width: 260px;
+    padding: 0 2px;
+  }
+
+  /* ── BACKGROUND UPLOAD ── */
+  #bgInput { display: none; }
+  #bgRemoveBtn { display: none; }
+
+  body.has-bg { background-attachment: fixed; background-size: cover; background-position: center; }
+  body.has-bg header { background: rgba(250,248,244,0.88); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  body.has-bg .column { background: rgba(250,248,244,0.85); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+  body.has-bg .card { background: rgba(240,236,228,0.9); }
+
+  /* ── HEADER ACTIONS ── */
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+
+  .group-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-right: 4px; }
+
+  select {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    padding: 6px 10px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    outline: none;
+    transition: border-color .2s;
+  }
+  select:hover, select:focus { border-color: var(--accent); }
+
+  .btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 7px 14px;
+    border-radius: var(--radius);
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn-primary:hover { background: #a83a20; color: #fff; border-color: #a83a20; }
+
+  /* ── TAB NAV ── */
+  .tab-nav {
+    display: flex;
+    gap: 2px;
+    padding: 0 28px;
+    background: var(--surface);
+    border-bottom: 1.5px solid var(--border);
+  }
+  .tab-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 10px 18px;
+    border: none;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2.5px solid transparent;
+    margin-bottom: -1.5px;
+    transition: color .2s, border-color .2s;
+    letter-spacing: .3px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+
+  /* ── BOARD ── */
+  #board { display: flex; gap: 18px; padding: 24px 28px; align-items: flex-start; min-height: calc(100vh - 64px); }
+
+  /* ── COLUMN ── */
+  .column { width: var(--col-w); flex-shrink: 0; background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; display: flex; flex-direction: column; animation: slideIn .3s ease; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  .col-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 10px; border-bottom: 1.5px solid var(--border); }
+  .col-title-wrap { display: flex; align-items: center; gap: 8px; }
+  .col-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .col-title { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; cursor: pointer; outline: none; border-bottom: 1.5px dashed transparent; transition: border-color .2s; }
+  .col-title:focus { border-bottom-color: var(--accent); }
+  .col-count { font-size: 11px; color: var(--muted); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 1px 7px; }
+  .col-menu-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 16px; padding: 2px 4px; border-radius: 4px; transition: background .2s; line-height: 1; }
+  .col-menu-btn:hover { background: var(--bg); }
+
+  /* ── CARD LIST ── */
+  .card-list { padding: 10px; min-height: 60px; display: flex; flex-direction: column; gap: 8px; flex: 1; transition: background .2s; }
+  .card-list.drag-over { background: var(--accent-light); border-radius: 6px; }
+
+  /* ── CARD ── */
+  .card { background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 12px 14px; cursor: grab; transition: box-shadow .2s, transform .15s, border-color .2s; position: relative; user-select: none; }
+  .card:hover { box-shadow: var(--shadow); border-color: #bbb3a4; }
+  .card.dragging { opacity: .4; transform: scale(.97); cursor: grabbing; }
+
+  .card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 7px; }
+  .tag { font-size: 10px; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; letter-spacing: .6px; font-weight: 500; border: 1px solid transparent; }
+
+  .card-title { font-family: 'Fraunces', serif; font-size: 14px; font-weight: 300; line-height: 1.4; color: var(--text); cursor: pointer; outline: none; }
+  .card-title:focus { border-bottom: 1px dashed var(--accent); }
+
+  /* ── CARD USER TAGS ── */
+  .card-user-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+  .card-user-tag { font-size: 10px; padding: 1px 7px; border-radius: 99px; font-weight: 500; letter-spacing: .3px; background: var(--accent); color: #fff; white-space: nowrap; }
+
+  /* ── CARD INDICATORS ── */
+  .card-indicators { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .card-indicator { font-size: 10px; color: var(--muted); display: flex; align-items: center; gap: 3px; }
+  .subtask-progress-track { width: 50px; height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .subtask-progress-fill { height: 100%; background: var(--accent); border-radius: 99px; transition: width .3s ease; }
+  .card-note-preview { font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; margin-top: 5px; font-style: italic; }
+
+  /* ── DUE DATE BADGE ── */
+  .card-due {
+    font-size: 10px; padding: 2px 7px; border-radius: 99px;
+    font-weight: 500; display: inline-flex; align-items: center; gap: 4px;
+    margin-top: 6px; border: 1px solid transparent;
+  }
+  .card-due.due-ok     { background: #4aaa6e22; color: #2d7a3a; border-color: #4aaa6e44; }
+  .card-due.due-soon   { background: #e0843a22; color: #b85f10; border-color: #e0843a44; }
+  .card-due.due-over   { background: #c84b2f22; color: #c84b2f; border-color: #c84b2f44; }
+
+  /* ── RECURRING BADGE ── */
+  .card-recur-badge {
+    font-size: 10px; padding: 1px 6px; border-radius: 99px;
+    background: #7b5ea722; color: #7b5ea7; border: 1px solid #7b5ea744;
+    display: inline-flex; align-items: center; gap: 3px; margin-top: 4px;
+  }
+
+  /* ── DRAG REORDER PLACEHOLDER ── */
+  .card-drop-target {
+    height: 4px; border-radius: 99px; background: var(--accent);
+    margin: 2px 0; opacity: 0; transition: opacity .15s, height .15s;
+    pointer-events: none;
+  }
+  .card-drop-target.active { opacity: 1; height: 6px; }
+
+  /* ── RECURRING MODAL FIELDS ── */
+  .recur-row { display: flex; gap: 8px; align-items: center; }
+  .recur-row select { flex: 1; }
+  .recur-row input[type=number] { width: 60px; flex-shrink: 0; }
+
+  .card-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+  .card-priority { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
+  .card-assignee { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; color: #fff; cursor: pointer; }
+
+  .card-actions { position: absolute; top: 8px; right: 8px; display: none; gap: 4px; }
+  .card:hover .card-actions { display: flex; }
+  .card-action-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; transition: border-color .15s; }
+  .card-action-btn:hover { border-color: var(--accent); }
+
+  /* ── ADD CARD ── */
+  .add-card-area { padding: 0 10px 10px; }
+  .add-card-input { width: 100%; font-family: 'DM Mono', monospace; font-size: 12px; padding: 8px 10px; background: var(--bg); border: 1.5px dashed var(--border); border-radius: var(--radius); color: var(--text); resize: none; display: none; outline: none; transition: border-color .2s; }
+  .add-card-input:focus { border-color: var(--accent); border-style: solid; }
+  .add-card-btn { width: 100%; background: none; border: 1.5px dashed var(--border); border-radius: var(--radius); color: var(--muted); font-family: 'DM Mono', monospace; font-size: 12px; padding: 8px; cursor: pointer; transition: all .2s; text-align: left; }
+  .add-card-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+  /* ── ADD COLUMN ── */
+  .add-column-btn { width: 220px; flex-shrink: 0; padding: 14px; background: none; border: 1.5px dashed var(--border); border-radius: 10px; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 12px; cursor: pointer; text-align: left; transition: all .2s; align-self: flex-start; }
+  .add-column-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+
+  /* ── MODAL ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(26,22,18,.45); display: flex; align-items: center; justify-content: center; z-index: 1000; animation: fadeIn .2s; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal { background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 28px; width: 520px; max-width: 95vw; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.15); animation: popIn .25s ease; }
+  @keyframes popIn { from { transform: scale(.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .modal h2 { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 600; margin-bottom: 18px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 5px; }
+  .field input, .field select, .field textarea { width: 100%; font-family: 'DM Mono', monospace; font-size: 13px; padding: 9px 12px; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius); color: var(--text); outline: none; transition: border-color .2s; resize: none; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+  .color-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .color-swatch { width: 26px; height: 26px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform .15s, border-color .15s; }
+  .color-swatch:hover { transform: scale(1.15); }
+  .color-swatch.selected { border-color: var(--text); }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+  /* ── TAG INPUT ── */
+  .tag-input-wrap { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 5px 8px; cursor: text; transition: border-color .2s; min-height: 36px; }
+  .tag-input-wrap:focus-within { border-color: var(--accent); }
+  .tag-chip { display: flex; align-items: center; gap: 4px; background: var(--accent); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 500; }
+  .tag-chip-del { background: none; border: none; color: #fff; cursor: pointer; font-size: 12px; padding: 0; line-height: 1; opacity: .7; transition: opacity .15s; }
+  .tag-chip-del:hover { opacity: 1; }
+  .tag-text-input { border: none; background: none; outline: none; flex: 1; min-width: 80px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); }
+  .tag-suggestions { position: fixed; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); z-index: 1100; max-height: 140px; overflow-y: auto; min-width: 160px; }
+  .tag-suggestion-item { padding: 7px 12px; font-size: 12px; cursor: pointer; transition: background .15s; }
+  .tag-suggestion-item:hover { background: var(--bg); color: var(--accent); }
+
+  /* ── SUBTASKS ── */
+  .subtask-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .subtask-item { display: flex; align-items: center; gap: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 8px; transition: border-color .15s; }
+  .subtask-item:hover { border-color: var(--accent); }
+  .subtask-item input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; border: none; background: none; padding: 0; }
+  .subtask-item-text { flex: 1; font-size: 12px; color: var(--text); background: none; border: none; outline: none; font-family: 'DM Mono', monospace; }
+  .subtask-item-text.done { text-decoration: line-through; color: var(--muted); }
+  .subtask-del-btn { background: none; border: none; cursor: pointer; color: var(--muted); font-size: 13px; padding: 0 2px; transition: color .15s; line-height: 1; }
+  .subtask-del-btn:hover { color: var(--accent); }
+  .subtask-add-row { display: flex; gap: 6px; }
+  .subtask-add-input { flex: 1; font-family: 'DM Mono', monospace; font-size: 12px; padding: 6px 10px; background: var(--bg); border: 1.5px dashed var(--border); border-radius: var(--radius); color: var(--text); outline: none; transition: border-color .2s; }
+  .subtask-add-input:focus { border-color: var(--accent); border-style: solid; }
+  .subtask-add-btn { font-family: 'DM Mono', monospace; font-size: 11px; padding: 6px 12px; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; transition: border-color .2s, color .2s; white-space: nowrap; }
+  .subtask-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── CONTEXT MENU ── */
+  .ctx-menu { position: fixed; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); z-index: 500; min-width: 160px; overflow: hidden; animation: fadeIn .15s; }
+  .ctx-item { padding: 9px 14px; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background .15s; }
+  .ctx-item:hover { background: var(--bg); }
+  .ctx-item.danger { color: var(--accent); }
+  .ctx-divider { height: 1px; background: var(--border); }
+
+  /* ── EMPTY STATE ── */
+  .empty-state { padding: 20px 10px; text-align: center; color: var(--muted); font-size: 11px; line-height: 1.6; }
+
+  /* ── TOOLTIP ── */
+  [data-tip] { position: relative; }
+  [data-tip]::after { content: attr(data-tip); position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--surface); font-size: 10px; padding: 3px 8px; border-radius: 4px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity .2s; }
+  [data-tip]:hover::after { opacity: 1; }
+
+  /* ── DASHBOARD ── */
+  #dashboard { display: none; padding: 28px; gap: 20px; flex-direction: column; }
+  #dashboard.visible { display: flex; }
+  .dash-row { display: flex; gap: 20px; flex-wrap: wrap; }
+  .dash-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 20px 24px; flex: 1; min-width: 180px; }
+  .dash-stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+  .dash-stat-value { font-family: 'Fraunces', serif; font-size: 36px; font-weight: 600; line-height: 1; color: var(--text); }
+  .dash-stat-sub { font-size: 11px; color: var(--muted); margin-top: 5px; }
+  .dash-section-title { font-family: 'Fraunces', serif; font-size: 16px; font-weight: 600; margin-bottom: 14px; color: var(--text); }
+  .progress-list { display: flex; flex-direction: column; gap: 12px; }
+  .progress-header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+  .progress-label { color: var(--text); }
+  .progress-count { color: var(--muted); }
+  .progress-track { height: 7px; background: var(--bg); border-radius: 99px; overflow: hidden; border: 1px solid var(--border); }
+  .progress-fill { height: 100%; border-radius: 99px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+  .priority-bars { display: flex; gap: 8px; align-items: flex-end; height: 80px; }
+  .pri-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+  .pri-bar { width: 100%; border-radius: 4px 4px 0 0; min-height: 4px; transition: height .5s ease; }
+  .pri-bar-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .pri-bar-val { font-size: 11px; font-weight: 500; color: var(--text); }
+  .assignee-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .assignee-table th { text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); padding: 0 0 8px; border-bottom: 1px solid var(--border); }
+  .assignee-table td { padding: 8px 0; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .assignee-table tr:last-child td { border-bottom: none; }
+  .a-avatar { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; font-size: 10px; font-weight: 500; color: #fff; margin-right: 8px; vertical-align: middle; }
+  .ring-wrap { display: flex; align-items: center; gap: 20px; }
+  .ring-svg { flex-shrink: 0; }
+  .ring-legend { display: flex; flex-direction: column; gap: 6px; }
+  .ring-leg-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .ring-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── CALENDAR ── */
+  #calendar { padding: 24px 28px; }
+  .cal-wrap { max-width: 1100px; margin: 0 auto; }
+  .cal-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .cal-month-label { font-family: 'Fraunces',serif; font-size: 20px; font-weight: 600; min-width: 160px; text-align: center; color: var(--text); }
+  .cal-nav-btn { font-size: 20px; background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); width: 32px; height: 32px; cursor: pointer; color: var(--text); display: flex; align-items: center; justify-content: center; transition: border-color .2s; }
+  .cal-nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .cal-today-btn { font-family: 'DM Mono',monospace; font-size: 11px; padding: 5px 12px; border-radius: var(--radius); border: 1.5px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; transition: border-color .2s; margin-left: 4px; }
+  .cal-today-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .cal-view-toggle { display: flex; margin-left: auto; border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .cal-view-btn { font-family: 'DM Mono',monospace; font-size: 11px; padding: 5px 14px; border: none; background: var(--surface); color: var(--muted); cursor: pointer; transition: background .2s, color .2s; }
+  .cal-view-btn.active { background: var(--accent); color: #fff; }
+  .cal-grid-month { display: grid; grid-template-columns: repeat(7,1fr); border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--border); gap: 1px; }
+  .cal-day-header { background: var(--surface); text-align: center; font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); padding: 8px 0; }
+  .cal-day-cell { background: var(--surface); min-height: 110px; padding: 6px; display: flex; flex-direction: column; gap: 3px; }
+  .cal-day-cell.other-month { background: var(--bg); opacity: .55; }
+  .cal-day-cell.today .cal-day-num { background: var(--accent); color: #fff; border-radius: 50%; }
+  .cal-day-num { font-size: 11px; font-weight: 500; color: var(--muted); width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; margin-bottom: 2px; }
+  .cal-task-pill { font-size: 10px; padding: 2px 6px; border-radius: 4px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; transition: opacity .15s; line-height: 1.4; }
+  .cal-task-pill:hover { opacity: .8; }
+  .cal-more { font-size: 10px; color: var(--muted); cursor: pointer; padding: 1px 4px; }
+  .cal-more:hover { color: var(--accent); }
+  .cal-grid-week { display: grid; grid-template-columns: repeat(7,1fr); border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--border); gap: 1px; }
+  .cal-week-col { background: var(--surface); min-height: 340px; display: flex; flex-direction: column; }
+  .cal-week-header { padding: 10px 8px 8px; border-bottom: 1px solid var(--border); text-align: center; }
+  .cal-week-dow { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
+  .cal-week-date { font-family: 'Fraunces',serif; font-size: 18px; font-weight: 600; color: var(--text); display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; margin: 2px auto 0; border-radius: 50%; }
+  .cal-week-date.today { background: var(--accent); color: #fff; }
+  .cal-week-tasks { padding: 8px 6px; display: flex; flex-direction: column; gap: 4px; }
+  .cal-week-pill { font-size: 11px; padding: 4px 8px; border-radius: 5px; color: #fff; cursor: pointer; transition: opacity .15s; line-height: 1.4; }
+  .cal-week-pill:hover { opacity: .8; }
+  .cal-tooltip { position: fixed; background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px; padding: 12px 14px; box-shadow: 0 8px 24px rgba(0,0,0,.12); z-index: 600; min-width: 200px; max-width: 280px; pointer-events: none; }
+  .cal-tt-title { font-family: 'Fraunces',serif; font-size: 14px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+  .cal-tt-row { font-size: 11px; color: var(--muted); margin-bottom: 3px; display: flex; gap: 6px; }
+  .cal-tt-row b { color: var(--text); }
+
+  /* ── THEME PANEL ── */
+  .theme-panel-overlay { position: fixed; inset: 0; background: rgba(26,22,18,.35); z-index: 900; display: none; }
+  .theme-panel-overlay.open { display: block; }
+  .theme-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 300px; background: var(--surface); border-left: 1.5px solid var(--border); z-index: 901; display: flex; flex-direction: column; transform: translateX(100%); transition: transform .3s cubic-bezier(.4,0,.2,1); box-shadow: -8px 0 32px rgba(0,0,0,.1); }
+  .theme-panel.open { transform: translateX(0); }
+  .theme-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1.5px solid var(--border); flex-shrink: 0; }
+  .theme-panel-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; }
+  .theme-panel-close { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--muted); padding: 2px 6px; border-radius: 4px; transition: background .15s; }
+  .theme-panel-close:hover { background: var(--bg); }
+  .theme-panel-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 24px; }
+  .tp-section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; }
+  .tp-presets { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .tp-preset { border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px; cursor: pointer; transition: border-color .2s, transform .15s; display: flex; flex-direction: column; gap: 6px; }
+  .tp-preset:hover { border-color: var(--accent); transform: scale(1.02); }
+  .tp-preset.active { border-color: var(--accent); border-width: 2px; }
+  .tp-preset-dots { display: flex; gap: 4px; }
+  .tp-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+  .tp-preset-name { font-size: 11px; font-weight: 500; color: var(--text); }
+  .tp-custom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .tp-color-row { display: flex; flex-direction: column; gap: 4px; }
+  .tp-color-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .tp-color-picker-wrap { display: flex; align-items: center; gap: 7px; background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 5px 8px; transition: border-color .2s; }
+  .tp-color-picker-wrap:hover { border-color: var(--accent); }
+  .tp-color-picker-wrap input[type=color] { width: 22px; height: 22px; border: none; background: none; cursor: pointer; padding: 0; border-radius: 50%; }
+  .tp-color-hex { font-size: 11px; color: var(--text); font-family: 'DM Mono',monospace; flex: 1; }
+  .tp-apply-btn { width: 100%; font-family: 'DM Mono',monospace; font-size: 12px; padding: 10px; border-radius: var(--radius); border: none; background: var(--accent); color: #fff; cursor: pointer; transition: background .2s; margin-top: 4px; }
+  .tp-apply-btn:hover { background: #a83a20; }
+
+  /* ── GUIDE ── */
+  #utilization { display: none; padding: 28px; }
+  #utilization.visible { display: block; }
+  .guide-wrap { max-width: 820px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  .guide-hero { background: var(--text); color: var(--surface); border-radius: 12px; padding: 32px 36px; }
+  .guide-hero-title { font-family: 'Fraunces', serif; font-size: 30px; font-weight: 600; margin-bottom: 8px; }
+  .guide-hero-title span { color: #e0843a; }
+  .guide-hero-sub { font-size: 13px; color: #bbb3a4; line-height: 1.6; }
+  .guide-section-title { font-family: 'Fraunces', serif; font-size: 17px; font-weight: 600; color: var(--text); padding-bottom: 10px; border-bottom: 1.5px solid var(--border); }
+  .guide-chips-row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .guide-chip { background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 12px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .chip-key { background: var(--text); color: var(--surface); font-family: 'DM Mono', monospace; font-size: 11px; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+  .guide-steps { display: flex; flex-direction: column; gap: 0; }
+  .guide-step { display: flex; gap: 18px; padding: 20px 0; border-bottom: 1px solid var(--border); }
+  .guide-step:last-child { border-bottom: none; }
+  .step-num { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 600; color: var(--accent); min-width: 32px; padding-top: 2px; }
+  .step-body { flex: 1; }
+  .step-title { font-family: 'Fraunces', serif; font-size: 15px; font-weight: 600; margin-bottom: 6px; color: var(--text); }
+  .step-desc { font-size: 12px; color: var(--muted); line-height: 1.7; }
+  .step-desc b { color: var(--text); }
+  .step-tip { margin-top: 8px; font-size: 11px; background: var(--accent-light); border-left: 3px solid var(--accent); padding: 7px 12px; border-radius: 0 6px 6px 0; color: var(--text); line-height: 1.6; }
+  .guide-anatomy { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+  .anatomy-card { background: var(--bg); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; width: 220px; flex-shrink: 0; box-shadow: var(--shadow); }
+  .anatomy-tags-row { display: flex; gap: 5px; margin-bottom: 8px; }
+  .anatomy-tag { font-size: 10px; padding: 2px 7px; border-radius: 20px; text-transform: uppercase; letter-spacing: .6px; font-weight: 500; border: 1px solid transparent; }
+  .anatomy-title { font-family: 'Fraunces', serif; font-size: 14px; font-weight: 300; line-height: 1.4; margin-bottom: 10px; }
+  .anatomy-meta { display: flex; justify-content: space-between; align-items: center; }
+  .anatomy-status { font-size: 10px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); }
+  .anatomy-avatar { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 500; color: #fff; }
+  .anatomy-legend { display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 220px; }
+  .anatomy-leg-item { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .anatomy-leg-item b { color: var(--text); }
+  .aleg-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<header style="flex-wrap:wrap;gap:10px">
+  <div style="display:flex;align-items:center;gap:14px;flex:1;min-width:280px">
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <div class="logo" id="appLogo" onclick="startRenameApp()" title="Click to rename board name">Rio Decz</div>
+      <input id="appNameInput" type="text" class="logo-rename-input" style="display:none"
+        onblur="finishRenameApp(this)"
+        onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.value=document.getElementById('appLogo').textContent;this.blur();}">
+      <!-- OWNER FIELD -->
+      <div style="display:flex;align-items:center;gap:6px;margin-top:2px">
+        <span style="font-size:10px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;font-family:'DM Mono',monospace">Owner:</span>
+        <span id="ownerDisplay" onclick="startEditOwner()" title="Click to set your name"
+          style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text);cursor:pointer;border-bottom:1px dashed var(--border);padding-bottom:1px;min-width:80px;display:inline-block">
+          Click to set name
+        </span>
+        <input id="ownerInput" type="text" placeholder="Your full name…"
+          style="display:none;font-family:'DM Mono',monospace;font-size:12px;background:transparent;border:none;border-bottom:2px solid var(--accent);outline:none;padding:1px 4px;min-width:140px;color:var(--text)"
+          onblur="finishEditOwner(this)"
+          onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape'){this.style.display='none';document.getElementById('ownerDisplay').style.display='';}">
+      </div>
+    </div>
+  </div>
+  <div class="header-actions" style="flex-wrap:wrap">
+    <span class="group-label">Group by</span>
+    <select id="groupSelect" onchange="regroupBoard()">
+      <option value="status">Status</option>
+      <option value="priority">Priority</option>
+      <option value="assignee">Assignee</option>
+      <option value="tag">Tag</option>
+      <option value="label">Label</option>
+    </select>
+    <button class="btn" onclick="exportExcel()">⬇ Export Excel</button>
+    <button class="btn" onclick="document.getElementById('xlsxImportInput').click()">⬆ Import Excel</button>
+    <button class="btn" onclick="exportTemplate()" title="Download blank import template">📋 Template</button>
+    <input type="file" id="xlsxImportInput" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)">
+    <button id="bgUploadBtn" class="btn" onclick="document.getElementById('bgInput').click()">🖼 Set bg</button>
+    <button id="bgRemoveBtn" class="btn" onclick="removeBg()">✕ Remove bg</button>
+    <input type="file" id="bgInput" accept="image/*" onchange="uploadBg(this)">
+    <button class="btn" onclick="openThemePanel()">🎨 Theme</button>
+    <button class="btn" onclick="exportBundleForManager()" title="Export a .json bundle the manager can import into the Performance Review tool" style="background:var(--accent-light);border-color:var(--accent);color:var(--accent)">📤 Send to Manager</button>
+    <button class="btn btn-primary" onclick="openNewCard()">+ New card</button>
+  </div>
+</header>
+
+<!-- THEME PANEL -->
+<div class="theme-panel-overlay" id="themePanelOverlay" onclick="closeThemePanel()"></div>
+<div class="theme-panel" id="themePanel">
+  <div class="theme-panel-header">
+    <span class="theme-panel-title">Color Theme</span>
+    <button class="theme-panel-close" onclick="closeThemePanel()">✕</button>
+  </div>
+  <div class="theme-panel-body">
+    <div>
+      <div class="tp-section-label">Presets</div>
+      <div class="tp-presets" id="tpPresets"></div>
+    </div>
+    <div>
+      <div class="tp-section-label">Customize</div>
+      <div class="tp-custom-grid">
+        <div class="tp-color-row"><span class="tp-color-label">Background</span><div class="tp-color-picker-wrap"><input type="color" id="cp-bg" oninput="syncHex(this,'hex-bg')"><span class="tp-color-hex" id="hex-bg">#f0ece4</span></div></div>
+        <div class="tp-color-row"><span class="tp-color-label">Surface</span><div class="tp-color-picker-wrap"><input type="color" id="cp-surface" oninput="syncHex(this,'hex-surface')"><span class="tp-color-hex" id="hex-surface">#faf8f4</span></div></div>
+        <div class="tp-color-row"><span class="tp-color-label">Text</span><div class="tp-color-picker-wrap"><input type="color" id="cp-text" oninput="syncHex(this,'hex-text')"><span class="tp-color-hex" id="hex-text">#1a1612</span></div></div>
+        <div class="tp-color-row"><span class="tp-color-label">Muted</span><div class="tp-color-picker-wrap"><input type="color" id="cp-muted" oninput="syncHex(this,'hex-muted')"><span class="tp-color-hex" id="hex-muted">#7a7168</span></div></div>
+        <div class="tp-color-row"><span class="tp-color-label">Border</span><div class="tp-color-picker-wrap"><input type="color" id="cp-border" oninput="syncHex(this,'hex-border')"><span class="tp-color-hex" id="hex-border">#d6cfc3</span></div></div>
+        <div class="tp-color-row"><span class="tp-color-label">Accent</span><div class="tp-color-picker-wrap"><input type="color" id="cp-accent" oninput="syncHex(this,'hex-accent')"><span class="tp-color-hex" id="hex-accent">#c84b2f</span></div></div>
+      </div>
+      <button class="tp-apply-btn" onclick="applyCustomTheme()">Apply Custom Theme</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB NAV -->
+<nav class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('dashboard',this)">📊 Dashboard</button>
+  <button class="tab-btn" onclick="switchTab('board',this)">📋 Board</button>
+  <button class="tab-btn" onclick="switchTab('calendar',this)">📅 Calendar</button>
+  <button class="tab-btn" onclick="switchTab('utilization',this)">📖 Guide</button>
+</nav>
+
+<div id="board"></div>
+
+<!-- CALENDAR -->
+<div id="calendar" style="display:none">
+  <div class="cal-wrap">
+    <div class="cal-toolbar">
+      <button class="cal-nav-btn" onclick="calShift(-1)">‹</button>
+      <div class="cal-month-label" id="calMonthLabel"></div>
+      <button class="cal-nav-btn" onclick="calShift(1)">›</button>
+      <button class="cal-today-btn" onclick="calToday()">Today</button>
+      <div class="cal-view-toggle">
+        <button class="cal-view-btn active" id="cvMonth" onclick="setCalView('month',this)">Month</button>
+        <button class="cal-view-btn" id="cvWeek" onclick="setCalView('week',this)">Week</button>
+      </div>
+    </div>
+    <div id="calGrid"></div>
+  </div>
+  <div id="calTooltip" class="cal-tooltip" style="display:none"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="dash-row">
+    <div class="dash-card"><div class="dash-stat-label">Total Cards</div><div class="dash-stat-value" id="dTotal">0</div><div class="dash-stat-sub">across all columns</div></div>
+    <div class="dash-card"><div class="dash-stat-label">Completed</div><div class="dash-stat-value" id="dDone" style="color:var(--accent)">0</div><div class="dash-stat-sub" id="dDonePct">0% completion rate</div></div>
+    <div class="dash-card"><div class="dash-stat-label">In Progress</div><div class="dash-stat-value" id="dInProgress">0</div><div class="dash-stat-sub">actively being worked on</div></div>
+    <div class="dash-card"><div class="dash-stat-label">High Priority</div><div class="dash-stat-value" id="dHighPri" style="color:#c84b2f">0</div><div class="dash-stat-sub">need immediate attention</div></div>
+  </div>
+  <div class="dash-row">
+    <div class="dash-card" style="flex:2;min-width:280px"><div class="dash-section-title">Progress by Status</div><div class="progress-list" id="dProgressList"></div></div>
+    <div class="dash-card" style="flex:1;min-width:200px"><div class="dash-section-title">By Priority</div><div class="priority-bars" id="dPriBars"></div></div>
+  </div>
+  <div class="dash-row">
+    <div class="dash-card" style="flex:1;min-width:220px">
+      <div class="dash-section-title">Overall Completion</div>
+      <div class="ring-wrap">
+        <svg class="ring-svg" width="110" height="110" viewBox="0 0 110 110">
+          <circle cx="55" cy="55" r="46" fill="none" stroke="var(--bg)" stroke-width="12"/>
+          <circle id="dRingFill" cx="55" cy="55" r="46" fill="none" stroke="var(--accent)" stroke-width="12" stroke-linecap="round" stroke-dasharray="289" stroke-dashoffset="289" transform="rotate(-90 55 55)" style="transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1)"/>
+          <text x="55" y="51" text-anchor="middle" font-family="Fraunces,serif" font-size="20" font-weight="600" fill="var(--text)" id="dRingPct">0%</text>
+          <text x="55" y="66" text-anchor="middle" font-family="DM Mono,monospace" font-size="9" fill="var(--muted)">done</text>
+        </svg>
+        <div class="ring-legend" id="dRingLegend"></div>
+      </div>
+    </div>
+    <div class="dash-card" style="flex:2;min-width:260px">
+      <div class="dash-section-title">Cards by Assignee</div>
+      <table class="assignee-table">
+        <thead><tr><th>Assignee</th><th>Total</th><th>Done</th><th>In Progress</th><th>To Do</th></tr></thead>
+        <tbody id="dAssigneeBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- GUIDE -->
+<div id="utilization">
+  <div class="guide-wrap">
+    <div class="guide-hero">
+      <div class="guide-hero-title">Welcome to <span>Rio Decz</span></div>
+      <div class="guide-hero-sub">Your visual task management board. Here's everything you need to get started.</div>
+    </div>
+    <div class="guide-section-title">⚡ Quick Reference</div>
+    <div class="guide-chips-row">
+      <div class="guide-chip"><span class="chip-key">+ New card</span> Add a card from the header</div>
+      <div class="guide-chip"><span class="chip-key">Drag</span> Move cards between columns</div>
+      <div class="guide-chip"><span class="chip-key">✎</span> Edit a card on hover</div>
+      <div class="guide-chip"><span class="chip-key">✕</span> Delete a card on hover</div>
+      <div class="guide-chip"><span class="chip-key">···</span> Column options menu</div>
+      <div class="guide-chip"><span class="chip-key">⬇ Export Excel</span> Full export with all card details</div>
+      <div class="guide-chip"><span class="chip-key">⬆ Import Excel</span> Import cards from .xlsx file</div>
+      <div class="guide-chip"><span class="chip-key">📋 Template</span> Download blank import template</div>
+      <div class="guide-chip"><span class="chip-key">🖼 Set background</span> Upload a background image</div>
+      <div class="guide-chip"><span class="chip-key">Group by</span> Reorganize by status, priority, assignee, tag, or label</div>
+    </div>
+    <div class="guide-section-title">📋 How to Use the Board</div>
+    <div class="guide-steps">
+      <div class="guide-step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Create a Card</div><div class="step-desc">Click <b>+ New card</b> in the header. Fill in the title, status, priority, type any name in <b>Assignee</b>, add <b>Tags</b> (press Enter after each), pick a label color, set dates, add notes, and add subtasks. Hit <b>Save card</b>.</div><div class="step-tip">💡 Tip — click <b>+ Add card</b> at the bottom of any column for a quick inline add. Press Enter to save, Esc to cancel.</div></div></div>
+      <div class="guide-step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Move Cards Between Columns</div><div class="step-desc">Drag any card and drop it onto a different column to update its status. The column highlights when you hover over a valid drop target.</div><div class="step-tip">💡 Tip — open the edit modal (✎) to change status from a dropdown instead of dragging.</div></div></div>
+      <div class="guide-step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Tags & Grouping</div><div class="step-desc">Add tags to cards from the edit modal — type a tag and press <b>Enter</b> or <b>,</b> to add. Tags appear as colored pills on cards. Use <b>Group by → Tag</b> to reorganize the board by tag.</div></div></div>
+      <div class="guide-step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Notes & Subtasks</div><div class="step-desc">Each card has a <b>Notes</b> textarea for free-form text, and a <b>Subtasks</b> checklist. Subtasks show a progress bar on the card face. Check off subtasks to track completion.</div></div></div>
+      <div class="guide-step"><div class="step-num">5</div><div class="step-body"><div class="step-title">Import & Export Excel</div><div class="step-desc">Click <b>⬇ Export Excel</b> to download all card data including notes, tags, subtasks, and dates across 4 sheets. Click <b>⬆ Import Excel</b> to add cards from a spreadsheet. Use <b>📋 Template</b> to download a blank template with instructions.</div></div></div>
+      <div class="guide-step"><div class="step-num">6</div><div class="step-body"><div class="step-title">Calendar View</div><div class="step-desc">Switch to <b>📅 Calendar</b> to see cards plotted by their start and end dates. Toggle between Month and Week view. Hover a task to see details, click to edit.</div></div></div>
+      <div class="guide-step"><div class="step-num">7</div><div class="step-body"><div class="step-title">Rename the App</div><div class="step-desc">Click the <b>Rio Decz</b> title in the top-left to rename it. Press Enter to save, Esc to cancel. The browser tab title updates too.</div></div></div>
+      <div class="guide-step"><div class="step-num">8</div><div class="step-body"><div class="step-title">Themes & Background</div><div class="step-desc">Click <b>🎨 Theme</b> to choose from 8 preset color themes or customize all 6 color variables. Click <b>🖼 Set background</b> to upload a background image — the UI applies a frosted glass effect automatically.</div></div></div>
+    </div>
+    <div class="guide-section-title">🃏 Anatomy of a Card</div>
+    <div class="guide-anatomy">
+      <div class="anatomy-card">
+        <div class="anatomy-tags-row"><span class="anatomy-tag" style="background:#c84b2f22;color:#c84b2f;border-color:#c84b2f44">●</span><span class="anatomy-tag" style="background:#f0ece4;color:#7a7168;border-color:#d6cfc3">▲ High</span></div>
+        <div class="anatomy-title">Card title goes here</div>
+        <div class="anatomy-meta"><span class="anatomy-status">inprogress</span><span class="anatomy-avatar" style="background:#4a8fd4">JD</span></div>
+      </div>
+      <div class="anatomy-legend">
+        <div class="anatomy-leg-item"><span class="aleg-dot" style="background:#c84b2f"></span><span><b>Color dot</b> — label color of the card</span></div>
+        <div class="anatomy-leg-item"><span class="aleg-dot" style="background:#e0843a"></span><span><b>Priority badge</b> — High / Medium / Low</span></div>
+        <div class="anatomy-leg-item"><span class="aleg-dot" style="background:#4aaa6e"></span><span><b>Title</b> — click to rename inline</span></div>
+        <div class="anatomy-leg-item"><span class="aleg-dot" style="background:#7b5ea7"></span><span><b>Tags</b> — colored pills below title</span></div>
+        <div class="anatomy-leg-item"><span class="aleg-dot" style="background:#d4b84a"></span><span><b>Notes preview</b> — first 60 chars of notes</span></div>
+        <div class="anatomy-leg-item"><span class="aleg-dot" style="background:#4a8fd4"></span><span><b>Assignee avatar</b> — auto-initials from typed name</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CARD MODAL -->
+<div id="cardModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2 id="modalTitle">New card</h2>
+    <div class="field"><label>Title</label><input id="fTitle" type="text" placeholder="What needs to be done?"></div>
+    <div class="field"><label>Status</label><select id="fStatus"></select></div>
+    <div class="field"><label>Priority</label><select id="fPriority"><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option></select></div>
+    <div class="field"><label>Assignee</label><input id="fAssignee" type="text" placeholder="Type a name (e.g. Jane Doe)"></div>
+    <div class="field">
+      <label>Tags</label>
+      <div class="tag-input-wrap" id="tagInputWrap" onclick="document.getElementById('tagTextInput').focus()">
+        <div id="tagChips"></div>
+        <input class="tag-text-input" id="tagTextInput" type="text" placeholder="Add tag, press Enter…" onkeydown="handleTagKey(event)" oninput="showTagSuggestions(this.value)">
+      </div>
+      <div class="tag-suggestions" id="tagSuggestions" style="display:none"></div>
+    </div>
+    <div class="field"><label>Label color</label><div class="color-row" id="colorRow"></div></div>
+    <div style="display:flex;gap:12px">
+      <div class="field" style="flex:1;margin-bottom:0"><label>Start Date</label><input id="fStartDate" type="date"></div>
+      <div class="field" style="flex:1;margin-bottom:0"><label>End Date</label><input id="fEndDate" type="date"></div>
+      <div class="field" style="flex:1;margin-bottom:0"><label>Due Date</label><input id="fDueDate" type="date"></div>
+    </div>
+    <div class="field" style="margin-top:14px">
+      <label>Recurring</label>
+      <div class="recur-row">
+        <select id="fRecurType" onchange="document.getElementById('fRecurEvery').style.display=this.value==='custom'?'':'none'">
+          <option value="">None</option>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="custom">Every N days</option>
+        </select>
+        <input id="fRecurEvery" type="number" min="1" max="365" value="1" style="display:none" placeholder="N">
+      </div>
+    </div>
+    <div class="field" style="margin-top:14px"><label>Notes</label><textarea id="fNotes" rows="3" placeholder="Add notes, context, or links…"></textarea></div>
+    <div class="field">
+      <label>Subtasks</label>
+      <div class="subtask-list" id="fSubtaskList"></div>
+      <div class="subtask-add-row">
+        <input class="subtask-add-input" id="fSubtaskInput" type="text" placeholder="Add a subtask…" onkeydown="if(event.key==='Enter'){event.preventDefault();addSubtaskFromInput();}">
+        <button class="subtask-add-btn" onclick="addSubtaskFromInput()">+ Add</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveCard()">Save card</button>
+    </div>
+  </div>
+</div>
+
+<!-- COLUMN MODAL -->
+<div id="colModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeColModal()">
+  <div class="modal">
+    <h2>New column</h2>
+    <div class="field"><label>Column name</label><input id="fColName" type="text" placeholder="e.g. In Review"></div>
+    <div class="field"><label>Dot color</label><div class="color-row" id="colColorRow"></div></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeColModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveColumn()">Add column</button>
+    </div>
+  </div>
+</div>
+
+<div id="ctxMenu" class="ctx-menu" style="display:none"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const COLORS = ['#c84b2f','#e0843a','#d4b84a','#4aaa6e','#4a8fd4','#7b5ea7','#d4689e','#7a7168'];
+const PRIORITIES = { high: '▲ High', medium: '● Med', low: '▽ Low' };
+
+let columns = [
+  { id: 'backlog',    title: 'Backlog',     color: '#7a7168' },
+  { id: 'todo',       title: 'To Do',       color: '#4a8fd4' },
+  { id: 'inprogress', title: 'In Progress', color: '#e0843a' },
+  { id: 'review',     title: 'In Review',   color: '#d4b84a' },
+  { id: 'done',       title: 'Done',        color: '#4aaa6e' },
+];
+
+let cards = [
+  { id: c(), title: 'Research competitor pricing',   status: 'backlog',    priority: 'low',    assignee: '',          label: '#7b5ea7', startDate: '2025-03-01', endDate: '2025-03-05', notes: '', tags: ['research'],        subtasks: [] },
+  { id: c(), title: 'Wireframe onboarding flow',     status: 'backlog',    priority: 'medium', assignee: 'Sofia Y.',  label: '#4a8fd4', startDate: '2025-03-03', endDate: '2025-03-08', notes: '', tags: ['design'],           subtasks: [{ id:'s1', text:'Sketch flows', done: true }, { id:'s2', text:'Review with team', done: false }] },
+  { id: c(), title: 'Set up CI/CD pipeline',         status: 'todo',       priority: 'high',   assignee: 'James T.',  label: '#c84b2f', startDate: '2025-03-05', endDate: '2025-03-10', notes: '', tags: ['devops'],           subtasks: [] },
+  { id: c(), title: 'Write unit tests for auth',     status: 'todo',       priority: 'medium', assignee: 'Alex L.',   label: '#4aaa6e', startDate: '2025-03-06', endDate: '2025-03-12', notes: '', tags: ['testing'],          subtasks: [{ id:'s3', text:'Auth module tests', done: false }, { id:'s4', text:'Edge case coverage', done: false }] },
+  { id: c(), title: 'Design system tokens',          status: 'todo',       priority: 'medium', assignee: 'Maria R.',  label: '#d4b84a', startDate: '2025-03-07', endDate: '2025-03-14', notes: '', tags: ['design'],           subtasks: [] },
+  { id: c(), title: 'Refactor API endpoints',        status: 'inprogress', priority: 'high',   assignee: 'Alex L.',   label: '#c84b2f', startDate: '2025-03-10', endDate: '2025-03-18', notes: 'Focus on REST compliance', tags: ['backend'], subtasks: [{ id:'s5', text:'Map existing endpoints', done: true }, { id:'s6', text:'Refactor auth routes', done: false }, { id:'s7', text:'Update docs', done: false }] },
+  { id: c(), title: 'Integrate payment gateway',     status: 'inprogress', priority: 'high',   assignee: 'James T.',  label: '#e0843a', startDate: '2025-03-12', endDate: '2025-03-20', notes: '', tags: ['backend','payments'], subtasks: [] },
+  { id: c(), title: 'Accessibility audit',           status: 'review',     priority: 'medium', assignee: 'Sofia Y.',  label: '#4aaa6e', startDate: '2025-03-15', endDate: '2025-03-22', notes: '', tags: ['qa'],               subtasks: [{ id:'s8', text:'WCAG checklist', done: true }, { id:'s9', text:'Screen reader test', done: true }] },
+  { id: c(), title: 'Update README documentation',   status: 'done',       priority: 'low',    assignee: 'Maria R.',  label: '#7a7168', startDate: '2025-03-01', endDate: '2025-03-03', notes: '', tags: ['docs'],             subtasks: [] },
+  { id: c(), title: 'Deploy to staging environment', status: 'done',       priority: 'high',   assignee: 'Alex L.',   label: '#4a8fd4', startDate: '2025-03-18', endDate: '2025-03-25', notes: '', tags: ['devops'],           subtasks: [{ id:'sa', text:'Build Docker image', done: true }, { id:'sb', text:'Push to registry', done: true }, { id:'sc', text:'Smoke test', done: true }] },
+];
+
+function c() { return Math.random().toString(36).slice(2,10); }
+
+let editingCardId = null;
+let selectedColor = COLORS[0];
+let selectedColColor = COLORS[3];
+let dragCard = null;
+let currentGroupBy = 'status';
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function nameToInitials(name) {
+  if (!name) return '';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+function nameToColor(name) {
+  if (!name) return '#7a7168';
+  const palette = ['#4a8fd4','#4aaa6e','#c84b2f','#7b5ea7','#e0843a','#d4689e','#d4b84a','#5ba4cf'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return palette[Math.abs(hash) % palette.length];
+}
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── GROUPING ──────────────────────────────────────────────────────────────────
+function getGroups() {
+  const g = currentGroupBy;
+  if (g === 'status') {
+    return columns.map(col => ({ id: col.id, title: col.title, color: col.color, cards: cards.filter(c => c.status === col.id) }));
+  }
+  if (g === 'priority') {
+    return ['high','medium','low'].map(p => ({
+      id: p,
+      title: { high:'High Priority', medium:'Medium Priority', low:'Low Priority' }[p],
+      color: { high:'#c84b2f', medium:'#e0843a', low:'#4a8fd4' }[p],
+      cards: cards.filter(c => c.priority === p),
+    }));
+  }
+  if (g === 'assignee') {
+    const names = [...new Set(cards.map(c => c.assignee).filter(Boolean))];
+    const groups = [
+      ...names.map(name => ({ id: name, title: name, color: nameToColor(name), cards: cards.filter(c => c.assignee === name) })),
+      { id: '', title: 'Unassigned', color: '#7a7168', cards: cards.filter(c => !c.assignee) },
+    ];
+    return groups.filter(g => g.cards.length > 0 || g.id === '');
+  }
+  if (g === 'tag') {
+    const allTags = [...new Set(cards.flatMap(c => c.tags || []))].sort();
+    const groups = allTags.map(tag => ({ id: tag, title: `#${tag}`, color: nameToColor(tag), cards: cards.filter(c => (c.tags || []).includes(tag)) }));
+    const noTag = { id: '__notag__', title: 'No Tag', color: '#7a7168', cards: cards.filter(c => !(c.tags && c.tags.length)) };
+    if (noTag.cards.length) groups.push(noTag);
+    return groups;
+  }
+  if (g === 'label') {
+    const seen = {};
+    COLORS.forEach(clr => { seen[clr] = []; });
+    cards.forEach(card => { if (seen[card.label]) seen[card.label].push(card); });
+    return Object.entries(seen).filter(([, arr]) => arr.length > 0).map(([clr, arr]) => ({ id: clr, title: 'Label ' + clr, color: clr, cards: arr }));
+  }
+  return [];
+}
+
+function regroupBoard() {
+  currentGroupBy = document.getElementById('groupSelect').value;
+  renderBoard();
+}
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderBoard() {
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+  getGroups().forEach(grp => board.appendChild(makeColumn(grp)));
+  if (currentGroupBy === 'status') {
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-column-btn';
+    addBtn.textContent = '+ Add column';
+    addBtn.onclick = openColModal;
+    board.appendChild(addBtn);
+  }
+  attachDragListeners();
+}
+
+function makeColumn(grp) {
+  const col = document.createElement('div');
+  col.className = 'column';
+  col.dataset.id = grp.id;
+  col.innerHTML = `
+    <div class="col-header">
+      <div class="col-title-wrap">
+        <div class="col-dot" style="background:${grp.color}"></div>
+        <div class="col-title" contenteditable="${currentGroupBy==='status'}" data-id="${grp.id}" onblur="renameCol(this)">${escHtml(grp.title)}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="col-count">${grp.cards.length}</span>
+        ${currentGroupBy==='status' ? `<button class="col-menu-btn" onclick="colMenu(event,'${grp.id}')">···</button>` : ''}
+      </div>
+    </div>
+    <div class="card-list" data-col="${grp.id}">
+      ${grp.cards.length === 0 ? '<div class="empty-state">Drop cards here</div>' : grp.cards.map(cardHTML).join('')}
+    </div>
+    ${currentGroupBy==='status' ? `
+    <div class="add-card-area">
+      <textarea class="add-card-input" rows="2" placeholder="Card title… (Enter to save)" onkeydown="quickAdd(event,'${grp.id}',this)" onblur="cancelQuickAdd(this)"></textarea>
+      <button class="add-card-btn" onclick="showQuickAdd(this)">+ Add card</button>
+    </div>` : ''}`;
+  return col;
+}
+
+function cardHTML(card) {
+  const initials = nameToInitials(card.assignee);
+  const aColor   = nameToColor(card.assignee);
+  const subtasks = card.subtasks || [];
+  const done     = subtasks.filter(s => s.done).length;
+  const pct      = subtasks.length ? Math.round(done / subtasks.length * 100) : 0;
+
+  const subtaskBar = subtasks.length ? `
+    <div class="card-indicator">
+      <span>✓ ${done}/${subtasks.length}</span>
+      <div class="subtask-progress-track"><div class="subtask-progress-fill" style="width:${pct}%"></div></div>
+    </div>` : '';
+
+  const notePreview = card.notes && card.notes.trim()
+    ? `<div class="card-note-preview">📝 ${escHtml(card.notes.trim().slice(0,60))}${card.notes.trim().length > 60 ? '…' : ''}</div>`
+    : '';
+
+  const userTags = (card.tags && card.tags.length)
+    ? `<div class="card-user-tags">${card.tags.map(t => `<span class="card-user-tag">${escHtml(t)}</span>`).join('')}</div>`
+    : '';
+
+  // Due date badge
+  let dueBadge = '';
+  if (card.dueDate) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const [dy, dm, dd] = card.dueDate.split('-').map(Number);
+    const due = new Date(dy, dm-1, dd);
+    const diff = Math.round((due - today) / 86400000);
+    let cls, label;
+    if (diff < 0)        { cls = 'due-over'; label = `⚠ ${Math.abs(diff)}d overdue`; }
+    else if (diff === 0) { cls = 'due-soon'; label = '⚑ Due today'; }
+    else if (diff <= 3)  { cls = 'due-soon'; label = `⚑ Due in ${diff}d`; }
+    else                 { cls = 'due-ok';   label = `◷ Due ${due.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`; }
+    dueBadge = `<div class="card-due ${cls}">${label}</div>`;
+  }
+
+  // Recurring badge
+  const recurBadge = card.recurType
+    ? `<div class="card-recur-badge">↻ ${card.recurType === 'custom' ? `Every ${card.recurEvery||1}d` : card.recurType}</div>`
+    : '';
+
+  return `
+  <div class="card" draggable="true" data-id="${card.id}">
+    <div class="card-tags">
+      <span class="tag" style="background:${card.label}22;color:${card.label};border-color:${card.label}44">●</span>
+      <span class="tag" style="background:#f0ece4;color:#7a7168;border-color:#d6cfc3">${PRIORITIES[card.priority]}</span>
+    </div>
+    <div class="card-title" contenteditable="true" onblur="renameCard(this,'${card.id}')">${escHtml(card.title)}</div>
+    ${userTags}${notePreview}
+    ${subtaskBar ? `<div class="card-indicators">${subtaskBar}</div>` : ''}
+    ${dueBadge}${recurBadge}
+    <div class="card-meta">
+      <span class="card-priority" style="color:${card.label}">${card.status}</span>
+      ${initials ? `<div class="card-assignee" style="background:${aColor}" data-tip="${escHtml(card.assignee)}">${initials}</div>` : ''}
+    </div>
+    <div class="card-actions">
+      <button class="card-action-btn" title="Edit" onclick="openEditCard('${card.id}')">✎</button>
+      <button class="card-action-btn" title="Copy card" onclick="copyCard('${card.id}')">⧉</button>
+      <button class="card-action-btn" title="Delete" onclick="deleteCard('${card.id}')">✕</button>
+    </div>
+  </div>`;
+}
+
+// ── DRAG & DROP + REORDER ─────────────────────────────────────────────────────
+let dragOverCard = null;
+
+function attachDragListeners() {
+  document.querySelectorAll('.card').forEach(el => {
+    el.addEventListener('dragstart', e => {
+      dragCard = el.dataset.id;
+      setTimeout(() => el.classList.add('dragging'), 0);
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      dragCard = null;
+      dragOverCard = null;
+      document.querySelectorAll('.card-list').forEach(l => l.classList.remove('drag-over'));
+      document.querySelectorAll('.card-drop-target').forEach(t => t.classList.remove('active'));
+    });
+    // Reorder: drag over another card
+    el.addEventListener('dragover', e => {
+      e.preventDefault(); e.stopPropagation();
+      if (!dragCard || dragCard === el.dataset.id) return;
+      dragOverCard = el.dataset.id;
+      document.querySelectorAll('.card-drop-target').forEach(t => t.classList.remove('active'));
+      const target = el.previousElementSibling;
+      if (target && target.classList.contains('card-drop-target')) target.classList.add('active');
+    });
+    el.addEventListener('drop', e => {
+      e.preventDefault(); e.stopPropagation();
+      if (!dragCard || dragCard === el.dataset.id) return;
+      const fromCard = cards.find(c => c.id === dragCard);
+      const toCard   = cards.find(c => c.id === el.dataset.id);
+      if (!fromCard || !toCard) return;
+      // Move within same column (reorder)
+      if (fromCard.status === toCard.status && currentGroupBy === 'status') {
+        const fi = cards.indexOf(fromCard);
+        const ti = cards.indexOf(toCard);
+        cards.splice(fi, 1);
+        cards.splice(ti, 0, fromCard);
+      } else {
+        // Move across columns
+        if (currentGroupBy === 'status')    fromCard.status   = toCard.status;
+        else if (currentGroupBy === 'priority') fromCard.priority = toCard.priority;
+        else if (currentGroupBy === 'assignee') fromCard.assignee = toCard.assignee;
+        else if (currentGroupBy === 'label')    fromCard.label    = toCard.label;
+      }
+      renderBoard(); saveState();
+    });
+  });
+
+  document.querySelectorAll('.card-list').forEach(list => {
+    list.addEventListener('dragover', e => { e.preventDefault(); list.classList.add('drag-over'); });
+    list.addEventListener('dragleave', e => {
+      if (!list.contains(e.relatedTarget)) list.classList.remove('drag-over');
+    });
+    list.addEventListener('drop', e => {
+      e.preventDefault();
+      list.classList.remove('drag-over');
+      if (!dragCard) return;
+      const targetGroup = list.dataset.col;
+      const card = cards.find(c => c.id === dragCard);
+      if (!card) return;
+      // Only handle drops onto empty space (not onto a card — handled above)
+      if (e.target === list || e.target.classList.contains('empty-state')) {
+        if (currentGroupBy === 'status')    card.status   = targetGroup;
+        else if (currentGroupBy === 'priority') card.priority = targetGroup;
+        else if (currentGroupBy === 'assignee') card.assignee = targetGroup;
+        else if (currentGroupBy === 'label')    card.label    = targetGroup;
+        renderBoard(); saveState();
+      }
+    });
+  });
+}
+
+// ── QUICK ADD ─────────────────────────────────────────────────────────────────
+function showQuickAdd(btn) { const area = btn.parentElement; btn.style.display = 'none'; const ta = area.querySelector('.add-card-input'); ta.style.display = 'block'; ta.focus(); }
+function cancelQuickAdd(ta) { ta.style.display = 'none'; ta.value = ''; const btn = ta.parentElement.querySelector('.add-card-btn'); if (btn) btn.style.display = ''; }
+function quickAdd(e, colId, ta) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const title = ta.value.trim();
+    if (title) { cards.push({ id: c(), title, status: colId, priority: 'medium', assignee: '', label: COLORS[0], notes: '', tags: [], subtasks: [] }); renderBoard(); saveState(); }
+  } else if (e.key === 'Escape') { cancelQuickAdd(ta); }
+}
+
+// ── INLINE RENAME ─────────────────────────────────────────────────────────────
+function renameCard(el, id) { const card = cards.find(c => c.id === id); if (card) { card.title = el.innerText.trim() || card.title; saveState(); } }
+function renameCol(el) { const col = columns.find(c => c.id === el.dataset.id); if (col) { col.title = el.innerText.trim() || col.title; saveState(); } }
+
+// ── TAGS ──────────────────────────────────────────────────────────────────────
+let modalTags = [];
+function resetTagInput(tags) { modalTags = [...tags]; renderTagChips(); document.getElementById('tagTextInput').value = ''; hideTagSuggestions(); }
+function renderTagChips() {
+  const wrap = document.getElementById('tagChips');
+  if (!wrap) return;
+  wrap.innerHTML = modalTags.map((t, i) => `<span class="tag-chip">${escHtml(t)}<button class="tag-chip-del" onclick="removeTag(${i})">✕</button></span>`).join('');
+}
+function removeTag(i) { modalTags.splice(i, 1); renderTagChips(); }
+function handleTagKey(e) {
+  const inp = e.target;
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const val = inp.value.trim().replace(/,/g,'');
+    if (val && !modalTags.includes(val)) { modalTags.push(val); renderTagChips(); }
+    inp.value = ''; hideTagSuggestions();
+  } else if (e.key === 'Backspace' && inp.value === '' && modalTags.length) { modalTags.pop(); renderTagChips(); }
+}
+function getAllTags() { return [...new Set(cards.flatMap(c => c.tags || []))].sort(); }
+function showTagSuggestions(val) {
+  const box = document.getElementById('tagSuggestions');
+  if (!val.trim()) { hideTagSuggestions(); return; }
+  const matches = getAllTags().filter(t => t.toLowerCase().startsWith(val.toLowerCase()) && !modalTags.includes(t));
+  if (!matches.length) { hideTagSuggestions(); return; }
+  box.innerHTML = matches.slice(0,6).map(t => `<div class="tag-suggestion-item" onmousedown="pickTagSuggestion('${escHtml(t)}')">${escHtml(t)}</div>`).join('');
+  const wrap = document.getElementById('tagInputWrap');
+  const rect = wrap.getBoundingClientRect();
+  box.style.left = rect.left + 'px'; box.style.top = (rect.bottom + 4) + 'px'; box.style.width = rect.width + 'px'; box.style.display = 'block';
+}
+function pickTagSuggestion(tag) { if (!modalTags.includes(tag)) { modalTags.push(tag); renderTagChips(); } document.getElementById('tagTextInput').value = ''; hideTagSuggestions(); }
+function hideTagSuggestions() { const box = document.getElementById('tagSuggestions'); if (box) box.style.display = 'none'; }
+function collectTags() { return [...modalTags]; }
+document.addEventListener('click', e => { if (!e.target.closest('#tagInputWrap') && !e.target.closest('#tagSuggestions')) hideTagSuggestions(); });
+
+// ── SUBTASKS ──────────────────────────────────────────────────────────────────
+let modalSubtasks = [];
+function renderSubtaskList(subtasks) { modalSubtasks = subtasks.map(s => ({ ...s })); _refreshSubtaskUI(); }
+function _refreshSubtaskUI() {
+  const list = document.getElementById('fSubtaskList');
+  if (!list) return;
+  list.innerHTML = modalSubtasks.map((s, i) => `
+    <div class="subtask-item">
+      <input type="checkbox" ${s.done ? 'checked' : ''} onchange="modalSubtasks[${i}].done=this.checked;_refreshSubtaskUI()">
+      <input class="subtask-item-text ${s.done ? 'done' : ''}" type="text" value="${escHtml(s.text)}" onchange="modalSubtasks[${i}].text=this.value" oninput="modalSubtasks[${i}].text=this.value">
+      <button class="subtask-del-btn" onclick="modalSubtasks.splice(${i},1);_refreshSubtaskUI()">✕</button>
+    </div>`).join('');
+}
+function addSubtaskFromInput() {
+  const inp = document.getElementById('fSubtaskInput');
+  const text = inp.value.trim();
+  if (!text) return;
+  modalSubtasks.push({ id: Math.random().toString(36).slice(2,8), text, done: false });
+  _refreshSubtaskUI(); inp.value = ''; inp.focus();
+}
+function collectSubtasks() { return modalSubtasks.map(s => ({ id: s.id, text: s.text, done: s.done })); }
+
+// ── CARD MODAL ────────────────────────────────────────────────────────────────
+function buildColorRow(containerId, selected, onPick) {
+  const row = document.getElementById(containerId);
+  row.innerHTML = '';
+  COLORS.forEach(clr => {
+    const sw = document.createElement('div');
+    sw.className = 'color-swatch' + (clr === selected ? ' selected' : '');
+    sw.style.background = clr;
+    sw.onclick = () => { onPick(clr); buildColorRow(containerId, clr, onPick); };
+    row.appendChild(sw);
+  });
+}
+function populateStatusSelect() {
+  document.getElementById('fStatus').innerHTML = columns.map(c => `<option value="${c.id}">${c.title}</option>`).join('');
+}
+function openNewCard(defaultStatus) {
+  editingCardId = null;
+  document.getElementById('modalTitle').textContent = 'New card';
+  document.getElementById('fTitle').value = '';
+  populateStatusSelect();
+  if (defaultStatus) document.getElementById('fStatus').value = defaultStatus;
+  document.getElementById('fPriority').value = 'medium';
+  document.getElementById('fAssignee').value = '';
+  document.getElementById('fStartDate').value = '';
+  document.getElementById('fEndDate').value = '';
+  document.getElementById('fDueDate').value = '';
+  document.getElementById('fRecurType').value = '';
+  document.getElementById('fRecurEvery').style.display = 'none';
+  document.getElementById('fRecurEvery').value = 1;
+  document.getElementById('fNotes').value = '';
+  resetTagInput([]);
+  renderSubtaskList([]);
+  selectedColor = COLORS[0];
+  buildColorRow('colorRow', selectedColor, clr => selectedColor = clr);
+  document.getElementById('cardModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('fTitle').focus(), 50);
+}
+function openEditCard(id) {
+  const card = cards.find(c => c.id === id);
+  if (!card) return;
+  editingCardId = id;
+  document.getElementById('modalTitle').textContent = 'Edit card';
+  document.getElementById('fTitle').value = card.title;
+  populateStatusSelect();
+  document.getElementById('fStatus').value = card.status;
+  document.getElementById('fPriority').value = card.priority;
+  document.getElementById('fAssignee').value = card.assignee || '';
+  document.getElementById('fStartDate').value = card.startDate || '';
+  document.getElementById('fEndDate').value   = card.endDate   || '';
+  document.getElementById('fDueDate').value   = card.dueDate   || '';
+  const rt = card.recurType || '';
+  document.getElementById('fRecurType').value = rt;
+  document.getElementById('fRecurEvery').style.display = rt === 'custom' ? '' : 'none';
+  document.getElementById('fRecurEvery').value = card.recurEvery || 1;
+  document.getElementById('fNotes').value     = card.notes     || '';
+  resetTagInput(card.tags || []);
+  renderSubtaskList(card.subtasks || []);
+  selectedColor = card.label;
+  buildColorRow('colorRow', selectedColor, clr => selectedColor = clr);
+  document.getElementById('cardModal').style.display = 'flex';
+}
+function saveCard() {
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) { document.getElementById('fTitle').focus(); return; }
+  const recurType  = document.getElementById('fRecurType').value;
+  const recurEvery = parseInt(document.getElementById('fRecurEvery').value) || 1;
+  const data = {
+    title,
+    status:     document.getElementById('fStatus').value,
+    priority:   document.getElementById('fPriority').value,
+    assignee:   document.getElementById('fAssignee').value,
+    label:      selectedColor,
+    startDate:  document.getElementById('fStartDate').value,
+    endDate:    document.getElementById('fEndDate').value,
+    dueDate:    document.getElementById('fDueDate').value,
+    recurType:  recurType || '',
+    recurEvery: recurType === 'custom' ? recurEvery : null,
+    notes:      document.getElementById('fNotes').value,
+    tags:       collectTags(),
+    subtasks:   collectSubtasks(),
+  };
+  if (editingCardId) {
+    Object.assign(cards.find(c => c.id === editingCardId), data);
+  } else {
+    cards.push({ id: c(), ...data });
+  }
+  closeModal(); renderBoard(); saveState();
+}
+
+// ── CARD COPY ─────────────────────────────────────────────────────────────────
+function copyCard(id) {
+  const card = cards.find(c => c.id === id);
+  if (!card) return;
+  const copy = {
+    ...JSON.parse(JSON.stringify(card)),
+    id: c(),
+    title: card.title + ' (copy)',
+    subtasks: (card.subtasks || []).map(s => ({ ...s, id: Math.random().toString(36).slice(2,8) })),
+  };
+  const idx = cards.indexOf(card);
+  cards.splice(idx + 1, 0, copy);
+  renderBoard(); saveState();
+}
+
+// ── RECURRING SPAWN ───────────────────────────────────────────────────────────
+function spawnRecurringCards() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const toAdd = [];
+  cards.forEach(card => {
+    if (!card.recurType || !card.dueDate) return;
+    const [dy, dm, dd] = card.dueDate.split('-').map(Number);
+    const due = new Date(dy, dm-1, dd);
+    if (due < today) {
+      // Advance due date
+      let next = new Date(due);
+      while (next < today) {
+        if (card.recurType === 'daily')        next.setDate(next.getDate() + 1);
+        else if (card.recurType === 'weekly')  next.setDate(next.getDate() + 7);
+        else if (card.recurType === 'monthly') next.setMonth(next.getMonth() + 1);
+        else if (card.recurType === 'custom')  next.setDate(next.getDate() + (card.recurEvery || 1));
+      }
+      const pad = n => String(n).padStart(2,'0');
+      card.dueDate = `${next.getFullYear()}-${pad(next.getMonth()+1)}-${pad(next.getDate())}`;
+      // Reset subtasks for next cycle
+      card.subtasks = (card.subtasks || []).map(s => ({ ...s, done: false }));
+    }
+  });
+  if (toAdd.length) { cards.push(...toAdd); saveState(); }
+}
+
+// ── COLUMN MODAL ──────────────────────────────────────────────────────────────
+function closeModal() { document.getElementById('cardModal').style.display = 'none'; }
+function openColModal() {
+  document.getElementById('fColName').value = '';
+  selectedColColor = COLORS[3];
+  buildColorRow('colColorRow', selectedColColor, clr => selectedColColor = clr);
+  document.getElementById('colModal').style.display = 'flex';
+  setTimeout(() => document.getElementById('fColName').focus(), 50);
+}
+function closeColModal() { document.getElementById('colModal').style.display = 'none'; }
+function saveColumn() {
+  const name = document.getElementById('fColName').value.trim();
+  if (!name) { document.getElementById('fColName').focus(); return; }
+  columns.push({ id: name.toLowerCase().replace(/\s+/g,'_') + '_' + c().slice(0,4), title: name, color: selectedColColor });
+  closeColModal(); renderBoard(); saveState();
+}
+
+// ── CONTEXT MENU ──────────────────────────────────────────────────────────────
+function colMenu(e, colId) {
+  e.stopPropagation();
+  const menu = document.getElementById('ctxMenu');
+  menu.innerHTML = `
+    <div class="ctx-item" onclick="openNewCard('${colId}');hideCtx()">+ Add card here</div>
+    <div class="ctx-divider"></div>
+    <div class="ctx-item danger" onclick="deleteColumn('${colId}');hideCtx()">✕ Delete column</div>`;
+  menu.style.display = 'block';
+  menu.style.left = (e.clientX + 4) + 'px';
+  menu.style.top  = (e.clientY + 4) + 'px';
+}
+function hideCtx() { document.getElementById('ctxMenu').style.display = 'none'; }
+document.addEventListener('click', hideCtx);
+
+// ── DELETE ────────────────────────────────────────────────────────────────────
+function deleteCard(id) { if (!confirm('Delete this card?')) return; cards = cards.filter(c => c.id !== id); renderBoard(); saveState(); }
+function deleteColumn(id) { if (!confirm('Delete column and all its cards?')) return; columns = columns.filter(c => c.id !== id); cards = cards.filter(c => c.status !== id); renderBoard(); saveState(); }
+
+// ── KEYBOARD ──────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeModal(); closeColModal(); hideCtx(); } });
+
+// ── BACKGROUND ────────────────────────────────────────────────────────────────
+function removeBg() { document.body.style.backgroundImage = ''; document.body.classList.remove('has-bg'); document.getElementById('bgRemoveBtn').style.display = 'none'; document.getElementById('bgUploadBtn').textContent = '🖼 Set background'; document.getElementById('bgInput').value = ''; }
+function uploadBg(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => { document.body.style.backgroundImage = `url(${e.target.result})`; document.body.classList.add('has-bg'); document.getElementById('bgRemoveBtn').style.display = ''; document.getElementById('bgUploadBtn').textContent = '🖼 Change bg'; };
+  reader.readAsDataURL(file);
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────────
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('board').style.display = 'none';
+  document.getElementById('dashboard').classList.remove('visible');
+  document.getElementById('utilization').classList.remove('visible');
+  document.getElementById('calendar').style.display = 'none';
+  if (tab === 'board') { document.getElementById('board').style.display = ''; }
+  else if (tab === 'dashboard') { document.getElementById('dashboard').classList.add('visible'); renderDashboard(); }
+  else if (tab === 'utilization') { document.getElementById('utilization').classList.add('visible'); }
+  else if (tab === 'calendar') { document.getElementById('calendar').style.display = ''; renderCalendar(); }
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const total   = cards.length;
+  const doneCol = columns.find(c => c.id === 'done') ? cards.filter(c => c.status === 'done').length : cards.filter(c => columns.find(col => col.id === c.status)?.title?.toLowerCase().includes('done')).length;
+  const inProg  = columns.find(c => c.id === 'inprogress') ? cards.filter(c => c.status === 'inprogress').length : cards.filter(c => columns.find(col => col.id === c.status)?.title?.toLowerCase().includes('progress')).length;
+  const highPri = cards.filter(c => c.priority === 'high').length;
+  const pct     = total ? Math.round(doneCol / total * 100) : 0;
+
+  document.getElementById('dTotal').textContent      = total;
+  document.getElementById('dDone').textContent       = doneCol;
+  document.getElementById('dDonePct').textContent    = pct + '% completion rate';
+  document.getElementById('dInProgress').textContent = inProg;
+  document.getElementById('dHighPri').textContent    = highPri;
+
+  document.getElementById('dProgressList').innerHTML = columns.map(col => {
+    const n = cards.filter(c => c.status === col.id).length;
+    const p = total ? Math.round(n / total * 100) : 0;
+    return `<div class="progress-item"><div class="progress-header"><span class="progress-label"><span style="color:${col.color}">●</span> ${escHtml(col.title)}</span><span class="progress-count">${n} / ${total}</span></div><div class="progress-track"><div class="progress-fill" style="width:${p}%;background:${col.color}"></div></div></div>`;
+  }).join('');
+
+  const priData = [{ key:'high', label:'High', color:'#c84b2f' }, { key:'medium', label:'Med', color:'#e0843a' }, { key:'low', label:'Low', color:'#4a8fd4' }];
+  const maxPri = Math.max(...priData.map(p => cards.filter(c => c.priority === p.key).length), 1);
+  document.getElementById('dPriBars').innerHTML = priData.map(p => {
+    const n = cards.filter(c => c.priority === p.key).length;
+    return `<div class="pri-bar-wrap"><div class="pri-bar-val">${n}</div><div class="pri-bar" style="height:${Math.round(n/maxPri*68)}px;background:${p.color}"></div><div class="pri-bar-label">${p.label}</div></div>`;
+  }).join('');
+
+  const circ = 2 * Math.PI * 46;
+  const ring = document.getElementById('dRingFill');
+  ring.style.strokeDasharray  = circ;
+  ring.style.strokeDashoffset = circ - (pct / 100 * circ);
+  document.getElementById('dRingPct').textContent = pct + '%';
+
+  document.getElementById('dRingLegend').innerHTML = [...columns].sort((a,b) => cards.filter(c=>c.status===b.id).length - cards.filter(c=>c.status===a.id).length).slice(0,4).map(col => {
+    const n = cards.filter(c => c.status === col.id).length;
+    return `<div class="ring-leg-item"><div class="ring-dot" style="background:${col.color}"></div><span>${escHtml(col.title)}: <b>${n}</b></span></div>`;
+  }).join('');
+
+  const names = [...new Set(cards.map(c => c.assignee).filter(Boolean))];
+  const rows = names.map(name => {
+    const mine = cards.filter(c => c.assignee === name);
+    return `<tr><td><span class="a-avatar" style="background:${nameToColor(name)}">${nameToInitials(name)}</span>${escHtml(name)}</td><td><b>${mine.length}</b></td><td style="color:#4aaa6e">${mine.filter(c=>c.status==='done').length}</td><td style="color:#e0843a">${mine.filter(c=>c.status==='inprogress').length}</td><td style="color:#4a8fd4">${mine.filter(c=>c.status==='todo').length}</td></tr>`;
+  });
+  const unassigned = cards.filter(c => !c.assignee);
+  if (unassigned.length) rows.push(`<tr><td><span class="a-avatar" style="background:#7a7168">—</span>Unassigned</td><td><b>${unassigned.length}</b></td><td style="color:#4aaa6e">${unassigned.filter(c=>c.status==='done').length}</td><td style="color:#e0843a">${unassigned.filter(c=>c.status==='inprogress').length}</td><td style="color:#4a8fd4">${unassigned.filter(c=>c.status==='todo').length}</td></tr>`);
+  document.getElementById('dAssigneeBody').innerHTML = rows.join('');
+}
+
+// ── EXPORT EXCEL ──────────────────────────────────────────────────────────────
+function exportExcel() {
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Raw Data (every field)
+  const allRows = cards.map(card => {
+    const subs = card.subtasks || [];
+    return {
+      'Title':            card.title,
+      'Status':           columns.find(c => c.id === card.status)?.title || card.status,
+      'Priority':         card.priority.charAt(0).toUpperCase() + card.priority.slice(1),
+      'Assignee':         card.assignee || '',
+      'Tags':             (card.tags || []).join(', '),
+      'Start Date':       card.startDate || '',
+      'End Date':         card.endDate   || '',
+      'Due Date':         card.dueDate   || '',
+      'Recurring':        card.recurType ? (card.recurType === 'custom' ? `Every ${card.recurEvery||1} days` : card.recurType) : '',
+      'Notes':            card.notes     || '',
+      'Subtasks Total':   subs.length,
+      'Subtasks Done':    subs.filter(s => s.done).length,
+      'Subtasks Pending': subs.filter(s => !s.done).length,
+      'Subtasks Detail':  subs.map(s => `[${s.done ? 'x' : ' '}] ${s.text}`).join(' | '),
+      'Label Color':      card.label,
+    };
+  });
+  const wsAll = XLSX.utils.json_to_sheet(allRows);
+  wsAll['!cols'] = [{ wch:40 },{ wch:16 },{ wch:10 },{ wch:18 },{ wch:22 },{ wch:12 },{ wch:12 },{ wch:12 },{ wch:14 },{ wch:30 },{ wch:14 },{ wch:14 },{ wch:16 },{ wch:50 },{ wch:14 }];
+  XLSX.utils.book_append_sheet(wb, wsAll, 'Raw Data');
+
+  // Sheet 2: By Status (full detail)
+  const byStatus = [];
+  columns.forEach(col => {
+    const colCards = cards.filter(c => c.status === col.id);
+    if (!colCards.length) return;
+    byStatus.push({ 'Column': `── ${col.title} (${colCards.length}) ──`, 'Title':'','Priority':'','Assignee':'','Tags':'','Start Date':'','End Date':'','Notes':'','Subtasks':'' });
+    colCards.forEach(card => {
+      const subs = card.subtasks || [];
+      byStatus.push({ 'Column': col.title, 'Title': card.title, 'Priority': card.priority.charAt(0).toUpperCase()+card.priority.slice(1), 'Assignee': card.assignee || '', 'Tags': (card.tags||[]).join(', '), 'Start Date': card.startDate||'', 'End Date': card.endDate||'', 'Notes': card.notes||'', 'Subtasks': subs.length ? `${subs.filter(s=>s.done).length}/${subs.length} done` : '' });
+    });
+  });
+  const wsStatus = XLSX.utils.json_to_sheet(byStatus);
+  wsStatus['!cols'] = [{ wch:16 },{ wch:38 },{ wch:10 },{ wch:18 },{ wch:22 },{ wch:12 },{ wch:12 },{ wch:30 },{ wch:14 }];
+  XLSX.utils.book_append_sheet(wb, wsStatus, 'By Status');
+
+  // Sheet 3: Subtasks Detail
+  const subRows = [];
+  cards.forEach(card => { (card.subtasks||[]).forEach(sub => { subRows.push({ 'Card Title': card.title, 'Status': columns.find(c=>c.id===card.status)?.title||card.status, 'Assignee': card.assignee||'', 'Subtask': sub.text, 'Done': sub.done ? 'Yes' : 'No' }); }); });
+  if (subRows.length) { const wsSub = XLSX.utils.json_to_sheet(subRows); wsSub['!cols'] = [{ wch:40 },{ wch:16 },{ wch:18 },{ wch:40 },{ wch:8 }]; XLSX.utils.book_append_sheet(wb, wsSub, 'Subtasks'); }
+
+  // Sheet 4: Summary
+  const summary = columns.map(col => ({ 'Status': col.title, 'Total Cards': cards.filter(c=>c.status===col.id).length, 'High Priority': cards.filter(c=>c.status===col.id&&c.priority==='high').length, 'Medium Priority': cards.filter(c=>c.status===col.id&&c.priority==='medium').length, 'Low Priority': cards.filter(c=>c.status===col.id&&c.priority==='low').length, 'With Subtasks': cards.filter(c=>c.status===col.id&&(c.subtasks||[]).length>0).length, 'With Notes': cards.filter(c=>c.status===col.id&&c.notes&&c.notes.trim()).length, 'With Tags': cards.filter(c=>c.status===col.id&&(c.tags||[]).length>0).length }));
+  const wsSum = XLSX.utils.json_to_sheet(summary);
+  wsSum['!cols'] = [{ wch:16 },{ wch:13 },{ wch:14 },{ wch:16 },{ wch:13 },{ wch:14 },{ wch:12 },{ wch:11 }];
+  XLSX.utils.book_append_sheet(wb, wsSum, 'Summary');
+
+  XLSX.writeFile(wb, 'RioDecz_Kanban.xlsx');
+}
+
+function exportTemplate() {
+  const wb = XLSX.utils.book_new();
+  const template = [{ 'Title':'Example Task','Status':columns[0]?.title||'To Do','Priority':'Medium','Assignee':'Jane Doe','Tags':'design, frontend','Start Date':'2025-03-01','End Date':'2025-03-10','Notes':'Any notes here','Subtasks Detail':'[x] First subtask | [ ] Second subtask | [ ] Third subtask','Label Color':'#4a8fd4' }];
+  const ws = XLSX.utils.json_to_sheet(template);
+  ws['!cols'] = [{ wch:40 },{ wch:16 },{ wch:12 },{ wch:18 },{ wch:20 },{ wch:12 },{ wch:12 },{ wch:30 },{ wch:50 },{ wch:14 }];
+  XLSX.utils.book_append_sheet(wb, ws, 'Import Template');
+  const instructions = [
+    { 'Field':'Title',           'Required':'Yes','Description':'Card title' },
+    { 'Field':'Status',          'Required':'No', 'Description':columns.map(c=>c.title).join(' | ') },
+    { 'Field':'Priority',        'Required':'No', 'Description':'High | Medium | Low' },
+    { 'Field':'Assignee',        'Required':'No', 'Description':'Free text name e.g. Jane Doe' },
+    { 'Field':'Tags',            'Required':'No', 'Description':'Comma-separated: tag1, tag2' },
+    { 'Field':'Start Date',      'Required':'No', 'Description':'YYYY-MM-DD format e.g. 2025-03-01' },
+    { 'Field':'End Date',        'Required':'No', 'Description':'YYYY-MM-DD format e.g. 2025-03-10' },
+    { 'Field':'Notes',           'Required':'No', 'Description':'Free text notes or links' },
+    { 'Field':'Subtasks Detail', 'Required':'No', 'Description':'Pipe-separated: [x] Done task | [ ] Pending task' },
+    { 'Field':'Label Color',     'Required':'No', 'Description':'Hex color e.g. #c84b2f' },
+  ];
+  const wsInstr = XLSX.utils.json_to_sheet(instructions);
+  wsInstr['!cols'] = [{ wch:18 },{ wch:10 },{ wch:55 }];
+  XLSX.utils.book_append_sheet(wb, wsInstr, 'Instructions');
+  XLSX.writeFile(wb, 'RioDecz_ImportTemplate.xlsx');
+}
+
+// ── IMPORT EXCEL ──────────────────────────────────────────────────────────────
+function importExcel(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      // Build subtask map from Subtasks sheet if present
+      const subtaskMap = {};
+      const subSheetName = wb.SheetNames.find(n => n === 'Subtasks');
+      if (subSheetName) {
+        XLSX.utils.sheet_to_json(wb.Sheets[subSheetName], { defval: '' }).forEach(row => {
+          const key = (row['Card Title'] || '').toString().trim().toLowerCase();
+          const text = (row['Subtask'] || '').toString().trim();
+          const done = (row['Done'] || '').toString().trim().toLowerCase() === 'yes';
+          if (!key || !text) return;
+          if (!subtaskMap[key]) subtaskMap[key] = [];
+          subtaskMap[key].push({ id: Math.random().toString(36).slice(2,8), text, done });
+        });
+      }
+      // Read main sheet
+      const mainSheet = wb.SheetNames.find(n => n === 'Raw Data') || wb.SheetNames[0];
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[mainSheet], { defval: '' });
+      let imported = 0;
+      rows.forEach(row => {
+        const title = (row['Title'] || row['title'] || '').toString().trim();
+        if (!title) return;
+        // Parse subtasks: prefer Subtasks sheet, fallback to Subtasks Detail column
+        let subtasks = subtaskMap[title.toLowerCase()] || [];
+        if (!subtasks.length) {
+          const detail = (row['Subtasks Detail'] || '').toString().trim();
+          if (detail) subtasks = detail.split('|').map(part => { const p = part.trim(); const done = p.startsWith('[x]') || p.startsWith('[X]'); const text = p.replace(/^\[.\]\s*/, '').trim(); return text ? { id: Math.random().toString(36).slice(2,8), text, done } : null; }).filter(Boolean);
+        }
+        cards.push({
+          id: c(), title,
+          status:     matchColumn(row['Status'] || row['status'] || ''),
+          priority:   normalizePriority(row['Priority'] || row['priority'] || 'medium'),
+          assignee:   (row['Assignee']    || row['assignee']   || '').toString().trim(),
+          label:      (row['Label Color'] || row['label']      || COLORS[0]).toString().trim() || COLORS[0],
+          startDate:  (row['Start Date']  || row['startDate']  || '').toString().trim(),
+          endDate:    (row['End Date']    || row['endDate']    || '').toString().trim(),
+          dueDate:    (row['Due Date']    || row['dueDate']    || '').toString().trim(),
+          recurType:  (row['Recurring']   || '').toString().trim().toLowerCase().split(' ')[0] || '',
+          recurEvery: null,
+          notes:      (row['Notes']       || row['notes']      || '').toString().trim(),
+          tags:       (row['Tags']||row['tags']||'').toString().trim() ? (row['Tags']||row['tags']).toString().split(',').map(t=>t.trim()).filter(Boolean) : [],
+          subtasks,
+        });
+        imported++;
+      });
+      renderBoard(); saveState();
+      alert(`✅ Imported ${imported} card${imported !== 1 ? 's' : ''} successfully.`);
+    } catch(err) { alert('❌ Import failed. Make sure you are using the exported template format.'); console.error(err); }
+    input.value = '';
+  };
+  reader.readAsBinaryString(file);
+}
+function matchColumn(val) {
+  const v = val.toString().toLowerCase().replace(/\s/g,'');
+  for (const col of columns) { if (col.title.toLowerCase().replace(/\s/g,'') === v || col.id === v) return col.id; }
+  return columns[0]?.id || 'todo';
+}
+function normalizePriority(val) { const v = val.toString().toLowerCase(); if (v.includes('high')) return 'high'; if (v.includes('low')) return 'low'; return 'medium'; }
+
+// ── CALENDAR ──────────────────────────────────────────────────────────────────
+let calDate     = new Date();
+let calViewMode = 'month';
+function setCalView(mode, btn) { calViewMode = mode; document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); renderCalendar(); }
+function calShift(dir) { calDate = calViewMode === 'month' ? new Date(calDate.getFullYear(), calDate.getMonth()+dir, 1) : new Date(calDate.getFullYear(), calDate.getMonth(), calDate.getDate()+dir*7); renderCalendar(); }
+function calToday() { calDate = new Date(); renderCalendar(); }
+function parseDate(s) { if (!s) return null; const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function fmtDate(d) { if (!d) return '—'; return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); }
+function sameDay(a, b) { return a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+function dateInRange(d, s, e) {
+  const day = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const sd  = s ? new Date(s.getFullYear(), s.getMonth(), s.getDate()) : null;
+  const ed  = e ? new Date(e.getFullYear(), e.getMonth(), e.getDate()) : null;
+  if (sd && ed) return day >= sd && day <= ed;
+  if (sd) return sameDay(day, sd);
+  return false;
+}
+function getCardColor(card) { const col = columns.find(c => c.id === card.status); return card.label || (col ? col.color : '#7a7168'); }
+function showTooltip(e, card) {
+  const tt = document.getElementById('calTooltip');
+  const col = columns.find(c => c.id === card.status);
+  tt.innerHTML = `
+    <div class="cal-tt-title">${escHtml(card.title)}</div>
+    <div class="cal-tt-row">📅 <b>Start:</b> ${fmtDate(parseDate(card.startDate))}</div>
+    <div class="cal-tt-row">🏁 <b>End:</b> ${fmtDate(parseDate(card.endDate))}</div>
+    <div class="cal-tt-row">📌 <b>Status:</b> ${col ? escHtml(col.title) : card.status}</div>
+    <div class="cal-tt-row">⚡ <b>Priority:</b> ${card.priority}</div>
+    ${card.assignee ? `<div class="cal-tt-row">👤 <b>Assignee:</b> ${escHtml(card.assignee)}</div>` : ''}
+    ${(card.tags||[]).length ? `<div class="cal-tt-row">🏷 <b>Tags:</b> ${(card.tags||[]).map(escHtml).join(', ')}</div>` : ''}`;
+  tt.style.display = 'block';
+  tt.style.left = Math.min(e.clientX+12, window.innerWidth-300) + 'px';
+  tt.style.top  = Math.min(e.clientY+12, window.innerHeight-180) + 'px';
+}
+function hideTooltip() { document.getElementById('calTooltip').style.display = 'none'; }
+
+function renderCalendar() {
+  const today = new Date();
+  const label = document.getElementById('calMonthLabel');
+  if (calViewMode === 'month') {
+    const year = calDate.getFullYear(), month = calDate.getMonth();
+    label.textContent = new Date(year, month, 1).toLocaleDateString('en-US', { month:'long', year:'numeric' });
+    const firstDay = new Date(year, month, 1), startDow = firstDay.getDay();
+    const days = [];
+    for (let i = startDow; i > 0; i--) days.push({ date: new Date(year, month, 1-i), current: false });
+    for (let d = 1; d <= new Date(year, month+1, 0).getDate(); d++) days.push({ date: new Date(year, month, d), current: true });
+    const total = Math.ceil(days.length/7)*7; let tr = 1;
+    while (days.length < total) days.push({ date: new Date(year, month+1, tr++), current: false });
+    const datedCards = cards.filter(c => c.startDate && c.startDate.trim());
+    const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    let html = `<div class="cal-grid-month">`;
+    DAYS.forEach(d => html += `<div class="cal-day-header">${d}</div>`);
+    days.forEach(({ date, current }) => {
+      const isToday = sameDay(date, today);
+      html += `<div class="cal-day-cell${!current?' other-month':''}${isToday?' today':''}"><div class="cal-day-num">${date.getDate()}</div>`;
+      const dayCards = datedCards.filter(card => { const s = parseDate(card.startDate); const e = card.endDate&&card.endDate.trim() ? parseDate(card.endDate) : s; return s && dateInRange(date, s, e); });
+      dayCards.slice(0, 20).forEach(card => {
+        const s = parseDate(card.startDate), e = card.endDate&&card.endDate.trim() ? parseDate(card.endDate) : s;
+        const isStart = sameDay(date, s), color = getCardColor(card);
+        html += `<div class="cal-task-pill" style="background:${color};border-radius:${isStart?'4px 2px 2px 4px':'2px 4px 4px 2px'};${!isStart?'opacity:.82;':''}" onmouseenter="showTooltip(event,cards.find(c=>c.id==='${card.id}'))" onmouseleave="hideTooltip()" onclick="openEditCard('${card.id}')">${isStart ? escHtml(card.title) : '&nbsp;'}</div>`;
+      });
+      if (dayCards.length > 20) html += `<div class="cal-more">+${dayCards.length-20} more</div>`;
+      html += `</div>`;
+    });
+    html += `</div>`;
+    document.getElementById('calGrid').innerHTML = html;
+  } else {
+    const dow = calDate.getDay();
+    const weekStart = new Date(calDate.getFullYear(), calDate.getMonth(), calDate.getDate()-dow);
+    const weekDays  = Array.from({ length:7 }, (_,i) => new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()+i));
+    const mn = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    label.textContent = `${mn[weekStart.getMonth()]} ${weekStart.getDate()} – ${mn[weekDays[6].getMonth()]} ${weekDays[6].getDate()}, ${weekDays[6].getFullYear()}`;
+    const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const datedCards = cards.filter(c => c.startDate && c.startDate.trim());
+    let html = `<div class="cal-grid-week">`;
+    weekDays.forEach((date, i) => {
+      const isToday = sameDay(date, today);
+      const dayCards = datedCards.filter(card => { const s = parseDate(card.startDate); const e = card.endDate&&card.endDate.trim() ? parseDate(card.endDate) : s; return s && dateInRange(date, s, e); });
+      html += `<div class="cal-week-col"><div class="cal-week-header"><div class="cal-week-dow">${DAYS[i]}</div><div class="cal-week-date${isToday?' today':''}">${date.getDate()}</div></div><div class="cal-week-tasks">${dayCards.map(card => `<div class="cal-week-pill" style="background:${getCardColor(card)}" onmouseenter="showTooltip(event,cards.find(c=>c.id==='${card.id}'))" onmouseleave="hideTooltip()" onclick="openEditCard('${card.id}')">${escHtml(card.title)}</div>`).join('')}</div></div>`;
+    });
+    html += `</div>`;
+    document.getElementById('calGrid').innerHTML = html;
+  }
+}
+
+// ── APP RENAME ────────────────────────────────────────────────────────────────
+function startRenameApp() {
+  const logo = document.getElementById('appLogo'), input = document.getElementById('appNameInput');
+  input.value = logo.textContent.trim(); logo.style.display = 'none'; input.style.display = ''; input.focus(); input.select();
+}
+function finishRenameApp(input) {
+  const logo = document.getElementById('appLogo');
+  const name = input.value.trim() || logo.textContent.trim();
+  logo.textContent = name; logo.style.display = ''; input.style.display = 'none'; document.title = name; saveState();
+}
+
+// ── OWNER NAME ────────────────────────────────────────────────────────────────
+let boardOwnerName = '';
+function startEditOwner() {
+  const disp = document.getElementById('ownerDisplay');
+  const inp  = document.getElementById('ownerInput');
+  inp.value = boardOwnerName || '';
+  disp.style.display = 'none';
+  inp.style.display = 'inline-block';
+  inp.focus();
+}
+function finishEditOwner(inp) {
+  const name = inp.value.trim();
+  boardOwnerName = name;
+  const disp = document.getElementById('ownerDisplay');
+  disp.textContent = name || 'Click to set name';
+  disp.style.display = 'inline-block';
+  inp.style.display = 'none';
+  saveState();
+  syncToPerformanceTool();
+}
+
+// ── EXPORT BUNDLE FOR MANAGER ─────────────────────────────────────────────────
+function exportBundleForManager() {
+  const owner = boardOwnerName || document.getElementById('appLogo')?.textContent?.trim() || 'Unknown';
+  if (!boardOwnerName) {
+    const ok = confirm('No owner name set. Would you like to set your name before exporting?\n\nClick OK to set it now, or Cancel to export without a name.');
+    if (ok) { startEditOwner(); return; }
+  }
+
+  const doneIds   = columns.filter(c => /done|complete|finished|closed/i.test(c.title)).map(c => c.id);
+  const inProgIds = columns.filter(c => /progress|doing|active|wip/i.test(c.title)).map(c => c.id);
+  const now = new Date(); now.setHours(0,0,0,0);
+
+  // Build owner-specific metrics
+  const mine   = cards.filter(c => !c.assignee || c.assignee.toLowerCase() === owner.toLowerCase() || cards.length <= 1);
+  const allCards = cards; // full board
+  const assignees = [...new Set(cards.map(c => c.assignee).filter(Boolean))];
+
+  const metrics = assignees.map(name => {
+    const ac = cards.filter(c => c.assignee === name);
+    const done = ac.filter(c => doneIds.includes(c.status));
+    const inProg = ac.filter(c => inProgIds.includes(c.status));
+    const high = ac.filter(c => c.priority === 'high');
+    const subtaskAll = ac.flatMap(c => c.subtasks || []);
+    const subtaskDone = subtaskAll.filter(s => s.done);
+    const dated = ac.filter(c => c.endDate);
+    const overdue = dated.filter(c => { const d = new Date(c.endDate); return !doneIds.includes(c.status) && d < now; });
+    const compRate = ac.length ? done.length / ac.length : 0;
+    const subtaskRate = subtaskAll.length ? subtaskDone.length / subtaskAll.length : compRate;
+    const overdueRate = dated.length ? overdue.length / dated.length : 0;
+    const highRate = ac.length ? high.length / ac.length : 0;
+    return {
+      assignee: name,
+      total: ac.length, done: done.length, inProgress: inProg.length,
+      todo: ac.length - done.length - inProg.length,
+      high: high.length, overdueCount: overdue.length,
+      subtasksTotal: subtaskAll.length, subtasksDone: subtaskDone.length,
+      tags: [...new Set(ac.flatMap(c => c.tags || []))],
+      completionRate: +compRate.toFixed(3),
+      derivedScores: {
+        task_completion: Math.max(1, Math.min(5, +(1 + compRate * 4).toFixed(2))),
+        quality:         Math.max(1, Math.min(5, +(1 + subtaskRate * 4).toFixed(2))),
+        punctuality:     Math.max(1, Math.min(5, +(5 - overdueRate * 4).toFixed(2))),
+        initiative:      Math.max(1, Math.min(5, +(1 + Math.min(highRate * 1.5, 1) * 4).toFixed(2))),
+      },
+      lastSync: new Date().toISOString(),
+    };
+  });
+
+  // Also include the owner as a self-entry if their name isn't an assignee
+  const ownerMetric = metrics.find(m => m.assignee.toLowerCase() === owner.toLowerCase());
+  if (!ownerMetric) {
+    const oc = cards; // treat all cards as owner's if no assignee matches
+    const done = oc.filter(c => doneIds.includes(c.status));
+    const compRate = oc.length ? done.length / oc.length : 0;
+    metrics.unshift({
+      assignee: owner, total: oc.length, done: done.length,
+      inProgress: oc.filter(c => inProgIds.includes(c.status)).length,
+      todo: oc.length - done.length, high: oc.filter(c => c.priority==='high').length,
+      overdueCount: 0, subtasksTotal: 0, subtasksDone: 0, tags: [],
+      completionRate: +compRate.toFixed(3),
+      derivedScores: {
+        task_completion: Math.max(1, Math.min(5, +(1 + compRate * 4).toFixed(2))),
+        quality: 3, punctuality: 3, initiative: 3,
+      },
+      lastSync: new Date().toISOString(),
+    });
+  }
+
+  const bundle = {
+    _type: 'kanban_perf_bundle',
+    _version: 2,
+    ownerName: owner,
+    boardName: document.getElementById('appLogo')?.textContent?.trim() || 'Kanban Board',
+    exportedAt: new Date().toISOString(),
+    columns: columns.map(c => ({ id: c.id, title: c.title, color: c.color, isDone: doneIds.includes(c.id), isInProg: inProgIds.includes(c.id) })),
+    cards: cards,
+    metrics,
+    totalCards: cards.length,
+    lastSync: new Date().toISOString(),
+  };
+
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const safe = owner.replace(/[^a-zA-Z0-9_\- ]/g, '').replace(/\s+/g, '_');
+  a.href = url;
+  a.download = `KanbanBundle_${safe}_${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+
+  // Confirm
+  const msg = document.createElement('div');
+  msg.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--surface);border:1.5px solid var(--accent);border-radius:8px;padding:12px 18px;font-family:"DM Mono",monospace;font-size:12px;color:var(--text);z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.15);max-width:300px;line-height:1.5';
+  msg.innerHTML = `<b style="color:var(--accent)">📤 Bundle exported!</b><br>Send <b>${safe}_${new Date().toISOString().slice(0,10)}.json</b> to your manager. They can import it in the Performance Review tool → Kanban Data tab.`;
+  document.body.appendChild(msg);
+  setTimeout(() => msg.remove(), 5000);
+}
+
+// ── THEME ──────────────────────────────────────────────────────────────────────
+const THEMES = [
+  { name:'Parchment', bg:'#f0ece4', surface:'#faf8f4', text:'#1a1612', muted:'#7a7168', border:'#d6cfc3', accent:'#c84b2f' },
+  { name:'Midnight',  bg:'#0f1117', surface:'#1a1d27', text:'#e8eaf0', muted:'#6b7080', border:'#2a2d3a', accent:'#7c6af7' },
+  { name:'Forest',    bg:'#e8f0e8', surface:'#f4f8f4', text:'#1a2a1a', muted:'#5a7a5a', border:'#c0d4c0', accent:'#2d7a3a' },
+  { name:'Ocean',     bg:'#e4eef5', surface:'#f2f7fb', text:'#0d2233', muted:'#5a7a90', border:'#c0d4e4', accent:'#1a6fa8' },
+  { name:'Slate',     bg:'#1e2330', surface:'#252b3b', text:'#d4dae8', muted:'#6a7490', border:'#323a50', accent:'#38b2ac' },
+  { name:'Rose',      bg:'#fdf0f3', surface:'#fff5f7', text:'#2a0d12', muted:'#8a5060', border:'#e8c0cc', accent:'#d63864' },
+  { name:'Sand',      bg:'#f5f0e8', surface:'#faf7f2', text:'#2a2218', muted:'#8a7a68', border:'#ddd0bc', accent:'#c87830' },
+  { name:'Obsidian',  bg:'#121212', surface:'#1e1e1e', text:'#e0e0e0', muted:'#787878', border:'#2e2e2e', accent:'#bb86fc' },
+];
+let activeThemeIndex = 0;
+function applyTheme(t) {
+  const r = document.documentElement.style;
+  r.setProperty('--bg', t.bg); r.setProperty('--surface', t.surface); r.setProperty('--text', t.text);
+  r.setProperty('--muted', t.muted); r.setProperty('--border', t.border); r.setProperty('--accent', t.accent); r.setProperty('--accent-light', t.accent+'22');
+  [['cp-bg',t.bg],['cp-surface',t.surface],['cp-text',t.text],['cp-muted',t.muted],['cp-border',t.border],['cp-accent',t.accent]].forEach(([id,val]) => { const el=document.getElementById(id); if(el) el.value=val; });
+  [['hex-bg',t.bg],['hex-surface',t.surface],['hex-text',t.text],['hex-muted',t.muted],['hex-border',t.border],['hex-accent',t.accent]].forEach(([id,val]) => { const el=document.getElementById(id); if(el) el.textContent=val; });
+  buildPresets();
+}
+function buildPresets() {
+  const cont = document.getElementById('tpPresets'); if (!cont) return;
+  cont.innerHTML = THEMES.map((t,i) => `<div class="tp-preset ${i===activeThemeIndex?'active':''}" onclick="selectTheme(${i})"><div class="tp-preset-dots"><div class="tp-dot" style="background:${t.bg};border:1px solid ${t.border}"></div><div class="tp-dot" style="background:${t.surface};border:1px solid ${t.border}"></div><div class="tp-dot" style="background:${t.accent}"></div><div class="tp-dot" style="background:${t.text}"></div></div><div class="tp-preset-name">${t.name}</div></div>`).join('');
+}
+function selectTheme(i) { activeThemeIndex=i; applyTheme(THEMES[i]); saveState(); }
+function syncHex(input, hexId) { document.getElementById(hexId).textContent = input.value; }
+function applyCustomTheme() {
+  const t = { name:'Custom', bg:document.getElementById('cp-bg').value, surface:document.getElementById('cp-surface').value, text:document.getElementById('cp-text').value, muted:document.getElementById('cp-muted').value, border:document.getElementById('cp-border').value, accent:document.getElementById('cp-accent').value };
+  const idx = THEMES.findIndex(t => t.name==='Custom');
+  if (idx>=0) { THEMES[idx]=t; activeThemeIndex=idx; } else { THEMES.push(t); activeThemeIndex=THEMES.length-1; }
+  applyTheme(t); saveState();
+}
+function openThemePanel()  { buildPresets(); document.getElementById('themePanel').classList.add('open'); document.getElementById('themePanelOverlay').classList.add('open'); }
+function closeThemePanel() { document.getElementById('themePanel').classList.remove('open'); document.getElementById('themePanelOverlay').classList.remove('open'); }
+
+// ── PERSISTENCE ───────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'riodecz_v1';
+const SYNC_KEY    = 'kanban_perf_sync';   // shared with Performance Review tool
+
+function saveState() {
+  try {
+    const appName = document.getElementById('appLogo')?.textContent?.trim() || 'Rio Decz';
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ cards, columns, appName, ownerName: boardOwnerName, themeIndex: activeThemeIndex, customTheme: THEMES.find(t => t.name==='Custom') || null }));
+    // ── SYNC BRIDGE: write clean snapshot for Performance Review ──
+    syncToPerformanceTool();
+  } catch(e) { console.warn('Save failed:', e); }
+}
+
+function syncToPerformanceTool() {
+  try {
+    // Identify "done" column ids
+    const doneIds = columns.filter(c => /done|complete|finished|closed/i.test(c.title)).map(c => c.id);
+    const inProgIds = columns.filter(c => /progress|doing|active|wip/i.test(c.title)).map(c => c.id);
+
+    // Build per-assignee metrics
+    const assignees = [...new Set(cards.map(c => c.assignee).filter(Boolean))];
+    const metrics = assignees.map(name => {
+      const mine = cards.filter(c => c.assignee === name);
+      const done = mine.filter(c => doneIds.includes(c.status));
+      const inProg = mine.filter(c => inProgIds.includes(c.status));
+      const high = mine.filter(c => c.priority === 'high');
+      const withNotes = mine.filter(c => c.notes && c.notes.trim());
+      const subtaskAll = mine.flatMap(c => c.subtasks || []);
+      const subtaskDone = subtaskAll.filter(s => s.done);
+      // Date-based timeliness: cards with endDate in past that are done vs overdue
+      const now = new Date(); now.setHours(0,0,0,0);
+      const dated = mine.filter(c => c.endDate);
+      const onTime = dated.filter(c => { const d = new Date(c.endDate); return doneIds.includes(c.status) && d >= now || (doneIds.includes(c.status) && d < now); });
+      const overdue = dated.filter(c => { const d = new Date(c.endDate); return !doneIds.includes(c.status) && d < now; });
+      const tags = [...new Set(mine.flatMap(c => c.tags || []))];
+      // derive scores (1-5 scale) from raw kanban data
+      const compRate   = mine.length ? done.length / mine.length : 0;
+      const subtaskRate = subtaskAll.length ? subtaskDone.length / subtaskAll.length : compRate;
+      const overdueRate = dated.length ? overdue.length / dated.length : 0;
+      const highPriRate = mine.length ? high.length / mine.length : 0;
+      // score formulas
+      const taskCompScore  = +(1 + compRate   * 4).toFixed(2);
+      const qualityScore   = +(1 + subtaskRate * 4).toFixed(2);
+      const punctualScore  = +(5 - overdueRate * 4).toFixed(2);
+      const initiativeScore= +(1 + Math.min(highPriRate * 1.5, 1) * 4).toFixed(2);
+      // store columns data for the PR tool
+      return {
+        assignee: name,
+        total: mine.length,
+        done: done.length,
+        inProgress: inProg.length,
+        todo: mine.length - done.length - inProg.length,
+        high: high.length,
+        overdueCount: overdue.length,
+        onTimeCount: done.length - overdue.length,
+        subtasksTotal: subtaskAll.length,
+        subtasksDone: subtaskDone.length,
+        withNotes: withNotes.length,
+        tags,
+        completionRate: +compRate.toFixed(3),
+        derivedScores: {
+          task_completion: Math.max(1, Math.min(5, taskCompScore)),
+          quality: Math.max(1, Math.min(5, qualityScore)),
+          punctuality: Math.max(1, Math.min(5, punctualScore)),
+          initiative: Math.max(1, Math.min(5, initiativeScore)),
+        },
+        lastSync: new Date().toISOString(),
+      };
+    });
+
+    localStorage.setItem(SYNC_KEY, JSON.stringify({
+      columns: columns.map(c => ({ id: c.id, title: c.title, color: c.color, isDone: doneIds.includes(c.id), isInProg: inProgIds.includes(c.id) })),
+      metrics,
+      totalCards: cards.length,
+      lastSync: new Date().toISOString(),
+      ownerName: boardOwnerName || '',
+      boardName: document.getElementById('appLogo')?.textContent?.trim() || 'Kanban Board',
+    }));
+  } catch(e) { console.warn('Sync failed:', e); }
+}
+
+// Add a visible sync button to header area
+function addSyncButton() {
+  const acts = document.querySelector('.header-actions');
+  if (!acts || document.getElementById('syncPRBtn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'syncPRBtn';
+  btn.className = 'btn btn-primary';
+  btn.innerHTML = '⇄ Sync to Review';
+  btn.title = 'Push current board data to Performance Review tool';
+  btn.onclick = () => { syncToPerformanceTool(); btn.textContent = '✓ Synced!'; setTimeout(()=>btn.innerHTML='⇄ Sync to Review',2000); };
+  acts.insertBefore(btn, acts.firstChild);
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const state = JSON.parse(raw);
+    if (state.cards)   cards   = state.cards;
+    if (state.columns) columns = state.columns;
+    if (state.ownerName) {
+      boardOwnerName = state.ownerName;
+      const od = document.getElementById('ownerDisplay');
+      if (od) od.textContent = boardOwnerName;
+    }
+    if (state.appName) { const logo = document.getElementById('appLogo'); if (logo) { logo.textContent = state.appName; document.title = state.appName; } }
+    if (state.customTheme) { const idx = THEMES.findIndex(t => t.name==='Custom'); if (idx>=0) THEMES[idx]=state.customTheme; else THEMES.push(state.customTheme); }
+    if (typeof state.themeIndex === 'number' && THEMES[state.themeIndex]) { activeThemeIndex = state.themeIndex; applyTheme(THEMES[state.themeIndex]); }
+    return true;
+  } catch(e) { console.warn('Load failed:', e); return false; }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+applyTheme(THEMES[0]);
+loadState();
+spawnRecurringCards();
+renderBoard();
+document.getElementById('board').style.display = 'none';
+document.getElementById('dashboard').classList.add('visible');
+renderDashboard();
+// Add sync button and perform initial sync
+setTimeout(() => { addSyncButton(); syncToPerformanceTool(); }, 100);
+</script>
+</body>
+</html>

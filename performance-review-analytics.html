@@ -1,0 +1,2422 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Performance Review Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:opsz,wght@5..1200,400;5..1200,600;5..1200,700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────────
+   TOKENS
+───────────────────────────────────────────── */
+:root {
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+}
+[data-theme="light"] {
+  --bg:     #f4f2ee; --bg2:  #ebe8e2; --bg3: #dedad2;
+  --sur:    #ffffff; --sur2: #faf9f7;
+  --bdr:    #e0dbd3; --bdr2: #ccc6bc;
+  --tx:     #1a1714; --tx2:  #3d3a36; --mu:  #8c877f;
+  --ac:     #c13b0e; --acl:  #fef3ee; --ach: #a53209;
+  --gn:     #186a3b; --gnb:  #edfbf3;
+  --bl:     #1a4db5; --blb:  #eef3ff;
+  --gd:     #a05f0a; --gdb:  #fef9ee;
+  --pu:     #6b31c4; --pub:  #f6f0ff;
+  --rb:     #fff0ef;
+  --sh:     0 1px 2px rgba(0,0,0,.05), 0 3px 10px rgba(0,0,0,.06);
+  --shm:    0 4px 12px rgba(0,0,0,.08), 0 10px 28px rgba(0,0,0,.07);
+  --shl:    0 8px 24px rgba(0,0,0,.09), 0 20px 56px rgba(0,0,0,.08);
+}
+[data-theme="dark"] {
+  --bg:#0e1016;--bg2:#151820;--bg3:#1c2030;--sur:#1a1e2c;--sur2:#20253a;
+  --bdr:#272d40;--bdr2:#333c56;--tx:#e6e9f4;--tx2:#adb3cc;--mu:#636b88;
+  --ac:#f87333;--acl:rgba(248,115,51,.12);--ach:#d95f20;
+  --gn:#3ecf6e;--gnb:rgba(62,207,110,.1);--bl:#5b9af5;--blb:rgba(91,154,245,.1);
+  --gd:#f0a843;--gdb:rgba(240,168,67,.1);--pu:#a87eed;--pub:rgba(168,126,237,.1);
+  --rb:rgba(248,100,100,.1);
+  --sh:0 2px 8px rgba(0,0,0,.3);--shm:0 4px 20px rgba(0,0,0,.4);--shl:0 12px 40px rgba(0,0,0,.5);
+}
+[data-theme="warm"] {
+  --bg:#fdf7f0;--bg2:#f8ece0;--bg3:#f0dece;--sur:#fffcf8;--sur2:#fdf7f0;
+  --bdr:#ead9c8;--bdr2:#d8c4ad;--tx:#2c1e0e;--tx2:#5a3d22;--mu:#9a7a58;
+  --ac:#a84e08;--acl:#fef2e5;--ach:#8a3d05;
+  --gn:#1a6637;--gnb:#f0faf4;--bl:#1c4099;--blb:#eef2ff;
+  --gd:#8d5407;--gdb:#fef8ec;--pu:#6829b8;--pub:#f8f2ff;--rb:#fff2f0;
+  --sh:0 1px 3px rgba(40,20,5,.07),0 4px 14px rgba(40,20,5,.07);
+  --shm:0 4px 12px rgba(40,20,5,.09);--shl:0 8px 28px rgba(40,20,5,.1);
+}
+[data-theme="slate"] {
+  --bg:#edf2f7;--bg2:#dde6ef;--bg3:#ccd8e5;--sur:#ffffff;--sur2:#f3f7fb;
+  --bdr:#c4d1de;--bdr2:#9ab0c4;--tx:#0b1929;--tx2:#253d54;--mu:#5e7a92;
+  --ac:#0a6e66;--acl:#ebfaf9;--ach:#085c56;
+  --gn:#06643a;--gnb:#eaf9f3;--bl:#1540a8;--blb:#eef2ff;
+  --gd:#93560a;--gdb:#fef9ed;--pu:#6123bb;--pub:#f7f2ff;--rb:#fff0ef;
+  --sh:0 1px 3px rgba(10,25,40,.07),0 4px 14px rgba(10,25,40,.06);
+  --shm:0 4px 12px rgba(10,25,40,.08);--shl:0 8px 28px rgba(10,25,40,.1);
+}
+
+/* ─────────────────────────────────────────────
+   BASE
+───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--tx);
+  min-height: 100vh;
+  line-height: 1.5;
+  transition: background .2s, color .2s;
+}
+
+/* ─────────────────────────────────────────────
+   HEADER
+───────────────────────────────────────────── */
+.topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0 24px; height: 60px;
+  background: var(--sur); border-bottom: 1px solid var(--bdr);
+  position: sticky; top: 0; z-index: 200;
+  box-shadow: var(--sh); flex-wrap: wrap;
+}
+.logo-block { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.logo-mark {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--ac); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0;
+}
+.logo-text-wrap .app-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px; font-weight: 700; letter-spacing: -.3px;
+  color: var(--tx); line-height: 1.2;
+}
+.logo-text-wrap .app-desc { font-size: 11px; color: var(--mu); }
+
+.topbar-mid { display: flex; align-items: center; gap: 8px; flex: 1; flex-wrap: wrap; }
+.topbar-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+/* ─────────────────────────────────────────────
+   FORM CONTROLS
+───────────────────────────────────────────── */
+select, input[type="text"], input[type="number"] {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  background: var(--sur2); border: 1px solid var(--bdr);
+  color: var(--tx); padding: 7px 11px; border-radius: var(--radius-sm);
+  outline: none; cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+select:focus, input:focus { border-color: var(--ac); background: var(--sur); }
+select { padding-right: 24px; }
+
+textarea {
+  font-family: 'DM Sans', sans-serif; font-size: 13px;
+  background: var(--sur2); border: 1px solid var(--bdr);
+  color: var(--tx); padding: 9px 12px; border-radius: var(--radius-sm);
+  outline: none; resize: vertical; min-height: 76px;
+  transition: border-color .15s; line-height: 1.6;
+}
+textarea:focus { border-color: var(--ac); }
+
+/* ─────────────────────────────────────────────
+   BUTTONS
+───────────────────────────────────────────── */
+.btn {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  padding: 7px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--bdr); background: var(--sur); color: var(--tx2);
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px; line-height: 1;
+}
+.btn:hover { border-color: var(--ac); color: var(--ac); background: var(--acl); }
+.btn-primary {
+  background: var(--ac); color: #fff; border-color: var(--ac);
+}
+.btn-primary:hover { background: var(--ach); border-color: var(--ach); color: #fff; }
+.btn-sm { font-size: 12px; padding: 5px 11px; }
+.btn-xs { font-size: 11px; padding: 4px 9px; }
+.btn-ghost { border-color: transparent; background: transparent; color: var(--mu); }
+.btn-ghost:hover { background: var(--bg2); border-color: var(--bdr); color: var(--tx); }
+.btn-green { background: var(--gn); color: #fff; border-color: var(--gn); }
+.btn-green:hover { opacity: .88; }
+
+/* ─────────────────────────────────────────────
+   SYNC PILL
+───────────────────────────────────────────── */
+.sync-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 500; padding: 5px 12px;
+  border-radius: 20px; border: 1px solid var(--bdr);
+  background: var(--sur2); color: var(--mu);
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.sync-pill:hover { border-color: var(--ac); color: var(--ac); }
+.sync-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--mu); flex-shrink: 0;
+}
+.sync-pill.live .sync-dot { background: var(--gn); animation: pulse 2s infinite; }
+.sync-pill.stale .sync-dot { background: var(--gd); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+/* ─────────────────────────────────────────────
+   THEME SWITCHER
+───────────────────────────────────────────── */
+.theme-sw {
+  display: flex; align-items: center; gap: 4px;
+  background: var(--bg2); border: 1px solid var(--bdr);
+  border-radius: var(--radius-sm); padding: 4px 7px;
+}
+.theme-sw-label { font-size: 11px; color: var(--mu); margin-right: 2px; }
+.tdot {
+  width: 20px; height: 20px; border-radius: 5px; cursor: pointer;
+  border: 2px solid transparent; transition: all .15s;
+}
+.tdot:hover { transform: scale(1.15); }
+.tdot.on { border-color: var(--ac); }
+.tdot[data-t="light"]  { background: linear-gradient(135deg,#f4f2ee 50%,#fff 50%); }
+.tdot[data-t="dark"]   { background: linear-gradient(135deg,#0e1016 50%,#1a1e2c 50%); }
+.tdot[data-t="warm"]   { background: linear-gradient(135deg,#fdf7f0 50%,#ead9c8 50%); }
+.tdot[data-t="slate"]  { background: linear-gradient(135deg,#edf2f7 50%,#c4d1de 50%); }
+
+/* ─────────────────────────────────────────────
+   TAB NAV
+───────────────────────────────────────────── */
+.tab-nav {
+  display: flex; padding: 0 24px;
+  background: var(--sur); border-bottom: 1px solid var(--bdr);
+  overflow-x: auto; gap: 2px;
+}
+.tbn {
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  padding: 13px 18px; border: none; background: none;
+  color: var(--mu); cursor: pointer;
+  border-bottom: 2.5px solid transparent; margin-bottom: -1px;
+  transition: color .15s, border-color .15s; white-space: nowrap;
+}
+.tbn:hover { color: var(--tx); }
+.tbn.on { color: var(--ac); border-bottom-color: var(--ac); }
+
+/* ─────────────────────────────────────────────
+   PAGE LAYOUT
+───────────────────────────────────────────── */
+.page { display: none; padding: 28px 24px; max-width: 1380px; }
+.page.on { display: block; }
+
+.section-heading {
+  font-size: 11px; font-weight: 600; color: var(--mu);
+  text-transform: uppercase; letter-spacing: 1px;
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 18px;
+}
+.section-heading::after { content: ''; flex: 1; height: 1px; background: var(--bdr); }
+
+/* ─────────────────────────────────────────────
+   KPI STRIP
+───────────────────────────────────────────── */
+.kpi-strip {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px; margin-bottom: 24px;
+}
+.kpi-card {
+  background: var(--sur); border: 1px solid var(--bdr);
+  border-radius: var(--radius); padding: 18px 20px;
+  box-shadow: var(--sh); position: relative; overflow: hidden;
+  transition: transform .15s, box-shadow .15s;
+}
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shm); }
+.kpi-accent-bar {
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--bar-color, var(--ac));
+}
+.kpi-icon { font-size: 20px; margin-bottom: 10px; line-height: 1; }
+.kpi-label {
+  font-size: 11px; font-weight: 600; color: var(--mu);
+  text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px;
+}
+.kpi-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 32px; font-weight: 700; line-height: 1;
+}
+.kpi-sub { font-size: 12px; color: var(--mu); margin-top: 5px; }
+
+/* ─────────────────────────────────────────────
+   CHART CARDS + GRID
+───────────────────────────────────────────── */
+.chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+.chart-grid.w3 { grid-template-columns: 1fr 1fr 1fr; }
+.chart-grid.wide { grid-template-columns: 2fr 1fr; }
+.chart-grid.full { grid-template-columns: 1fr; }
+
+.card {
+  background: var(--sur); border: 1px solid var(--bdr);
+  border-radius: var(--radius); padding: 22px 24px;
+  box-shadow: var(--sh); transition: box-shadow .15s;
+}
+.card:hover { box-shadow: var(--shm); }
+.card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px; font-weight: 600; color: var(--tx); margin-bottom: 3px;
+}
+.card-sub { font-size: 12px; color: var(--mu); margin-bottom: 18px; }
+
+/* ─────────────────────────────────────────────
+   BAR LIST
+───────────────────────────────────────────── */
+.bar-list { display: flex; flex-direction: column; gap: 11px; }
+.bar-item { display: flex; align-items: center; gap: 10px; }
+.bar-label { font-size: 12px; color: var(--tx2); min-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; height: 8px; background: var(--bg2); border-radius: 99px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 99px; transition: width .7s cubic-bezier(.4,0,.2,1); }
+.bar-val { font-size: 12px; font-weight: 600; min-width: 34px; text-align: right; }
+
+/* ─────────────────────────────────────────────
+   SCORE COLORS
+───────────────────────────────────────────── */
+.sc-ex { color: var(--gn) !important; }
+.sc-gd { color: var(--bl) !important; }
+.sc-av { color: var(--gd) !important; }
+.sc-lo { color: var(--ac) !important; }
+
+/* ─────────────────────────────────────────────
+   BADGES
+───────────────────────────────────────────── */
+.badge {
+  font-size: 11px; font-weight: 600; padding: 3px 9px;
+  border-radius: 20px; display: inline-block; white-space: nowrap;
+}
+.badge-ex  { background: var(--gnb); color: var(--gn); }
+.badge-gd  { background: var(--blb); color: var(--bl); }
+.badge-av  { background: var(--gdb); color: var(--gd); }
+.badge-lo  { background: var(--rb);  color: var(--ac); }
+.badge-gn  { background: var(--gnb); color: var(--gn); }
+
+/* ─────────────────────────────────────────────
+   DATA TABLE
+───────────────────────────────────────────── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .7px;
+  color: var(--mu); padding: 10px 14px; text-align: left;
+  border-bottom: 2px solid var(--bdr); font-weight: 600;
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 11px 14px; border-bottom: 1px solid var(--bdr);
+  font-size: 13px; vertical-align: middle;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover td { background: var(--bg2); }
+
+/* ─────────────────────────────────────────────
+   AVATAR
+───────────────────────────────────────────── */
+.av {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0;
+}
+.av-md { width: 38px; height: 38px; font-size: 14px; }
+.av-lg { width: 50px; height: 50px; font-size: 17px; }
+
+/* ─────────────────────────────────────────────
+   QUARTER TABS
+───────────────────────────────────────────── */
+.q-tabs { display: flex; gap: 6px; margin-bottom: 22px; flex-wrap: wrap; }
+.q-tab {
+  font-size: 13px; font-weight: 500; padding: 7px 16px; border-radius: 20px;
+  border: 1px solid var(--bdr); background: var(--sur); color: var(--mu);
+  cursor: pointer; transition: all .15s; font-family: 'DM Sans', sans-serif;
+}
+.q-tab.on { background: var(--ac); border-color: var(--ac); color: #fff; }
+.q-tab:hover:not(.on) { border-color: var(--ac); color: var(--ac); }
+
+/* ─────────────────────────────────────────────
+   TIMELINE
+───────────────────────────────────────────── */
+.tl { padding-left: 24px; position: relative; }
+.tl::before { content: ''; position: absolute; left: 8px; top: 8px; bottom: 8px; width: 1px; background: var(--bdr); }
+.tl-item { position: relative; margin-bottom: 16px; }
+.tl-item::before {
+  content: ''; position: absolute; left: -19px; top: 6px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--ac); border: 2px solid var(--sur);
+}
+.tl-date { font-size: 11px; color: var(--mu); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+.tl-body { font-size: 13px; margin-top: 3px; line-height: 1.55; }
+
+/* ─────────────────────────────────────────────
+   NOTE CARD
+───────────────────────────────────────────── */
+.note-card {
+  border: 1px solid var(--bdr); border-left: 3px solid var(--ac);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 12px 16px; margin-bottom: 10px; background: var(--sur2);
+}
+.note-meta {
+  display: flex; justify-content: space-between;
+  font-size: 11px; color: var(--mu); font-weight: 600;
+  text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px;
+}
+.note-body { font-size: 13px; color: var(--tx2); line-height: 1.55; }
+
+/* ─────────────────────────────────────────────
+   KANBAN PAGE — Employee boards list
+───────────────────────────────────────────── */
+.emp-board-list { display: flex; flex-direction: column; gap: 16px; }
+.emp-board-card {
+  background: var(--sur); border: 1px solid var(--bdr);
+  border-radius: var(--radius); padding: 0;
+  box-shadow: var(--sh); overflow: hidden;
+}
+.emp-board-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px; border-bottom: 1px solid var(--bdr);
+  background: var(--sur2); flex-wrap: wrap; gap: 10px;
+}
+.emp-board-meta { flex: 1; min-width: 140px; }
+.emp-board-name {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px; font-weight: 700; color: var(--tx); margin-bottom: 2px;
+}
+.emp-board-info { font-size: 12px; color: var(--mu); }
+.emp-board-score {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px; font-weight: 700; line-height: 1;
+}
+.emp-board-body { padding: 18px 20px; }
+
+.metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+.metric-cell {
+  background: var(--bg2); border-radius: var(--radius-sm);
+  padding: 12px 14px; text-align: center;
+}
+.metric-val {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px; font-weight: 700; line-height: 1;
+  color: var(--tx);
+}
+.metric-lbl { font-size: 11px; color: var(--mu); margin-top: 4px; }
+
+.derived-scores { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.derived-score-item { display: flex; align-items: center; gap: 8px; }
+.ds-name { font-size: 12px; color: var(--tx2); min-width: 100px; }
+.ds-track { flex: 1; height: 6px; background: var(--bg2); border-radius: 99px; overflow: hidden; }
+.ds-fill { height: 100%; border-radius: 99px; }
+.ds-val { font-size: 12px; font-weight: 600; min-width: 28px; text-align: right; }
+
+/* ─────────────────────────────────────────────
+   CRITERIA EDITOR
+───────────────────────────────────────────── */
+.dept-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 18px; }
+.dept-tab {
+  font-size: 12px; font-weight: 500; padding: 6px 13px; border-radius: 20px;
+  border: 1px solid var(--bdr); background: var(--sur); color: var(--mu);
+  cursor: pointer; transition: all .15s; font-family: 'DM Sans', sans-serif;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.dept-tab.on { background: var(--ac); border-color: var(--ac); color: #fff; }
+.dept-tab:hover:not(.on) { border-color: var(--ac); color: var(--ac); }
+.dept-tab .x { font-size: 11px; opacity: 0; transition: opacity .15s; }
+.dept-tab:hover .x { opacity: 1; }
+
+.crit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px; }
+.crit-item {
+  background: var(--sur2); border: 1px solid var(--bdr);
+  border-radius: var(--radius); padding: 18px 20px; position: relative;
+}
+.crit-item-del {
+  position: absolute; top: 12px; right: 12px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--rb); border: none; color: var(--ac);
+  font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity .15s;
+}
+.crit-item:hover .crit-item-del { opacity: 1; }
+.crit-name-wrap { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.crit-color { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.crit-name-in {
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  background: transparent; border: none; border-bottom: 1px solid var(--bdr);
+  color: var(--tx); outline: none; padding: 2px 0; flex: 1;
+  transition: border-color .15s;
+}
+.crit-name-in:focus { border-bottom-color: var(--ac); }
+.crit-desc-in {
+  font-family: 'DM Sans', sans-serif; font-size: 12px;
+  background: transparent; border: none; border-bottom: 1px dashed var(--bdr);
+  color: var(--mu); outline: none; padding: 2px 0; width: 100%;
+  transition: border-color .15s; margin-bottom: 12px;
+}
+.crit-desc-in:focus { border-bottom-color: var(--ac); }
+.crit-weight-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.crit-wt-in {
+  font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 700;
+  color: var(--ac); background: var(--sur); border: 1.5px solid var(--bdr);
+  border-radius: var(--radius-sm); outline: none;
+  width: 80px; text-align: center; padding: 4px 8px;
+  transition: border-color .15s; -moz-appearance: textfield;
+}
+.crit-wt-in::-webkit-outer-spin-button,
+.crit-wt-in::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.crit-wt-in:focus { border-color: var(--ac); }
+.crit-src-label { font-size: 11px; color: var(--mu); margin-bottom: 4px; }
+.crit-src-sel { font-size: 12px; width: 100%; padding: 5px 8px; }
+
+.weight-total-bar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px; background: var(--bg2);
+  border-radius: var(--radius-sm); margin-top: 16px;
+}
+.weight-total-label { font-size: 13px; color: var(--tx2); }
+.weight-total-val { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; }
+.weight-bar-track { flex: 1; height: 8px; background: var(--bdr); border-radius: 99px; overflow: hidden; }
+.weight-bar-fill { height: 100%; border-radius: 99px; transition: width .4s, background .3s; }
+
+/* ─────────────────────────────────────────────
+   SLIDER (REVIEW MODAL)
+───────────────────────────────────────────── */
+.slider-field { margin-bottom: 14px; }
+.slider-field-label {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.slider-field-label .name { font-size: 13px; font-weight: 600; color: var(--tx2); }
+.slider-field-label .meta { font-size: 11px; color: var(--mu); }
+.slider-row { display: flex; align-items: center; gap: 10px; }
+.slider-edge { font-size: 12px; color: var(--mu); width: 12px; text-align: center; }
+.slider-value {
+  font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700;
+  min-width: 42px; text-align: center; transition: color .2s;
+}
+input[type="range"] {
+  -webkit-appearance: none; flex: 1; height: 5px;
+  border-radius: 99px; background: var(--bg3); outline: none; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px;
+  border-radius: 50%; background: var(--ac); cursor: pointer;
+  border: 2.5px solid var(--sur); box-shadow: 0 0 0 2px var(--acl);
+}
+
+/* ─────────────────────────────────────────────
+   MODALS
+───────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15,10,5,.42);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 500; animation: fade-in .18s;
+}
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--sur); border: 1px solid var(--bdr);
+  border-radius: var(--radius-lg); padding: 28px 32px;
+  width: 580px; max-width: 96vw; max-height: 92vh; overflow-y: auto;
+  box-shadow: var(--shl);
+  animation: pop-in .22s cubic-bezier(.34, 1.56, .64, 1);
+}
+@keyframes pop-in { from { transform: scale(.94) translateY(14px); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-title { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+.modal-desc { font-size: 13px; color: var(--mu); margin-bottom: 22px; line-height: 1.5; }
+.field-group { margin-bottom: 16px; }
+.field-group label {
+  display: block; font-size: 11px; font-weight: 600;
+  color: var(--mu); margin-bottom: 6px;
+  text-transform: uppercase; letter-spacing: .6px;
+}
+.field-group input, .field-group select, .field-group textarea {
+  width: 100%;
+}
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.modal-footer {
+  display: flex; justify-content: flex-end; gap: 10px;
+  margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--bdr);
+}
+
+/* ─────────────────────────────────────────────
+   INFO BOX / ALERT
+───────────────────────────────────────────── */
+.info-box {
+  background: var(--acl); border: 1px solid var(--bdr);
+  border-left: 3px solid var(--ac); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 12px 16px; margin-bottom: 16px;
+  font-size: 13px; color: var(--tx2); line-height: 1.6;
+}
+.info-box b { color: var(--ac); }
+.info-box code { background: var(--bg2); border-radius: 4px; padding: 1px 6px; font-size: 12px; color: var(--ac); }
+
+.success-box {
+  background: var(--gnb); border-left: 3px solid var(--gn);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: var(--tx2);
+}
+
+/* ─────────────────────────────────────────────
+   DRAG ZONE / IMPORT
+───────────────────────────────────────────── */
+.drop-zone {
+  border: 2px dashed var(--bdr2); border-radius: var(--radius);
+  padding: 28px; text-align: center; cursor: pointer; transition: all .15s;
+}
+.drop-zone:hover { border-color: var(--ac); background: var(--acl); color: var(--ac); }
+.drop-zone-icon { font-size: 32px; margin-bottom: 10px; }
+.drop-zone-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+.drop-zone-hint { font-size: 12px; color: var(--mu); }
+
+/* ─────────────────────────────────────────────
+   EMPTY STATE
+───────────────────────────────────────────── */
+.empty-state {
+  text-align: center; padding: 64px 28px; color: var(--mu);
+}
+.empty-state-icon { font-size: 44px; opacity: .25; margin-bottom: 16px; }
+.empty-state h3 {
+  font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 600;
+  color: var(--mu); margin-bottom: 8px;
+}
+.empty-state p { font-size: 13px; line-height: 1.65; max-width: 360px; margin: 0 auto 20px; }
+
+/* ─────────────────────────────────────────────
+   TOAST
+───────────────────────────────────────────── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--sur); border: 1px solid var(--bdr);
+  border-left: 3px solid var(--gn); color: var(--tx);
+  padding: 12px 18px; border-radius: var(--radius); font-size: 13px; font-weight: 500;
+  z-index: 9999; transform: translateY(80px); opacity: 0;
+  transition: all .35s cubic-bezier(.34, 1.56, .64, 1);
+  box-shadow: var(--shm); pointer-events: none; max-width: 340px;
+}
+.toast.on { transform: translateY(0); opacity: 1; }
+
+/* ─────────────────────────────────────────────
+   RATING SCALE
+───────────────────────────────────────────── */
+.rating-scale { display: flex; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--bdr); margin: 16px 0; }
+.rating-cell { flex: 1; padding: 13px 10px; text-align: center; border-right: 1px solid var(--bdr); }
+.rating-cell:last-child { border-right: none; }
+.rating-num { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; }
+.rating-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; margin-top: 3px; }
+
+/* ─────────────────────────────────────────────
+   HEATMAP
+───────────────────────────────────────────── */
+.heatmap { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; }
+.hm-cell { aspect-ratio: 1; border-radius: 5px; }
+.hm-labels { display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px; margin-top: 5px; }
+.hm-lbl { font-size: 10px; color: var(--mu); text-align: center; font-weight: 500; }
+
+/* ─────────────────────────────────────────────
+   DONUT
+───────────────────────────────────────────── */
+.donut-wrap { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+.donut-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.donut-dot { width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+.donut-count { margin-left: auto; font-weight: 600; color: var(--tx); }
+
+/* ─────────────────────────────────────────────
+   EMPLOYEE CARD (grid)
+───────────────────────────────────────────── */
+.emp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.emp-card {
+  background: var(--sur); border: 1px solid var(--bdr);
+  border-radius: var(--radius); padding: 20px 22px;
+  cursor: pointer; transition: all .15s; box-shadow: var(--sh);
+}
+.emp-card:hover { transform: translateY(-2px); box-shadow: var(--shm); border-color: var(--ac); }
+.emp-card-sep { opacity: .72; border-style: dashed; }
+
+/* ─────────────────────────────────────────────
+   SCROLLBAR
+───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bdr2); border-radius: 3px; }
+
+/* ─────────────────────────────────────────────
+   RESPONSIVE
+───────────────────────────────────────────── */
+@media (max-width: 860px) {
+  .chart-grid, .chart-grid.wide, .chart-grid.w3 { grid-template-columns: 1fr; }
+  .crit-grid, .two-col { grid-template-columns: 1fr; }
+  .topbar { height: auto; padding: 12px 16px; }
+  .page { padding: 18px 16px; }
+  .tab-nav { padding: 0 16px; }
+  .metric-row { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ TOP BAR ═══ -->
+<div class="topbar">
+  <div class="logo-block">
+    <div class="logo-mark">📊</div>
+    <div class="logo-text-wrap">
+      <div class="app-name">Performance Review</div>
+      <div class="app-desc">Analytics · Kanban Connected</div>
+    </div>
+  </div>
+
+  <div class="topbar-mid">
+    <select id="empF" onchange="applyF()" style="min-width:148px">
+      <option value="all">All Employees</option>
+    </select>
+    <select id="fyF" onchange="applyF()" title="Fiscal Year (April – March)">
+      <option value="FY2025-26">FY 2025–26 (Apr 25 – Mar 26)</option>
+      <option value="FY2024-25" selected>FY 2024–25 (Apr 24 – Mar 25)</option>
+      <option value="FY2023-24">FY 2023–24 (Apr 23 – Mar 24)</option>
+      <option value="FY2022-23">FY 2022–23 (Apr 22 – Mar 23)</option>
+    </select>
+    <div class="sync-pill" id="syncPill" onclick="pullKanban()" title="Re-sync Kanban">
+      <div class="sync-dot"></div>
+      <span id="syncLabel">No Kanban data</span>
+    </div>
+  </div>
+
+  <div class="topbar-right">
+    <div class="theme-sw">
+      <span class="theme-sw-label">Theme</span>
+      <div class="tdot on" data-t="light" onclick="setTheme('light')" title="Light"></div>
+      <div class="tdot" data-t="warm"  onclick="setTheme('warm')"  title="Warm"></div>
+      <div class="tdot" data-t="slate" onclick="setTheme('slate')" title="Slate"></div>
+      <div class="tdot" data-t="dark"  onclick="setTheme('dark')"  title="Dark"></div>
+    </div>
+    <button class="btn btn-sm" onclick="openImport()">⬆ Import</button>
+    <button class="btn btn-primary btn-sm" onclick="openReview()">＋ New Review</button>
+  </div>
+</div>
+
+<!-- ═══ TAB NAV ═══ -->
+<div class="tab-nav">
+  <button class="tbn on" onclick="switchTab('overview',this)">Overview</button>
+  <button class="tbn" onclick="switchTab('kanban',this)">Kanban Data</button>
+  <button class="tbn" onclick="switchTab('quarterly',this)">Quarterly</button>
+  <button class="tbn" onclick="switchTab('annual',this)">Annual</button>
+  <button class="tbn" onclick="switchTab('employees',this)">Employees</button>
+  <button class="tbn" onclick="switchTab('criteria',this)">Criteria Editor</button>
+</div>
+
+<!-- ═══ OVERVIEW ═══ -->
+<div class="page on" id="pg-overview">
+  <div class="section-heading">Performance Snapshot</div>
+  <div class="kpi-strip" id="kpiStrip"></div>
+  <div class="chart-grid wide">
+    <div class="card">
+      <div class="card-title">Score Trend</div>
+      <div class="card-sub">Average weighted score by month</div>
+      <canvas id="trendCanvas" height="120"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">Score Distribution</div>
+      <div class="card-sub">Reviews by performance band</div>
+      <div id="donutWrap" style="margin-top:8px"></div>
+    </div>
+  </div>
+  <div class="chart-grid">
+    <div class="card">
+      <div class="card-title">Top Performers</div>
+      <div class="card-sub">Average weighted score per employee</div>
+      <div class="bar-list" id="topBars"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Criteria Averages</div>
+      <div class="card-sub">Company-wide average per criterion</div>
+      <div class="bar-list" id="critAvgBars"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Activity Heatmap</div>
+    <div class="card-sub">Score intensity by month</div>
+    <div class="heatmap" id="hmGrid" style="margin-top:12px"></div>
+    <div class="hm-labels" id="hmLabels"></div>
+  </div>
+</div>
+
+<!-- ═══ KANBAN DATA ═══ -->
+<div class="page" id="pg-kanban">
+  <div class="section-heading">Kanban Board Data — Per Employee</div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div class="card-title">Synced Board Data</div>
+        <div class="card-sub" id="syncMetaLabel" style="margin-bottom:0">Waiting for data…</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="openBundleImport()">📥 Import Manager Bundle (.json)</button>
+        <button class="btn btn-sm" onclick="pullKanban()">⟳ Refresh</button>
+        <button class="btn btn-primary btn-sm" onclick="convertKanbanToReviews()">⇒ Create Reviews from Kanban</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="empBoardList" class="emp-board-list"></div>
+</div>
+
+<!-- ═══ QUARTERLY ═══ -->
+<div class="page" id="pg-quarterly">
+  <div class="section-heading">Quarterly Analysis</div>
+  <div class="q-tabs">
+    <button class="q-tab on" onclick="setQ('Q1',this)">Q1 · Jan–Mar</button>
+    <button class="q-tab" onclick="setQ('Q2',this)">Q2 · Apr–Jun</button>
+    <button class="q-tab" onclick="setQ('Q3',this)">Q3 · Jul–Sep</button>
+    <button class="q-tab" onclick="setQ('Q4',this)">Q4 · Oct–Dec</button>
+  </div>
+  <div id="qContent"></div>
+</div>
+
+<!-- ═══ ANNUAL ═══ -->
+<div class="page" id="pg-annual">
+  <div class="section-heading">Annual Performance Report</div>
+  <div id="annContent"></div>
+</div>
+
+<!-- ═══ EMPLOYEES ═══ -->
+<div class="page" id="pg-employees">
+  <div class="section-heading">Employee Profiles</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:7px;font-size:13px;cursor:pointer;user-select:none">
+        <input type="checkbox" id="empShowSep" onchange="rEmployees()" style="width:16px;height:16px;cursor:pointer;accent-color:var(--ac)">
+        <span style="color:var(--tx2)">Show separated employees</span>
+      </label>
+      <span id="empSepCount" style="font-size:12px;color:var(--mu)"></span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-sm" onclick="syncKanbanToEmployees()" title="Auto-add any Kanban board employees not yet in list">⟳ Sync from Kanban</button>
+    </div>
+  </div>
+  <div class="emp-grid" id="empGrid"></div>
+</div>
+
+<!-- ═══ CRITERIA EDITOR ═══ -->
+<div class="page" id="pg-criteria">
+  <div class="section-heading">Criteria Editor — By Department</div>
+
+  <div class="info-box">
+    Each department has its own criteria with custom <b>names</b>, <b>weights</b> (must total 100%), and an optional <b>Kanban auto-score source</b>. Criteria linked to Kanban are pre-filled when adding reviews.
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
+    <div class="dept-tabs" id="deptTabs"></div>
+    <button class="btn btn-sm" onclick="addDept()">＋ Add Department</button>
+  </div>
+
+  <div id="critEditorContent"></div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">Rating Scale Reference</div>
+    <div class="rating-scale">
+      <div class="rating-cell" style="background:var(--gnb)"><div class="rating-num sc-ex">5</div><div class="rating-lbl" style="color:var(--gn)">Exceptional</div></div>
+      <div class="rating-cell" style="background:var(--blb)"><div class="rating-num sc-gd">4</div><div class="rating-lbl" style="color:var(--bl)">Exceeds</div></div>
+      <div class="rating-cell" style="background:var(--gdb)"><div class="rating-num sc-av">3</div><div class="rating-lbl" style="color:var(--gd)">Meets</div></div>
+      <div class="rating-cell" style="background:var(--rb)"><div class="rating-num sc-lo">2</div><div class="rating-lbl" style="color:var(--ac)">Developing</div></div>
+      <div class="rating-cell" style="background:var(--bg2)"><div class="rating-num" style="color:var(--mu)">1</div><div class="rating-lbl" style="color:var(--mu)">Unsat.</div></div>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Range</th><th>Rating</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="sc-ex" style="font-weight:700">4.5 – 5.0</td><td><span class="badge badge-ex">Exceptional</span></td><td style="color:var(--mu)">Consistently exceeds all expectations; role model for peers</td></tr>
+        <tr><td class="sc-gd" style="font-weight:700">3.5 – 4.4</td><td><span class="badge badge-gd">Exceeds</span></td><td style="color:var(--mu)">Regularly exceeds expectations in most areas</td></tr>
+        <tr><td class="sc-av" style="font-weight:700">2.5 – 3.4</td><td><span class="badge badge-av">Meets</span></td><td style="color:var(--mu)">Consistently meets expectations; solid performer</td></tr>
+        <tr><td class="sc-lo" style="font-weight:700">1.5 – 2.4</td><td><span class="badge badge-lo">Developing</span></td><td style="color:var(--mu)">Partially meets expectations; improvement plan recommended</td></tr>
+        <tr><td style="color:var(--mu);font-weight:700">1.0 – 1.4</td><td><span class="badge badge-lo">Unsat.</span></td><td style="color:var(--mu)">Does not meet minimum expectations</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ REVIEW MODAL ═══ -->
+<div id="rvModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeReview()">
+  <div class="modal">
+    <div class="modal-title">New Performance Review</div>
+    <div class="modal-desc">Criteria auto-filled from Kanban where a source is linked</div>
+    <div class="two-col">
+      <div class="field-group">
+        <label>Employee Name</label>
+        <input id="rEmp" type="text" placeholder="Full name" list="empDL">
+      </div>
+      <div class="field-group">
+        <label>Department</label>
+        <select id="rDept" onchange="buildReviewFields()"></select>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="field-group">
+        <label>Role / Title</label>
+        <input id="rRole" type="text" placeholder="e.g. Frontend Engineer">
+      </div>
+      <div class="field-group">
+        <label>Review Period</label>
+        <select id="rPer">
+          <option value="Q1-2025">Q1 2025 — Apr–Jun 2025</option>
+          <option value="Q2-2025">Q2 2025 — Jul–Sep 2025</option>
+          <option value="Q3-2025">Q3 2025 — Oct–Dec 2025</option>
+          <option value="Q4-2026">Q4 2026 — Jan–Mar 2026</option>
+          <option value="Annual-2025">Annual FY 2025–26</option>
+          <option value="Q1-2024">Q1 2024 — Apr–Jun 2024</option>
+          <option value="Q2-2024">Q2 2024 — Jul–Sep 2024</option>
+          <option value="Q3-2024">Q3 2024 — Oct–Dec 2024</option>
+          <option value="Q4-2025">Q4 2025 — Jan–Mar 2025</option>
+          <option value="Annual-2024">Annual FY 2024–25</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-group">
+      <label>Reviewer</label>
+      <input id="rRvr" type="text" placeholder="Reviewer / Manager name">
+    </div>
+    <div id="kanbanAutoBanner" style="display:none" class="success-box"></div>
+    <div class="section-heading" style="margin-bottom:14px">
+      Criteria Scores
+      <span style="font-size:11px;font-weight:400;color:var(--mu);text-transform:none;letter-spacing:0"> 1 = Unsatisfactory &nbsp;→&nbsp; 5 = Exceptional</span>
+    </div>
+    <div id="reviewSliders"></div>
+    <div class="field-group">
+      <label>Notes / Comments</label>
+      <textarea id="rNotes" placeholder="Key observations, achievements, areas for improvement…"></textarea>
+    </div>
+    <div class="two-col">
+      <div class="field-group">
+        <label>Total Tasks (from Kanban)</label>
+        <input id="rTT" type="number" min="0" placeholder="Auto-filled if synced">
+      </div>
+      <div class="field-group">
+        <label>Tasks Completed</label>
+        <input id="rTD" type="number" min="0" placeholder="Auto-filled if synced">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeReview()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveReview()">Save Review</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ IMPORT MODAL ═══ -->
+<div id="impModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeImport()">
+  <div class="modal" style="width:620px">
+    <div class="modal-title">Import Data</div>
+    <div class="modal-desc">Upload an Excel (.xlsx/.xls/.csv) file or a Kanban Bundle (.json) exported by an employee's Kanban board</div>
+
+    <div class="info-box" style="font-size:12px">
+      <b>Excel columns:</b> <code>Employee</code>, <code>Period</code> (Q1-2025…), <code>Department</code>, <code>Role</code>, <code>Reviewer</code>, <code>Notes</code>, <code>TasksTotal</code>, <code>TasksDone</code>, plus one column per criterion with scores 1–5, or a single <code>Score</code>/<code>Overall</code>.
+    </div>
+
+    <div class="drop-zone" id="impDropZone" onclick="document.getElementById('impFileIn').click()">
+      <div class="drop-zone-icon">📂</div>
+      <div class="drop-zone-title">Click to upload or drag & drop</div>
+      <div class="drop-zone-hint">Supports .xlsx · .xls · .csv · .json (Kanban Bundle)</div>
+      <input type="file" id="impFileIn" accept=".xlsx,.xls,.csv,.json" style="display:none" onchange="handleImpFile(event)">
+    </div>
+    <div id="impPreview" style="margin-top:14px"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="dlTemplate()">⬇ Download Template</button>
+      <button class="btn" onclick="closeImport()">Cancel</button>
+      <button class="btn btn-primary" id="impConfirmBtn" style="display:none" onclick="doImport()">Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ BUNDLE IMPORT MODAL ═══ -->
+<div id="bundleModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeBundleImport()">
+  <div class="modal" style="width:580px">
+    <div class="modal-title">Import Kanban Bundle from Employee</div>
+    <div class="modal-desc">Accept a .json bundle file exported by an employee from their Kanban board (via the "📤 Send to Manager" button)</div>
+    <div class="info-box" style="font-size:12px">
+      Each employee's bundle is imported <b>separately</b> and added as their individual board entry. Multiple bundles can be imported — one per employee.
+    </div>
+    <div class="drop-zone" id="bundleDropZone" onclick="document.getElementById('bundleFileIn').click()">
+      <div class="drop-zone-icon">📦</div>
+      <div class="drop-zone-title">Click or drag to upload bundle .json</div>
+      <div class="drop-zone-hint">File name: KanbanBundle_EmployeeName_YYYY-MM-DD.json</div>
+      <input type="file" id="bundleFileIn" accept=".json" style="display:none" onchange="handleBundleFile(event)">
+    </div>
+    <div id="bundlePreview" style="margin-top:14px"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeBundleImport()">Cancel</button>
+      <button class="btn btn-primary" id="bundleConfirmBtn" style="display:none" onclick="confirmBundle()">Import Bundle</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ EMPLOYEE DETAIL MODAL ═══ -->
+<div id="empModal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeEmpModal()">
+  <div class="modal" style="width:660px">
+    <div id="empModalBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeEmpModal()">Close</button>
+      <button class="btn btn-primary" onclick="reviewForCurEmp()">Add Review</button>
+    </div>
+  </div>
+</div>
+
+<datalist id="empDL"></datalist>
+<div class="toast" id="toast"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+const SK        = 'perfRv6';
+const KANBAN_SK = 'riodecz_v1';
+const SYNC_SK   = 'kanban_perf_sync';
+
+let reviews      = [];
+let kanbanBoards = {};   // { employeeName: { bundle data } }  — per-employee boards
+let kanbanSync   = null; // latest live sync (same-browser kanban)
+let importRows   = [];
+let bundleData   = null;
+let selQ         = 'Q1';
+let empFilter    = 'all', fyFilter = 'FY2024-25';
+
+// ── FISCAL YEAR HELPERS (April 1 – March 31) ──────────────────────
+function parseFY(fy) {
+  // "FY2024-25" → { startYear:2024, endYear:2025, start: Date(Apr 1 2024), end: Date(Mar 31 2025) }
+  const m = fy.match(/FY(\d{4})-(\d{2,4})/);
+  if (!m) return null;
+  const sy = parseInt(m[1]);
+  const ey = m[2].length === 2 ? sy - (sy % 100) + parseInt(m[2]) : parseInt(m[2]);
+  return {
+    label: `FY ${sy}–${String(ey).slice(2)}`,
+    startYear: sy, endYear: ey,
+    start: new Date(sy, 3, 1),   // Apr 1
+    end:   new Date(ey, 2, 31),  // Mar 31
+    quarters: [
+      { q:'Q1', label:`Q1 Apr–Jun ${sy}`, months:[3,4,5],   year:sy },
+      { q:'Q2', label:`Q2 Jul–Sep ${sy}`, months:[6,7,8],   year:sy },
+      { q:'Q3', label:`Q3 Oct–Dec ${sy}`, months:[9,10,11], year:sy },
+      { q:'Q4', label:`Q4 Jan–Mar ${ey}`, months:[0,1,2],   year:ey },
+    ]
+  };
+}
+
+function dateInFY(dateStr, fy) {
+  const fyParsed = parseFY(fy);
+  if (!fyParsed || !dateStr) return false;
+  const d = new Date(dateStr);
+  return d >= fyParsed.start && d <= fyParsed.end;
+}
+
+// Map a "period" string (Q1-2025, Annual-2025) into a date range and check FY membership
+function periodInFY(period, fy) {
+  const fyParsed = parseFY(fy);
+  if (!fyParsed || !period) return false;
+  // Q1=Apr-Jun startYear, Q2=Jul-Sep startYear, Q3=Oct-Dec startYear, Q4=Jan-Mar endYear, Annual=any in FY
+  if (period.startsWith('Q1')) return period.includes(String(fyParsed.startYear));
+  if (period.startsWith('Q2')) return period.includes(String(fyParsed.startYear));
+  if (period.startsWith('Q3')) return period.includes(String(fyParsed.startYear));
+  if (period.startsWith('Q4')) return period.includes(String(fyParsed.endYear)) || period.includes(String(fyParsed.startYear));
+  if (period.startsWith('Annual')) return period.includes(String(fyParsed.startYear)) || period.includes(String(fyParsed.endYear));
+  return false;
+}
+
+function fyLabel() { return parseFY(fyFilter)?.label || fyFilter; }
+let activeDept   = 'General';
+let curEmpModal  = null;
+let separatedEmps = {}; // { name: { date, reason } } — employees who left
+
+const KANBAN_SOURCES = [
+  { val: '',                  label: 'Manual only (no auto-score)' },
+  { val: 'task_completion',   label: 'Task Completion Rate (Kanban)' },
+  { val: 'quality',           label: 'Subtask Completion (Kanban)' },
+  { val: 'punctuality',       label: 'Deadline Timeliness (Kanban)' },
+  { val: 'initiative',        label: 'High-Priority Task Rate (Kanban)' },
+];
+
+let departments = {
+  'General': [
+    { id:'task_completion', name:'Task Completion', weight:25, desc:'Tasks completed on time',                kanbanSource:'task_completion' },
+    { id:'quality',         name:'Work Quality',    weight:25, desc:'Quality & accuracy of delivered work',  kanbanSource:'quality' },
+    { id:'collaboration',   name:'Collaboration',   weight:15, desc:'Teamwork and communication',            kanbanSource:'' },
+    { id:'initiative',      name:'Initiative',      weight:15, desc:'Proactiveness and self-direction',      kanbanSource:'initiative' },
+    { id:'punctuality',     name:'Punctuality',     weight:10, desc:'Meeting deadlines',                     kanbanSource:'punctuality' },
+    { id:'goals',           name:'Goal Achievement',weight:10, desc:'Progress toward agreed goals',          kanbanSource:'' },
+  ],
+  'Engineering': [
+    { id:'delivery',    name:'Delivery',       weight:30, desc:'Features shipped on time',          kanbanSource:'task_completion' },
+    { id:'code_quality',name:'Code Quality',   weight:25, desc:'Code review pass rate & bugs',      kanbanSource:'quality' },
+    { id:'collab',      name:'Collaboration',  weight:15, desc:'PR reviews and cross-team comms',   kanbanSource:'' },
+    { id:'initiative',  name:'Initiative',     weight:15, desc:'Proactive problem solving',          kanbanSource:'initiative' },
+    { id:'timeliness',  name:'Timeliness',     weight:15, desc:'Sprint deadline adherence',          kanbanSource:'punctuality' },
+  ],
+  'Design': [
+    { id:'delivery',   name:'Delivery',          weight:25, desc:'Designs delivered on schedule',   kanbanSource:'task_completion' },
+    { id:'quality',    name:'Design Quality',    weight:30, desc:'Quality of visual & UX output',   kanbanSource:'quality' },
+    { id:'collab',     name:'Stakeholder Collab',weight:20, desc:'Alignment with product & eng',    kanbanSource:'' },
+    { id:'iteration',  name:'Iteration Speed',   weight:15, desc:'Turnaround on feedback',           kanbanSource:'punctuality' },
+    { id:'innovation', name:'Innovation',         weight:10, desc:'Novel design solutions',           kanbanSource:'initiative' },
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════════════════════════
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.querySelectorAll('.tdot').forEach(d => d.classList.toggle('on', d.dataset.t === t));
+  localStorage.setItem('prvTheme6', t);
+  setTimeout(() => { const a = document.querySelector('.tbn.on'); if (a) a.click(); }, 30);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════
+function getCrit(dept) { return departments[dept] || departments['General']; }
+
+function wScore(scores, dept) {
+  const crit = getCrit(dept || 'General');
+  let tot = 0, w = 0;
+  crit.forEach(c => { if (scores[c.id] != null) { tot += scores[c.id] * c.weight; w += c.weight; } });
+  return w ? +(tot / w).toFixed(2) : 0;
+}
+
+function scCls(s) {
+  s = +s;
+  if (s >= 4.5) return 'sc-ex';
+  if (s >= 3.5) return 'sc-gd';
+  if (s >= 2.5) return 'sc-av';
+  return 'sc-lo';
+}
+
+function badgeHtml(s) {
+  s = +s;
+  if (s >= 4.5) return '<span class="badge badge-ex">Exceptional</span>';
+  if (s >= 3.5) return '<span class="badge badge-gd">Exceeds</span>';
+  if (s >= 2.5) return '<span class="badge badge-av">Meets</span>';
+  if (s >= 1.5) return '<span class="badge badge-lo">Developing</span>';
+  return '<span class="badge badge-lo">Unsat.</span>';
+}
+
+function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function avatarColor(n) {
+  if (!n) return '#8c877f';
+  const p = ['#c13b0e','#1a4db5','#186a3b','#a05f0a','#6b31c4','#0a6e66','#b5184e','#074e8c'];
+  let h = 0;
+  for (let i = 0; i < n.length; i++) h = (h * 31 + n.charCodeAt(i)) & 0xfffffff;
+  return p[Math.abs(h) % p.length];
+}
+function initials(n) { return (n || '?').split(' ').map(p => p[0]).join('').toUpperCase().slice(0, 2); }
+
+function allEmps() {
+  const fromReviews = [...new Set(reviews.map(r => r.employee))].filter(Boolean);
+  const fromKanban = Object.keys(kanbanBoards);
+  if (kanbanSync?.metrics) kanbanSync.metrics.forEach(m => { if (m.assignee) fromKanban.push(m.assignee); });
+  return [...new Set([...fromReviews, ...fromKanban])].filter(Boolean).sort();
+}
+
+// All employees (including Kanban-only, including separated if flag set)
+function allEmpsTotal() { return allEmps(); }
+
+function filtered() {
+  return reviews.filter(r => {
+    const empOk = empFilter === 'all' || r.employee === empFilter;
+    const fyOk  = periodInFY(r.period, fyFilter);
+    return empOk && fyOk;
+  });
+}
+
+// Reviews for a specific FY quarter
+function filteredQ(q) {
+  const fyParsed = parseFY(fyFilter);
+  if (!fyParsed) return [];
+  const qDef = fyParsed.quarters.find(x => x.q === q);
+  if (!qDef) return [];
+  return reviews.filter(r => {
+    const empOk = empFilter === 'all' || r.employee === empFilter;
+    // Match period string to the FY quarter
+    const pOk = r.period === `${q}-${qDef.year}`;
+    return empOk && pOk;
+  });
+}
+
+function pq(p) { if (p.startsWith('Q1')) return 'Q1'; if (p.startsWith('Q2')) return 'Q2'; if (p.startsWith('Q3')) return 'Q3'; if (p.startsWith('Q4')) return 'Q4'; return 'Annual'; }
+function uid() { return 'r' + Date.now() + Math.random().toString(36).slice(2, 6); }
+function cssv(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+function showToast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderLeftColor = color || 'var(--gn)';
+  t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 3400);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PERSIST
+// ═══════════════════════════════════════════════════════════════════
+function persist() {
+  try { localStorage.setItem(SK, JSON.stringify({ reviews, departments, kanbanBoards, separatedEmps })); } catch (e) {}
+}
+function loadPersist() {
+  try {
+    const raw = localStorage.getItem(SK);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (s.reviews)        reviews       = s.reviews;
+    if (s.departments)    departments   = s.departments;
+    if (s.kanbanBoards)   kanbanBoards  = s.kanbanBoards;
+    if (s.separatedEmps)  separatedEmps = s.separatedEmps;
+    return true;
+  } catch (e) { return false; }
+}
+function seedData() {
+  reviews = [
+    { id:'r1', employee:'Alex Rivera',    role:'Frontend Engineer', dept:'Engineering', period:'Q1-2025', reviewer:'Maria Santos', scores:{ delivery:4.5, code_quality:4.2, collab:4.8, initiative:4.0, timeliness:3.8 }, notes:'Exceptional dashboard redesign. Mentored two junior devs.', date:'2025-03-31', kanban:{ total:18, done:16 } },
+    { id:'r2', employee:'Alex Rivera',    role:'Frontend Engineer', dept:'Engineering', period:'Q2-2025', reviewer:'Maria Santos', scores:{ delivery:4.8, code_quality:4.5, collab:4.6, initiative:4.4, timeliness:4.2 }, notes:'Led the component library initiative.',                   date:'2025-06-30', kanban:{ total:22, done:21 } },
+    { id:'r3', employee:'Jordan Kim',     role:'Backend Engineer',  dept:'Engineering', period:'Q1-2025', reviewer:'Maria Santos', scores:{ delivery:3.8, code_quality:4.3, collab:3.5, initiative:3.9, timeliness:3.2 }, notes:'Good technical output. Needs better communication.',        date:'2025-03-31', kanban:{ total:14, done:10 } },
+    { id:'r4', employee:'Jordan Kim',     role:'Backend Engineer',  dept:'Engineering', period:'Q2-2025', reviewer:'Maria Santos', scores:{ delivery:4.1, code_quality:4.4, collab:3.9, initiative:4.1, timeliness:3.8 }, notes:'Improved communication. API refactor ahead of schedule.',   date:'2025-06-30', kanban:{ total:16, done:14 } },
+    { id:'r5', employee:'Priya Nair',     role:'Product Designer',  dept:'Design',      period:'Q1-2025', reviewer:'Liam Park',   scores:{ delivery:5.0, quality:4.9, collab:4.7, iteration:4.6, innovation:4.8 },         notes:'Outstanding. Delivered design system 2 weeks early.',      date:'2025-03-31', kanban:{ total:20, done:20 } },
+    { id:'r6', employee:'Priya Nair',     role:'Product Designer',  dept:'Design',      period:'Q2-2025', reviewer:'Liam Park',   scores:{ delivery:4.8, quality:4.7, collab:4.9, iteration:4.5, innovation:4.6 },         notes:'User testing sessions yielded critical insights.',          date:'2025-06-30', kanban:{ total:18, done:17 } },
+    { id:'r7', employee:'Marco De Luca',  role:'QA Engineer',       dept:'General',     period:'Q1-2025', reviewer:'Liam Park',   scores:{ task_completion:2.5, quality:3.0, collaboration:3.2, initiative:2.2, punctuality:2.0, goals:2.4 }, notes:'Missed 4 of 6 sprint deadlines. PIP recommended.', date:'2025-03-31', kanban:{ total:12, done:6 } },
+    { id:'r8', employee:'Marco De Luca',  role:'QA Engineer',       dept:'General',     period:'Q2-2025', reviewer:'Liam Park',   scores:{ task_completion:3.2, quality:3.5, collaboration:3.4, initiative:2.8, punctuality:3.0, goals:3.1 }, notes:'Improvement shown following PIP.',                  date:'2025-06-30', kanban:{ total:14, done:10 } },
+  ];
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// KANBAN SYNC
+// ═══════════════════════════════════════════════════════════════════
+function getKanbanMetric(name) {
+  // Priority 1: per-employee imported board
+  if (kanbanBoards[name]) return kanbanBoards[name];
+  // Priority 2: live same-browser sync
+  if (kanbanSync?.metrics) {
+    return kanbanSync.metrics.find(m => m.assignee?.toLowerCase() === name?.toLowerCase()) || null;
+  }
+  return null;
+}
+
+function pullKanban() {
+  let raw = localStorage.getItem(SYNC_SK);
+  if (!raw) raw = readKanbanDirect();
+  if (!raw) {
+    updateSyncPill(false, 'No live Kanban — import a bundle or open kanban-connected.html');
+    renderKanbanPage();
+    return;
+  }
+  try {
+    kanbanSync = JSON.parse(raw);
+    const age = kanbanSync.lastSync ? Math.round((Date.now() - new Date(kanbanSync.lastSync)) / 60000) : null;
+    const ageStr = age !== null ? (age < 1 ? 'just now' : age + 'm ago') : '';
+    const owner = kanbanSync.ownerName ? `  ·  Owner: ${kanbanSync.ownerName}` : '';
+    updateSyncPill(true, `Synced ${ageStr} · ${kanbanSync.metrics?.length || 0} people · ${kanbanSync.totalCards || 0} cards${owner}`);
+
+    // Register the owner's board into kanbanBoards
+    if (kanbanSync.ownerName && kanbanSync.metrics) {
+      const ownerM = kanbanSync.metrics.find(m => m.assignee?.toLowerCase() === kanbanSync.ownerName?.toLowerCase());
+      if (ownerM) {
+        kanbanBoards[kanbanSync.ownerName] = { ...ownerM, boardName: kanbanSync.boardName, source: 'live' };
+        persist();
+      }
+    }
+    renderKanbanPage();
+    showToast('Kanban synced — ' + (kanbanSync.metrics?.length || 0) + ' employees');
+  } catch (e) {
+    updateSyncPill(false, 'Sync data corrupted');
+  }
+}
+
+function readKanbanDirect() {
+  try {
+    const raw = localStorage.getItem(KANBAN_SK);
+    if (!raw) return null;
+    const state = JSON.parse(raw);
+    const cards = state.cards || [], columns = state.columns || [];
+    const doneIds   = columns.filter(c => /done|complete|finished|closed/i.test(c.title)).map(c => c.id);
+    const inProgIds = columns.filter(c => /progress|doing|active|wip/i.test(c.title)).map(c => c.id);
+    const assignees = [...new Set(cards.map(c => c.assignee).filter(Boolean))];
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const metrics = assignees.map(name => {
+      const mine = cards.filter(c => c.assignee === name);
+      const done  = mine.filter(c => doneIds.includes(c.status));
+      const inProg = mine.filter(c => inProgIds.includes(c.status));
+      const high   = mine.filter(c => c.priority === 'high');
+      const subs   = mine.flatMap(c => c.subtasks || []);
+      const subsDone = subs.filter(s => s.done);
+      const dated  = mine.filter(c => c.endDate);
+      const overdue = dated.filter(c => { const d = new Date(c.endDate); return !doneIds.includes(c.status) && d < now; });
+      const cr = mine.length ? done.length / mine.length : 0;
+      const sr = subs.length ? subsDone.length / subs.length : cr;
+      const or = dated.length ? overdue.length / dated.length : 0;
+      const hr = mine.length ? high.length / mine.length : 0;
+      return {
+        assignee: name, total: mine.length, done: done.length, inProgress: inProg.length,
+        todo: mine.length - done.length - inProg.length,
+        high: high.length, overdueCount: overdue.length,
+        subtasksTotal: subs.length, subtasksDone: subsDone.length,
+        tags: [...new Set(mine.flatMap(c => c.tags || []))],
+        completionRate: +cr.toFixed(3),
+        derivedScores: {
+          task_completion: Math.max(1, Math.min(5, +(1 + cr * 4).toFixed(2))),
+          quality:         Math.max(1, Math.min(5, +(1 + sr * 4).toFixed(2))),
+          punctuality:     Math.max(1, Math.min(5, +(5 - or * 4).toFixed(2))),
+          initiative:      Math.max(1, Math.min(5, +(1 + Math.min(hr * 1.5, 1) * 4).toFixed(2))),
+        },
+        lastSync: new Date().toISOString(),
+      };
+    });
+    const payload = {
+      columns: columns.map(c => ({ id: c.id, title: c.title, color: c.color })),
+      metrics, totalCards: cards.length,
+      lastSync: new Date().toISOString(),
+      ownerName: state.ownerName || '',
+      boardName: state.appName || 'Kanban Board',
+    };
+    localStorage.setItem(SYNC_SK, JSON.stringify(payload));
+    return JSON.stringify(payload);
+  } catch (e) { return null; }
+}
+
+function updateSyncPill(live, msg) {
+  const pill = document.getElementById('syncPill');
+  const lbl  = document.getElementById('syncLabel');
+  pill.className = 'sync-pill ' + (live ? 'live' : 'stale');
+  lbl.textContent = msg;
+  const meta = document.getElementById('syncMetaLabel');
+  if (meta) meta.textContent = live ? msg : 'Not connected — open kanban-connected.html or import a bundle';
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════════════════
+function switchTab(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tbn').forEach(b => b.classList.remove('on'));
+  document.getElementById('pg-' + name).classList.add('on');
+  btn.classList.add('on');
+  renderPage(name);
+}
+function renderPage(n) {
+  if (n === 'overview')   rOverview();
+  else if (n === 'kanban')    renderKanbanPage();
+  else if (n === 'quarterly') rQuarterly();
+  else if (n === 'annual')    rAnnual();
+  else if (n === 'employees') rEmployees();
+  else if (n === 'criteria')  renderCriteria();
+}
+function applyF() {
+  empFilter = document.getElementById('empF').value;
+  fyFilter  = document.getElementById('fyF').value;
+  const a   = document.querySelector('.tbn.on');
+  const tab = a?.getAttribute('onclick')?.match(/'(\w+)'/)?.[1] || 'overview';
+  renderPage(tab);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// OVERVIEW
+// ═══════════════════════════════════════════════════════════════════
+function rOverview() {
+  const data  = filtered();
+  const fyParsed = parseFY(fyFilter);
+  // Total HC = ALL employees (from reviews + kanban), not just those with data in this FY
+  const totalHC   = allEmps().filter(e => !separatedEmps[e]).length;
+  const activeHC  = allEmps().filter(e => !separatedEmps[e]);
+  const sepHC     = Object.keys(separatedEmps).length;
+  const empsInFY  = [...new Set(data.map(r => r.employee))]; // employees with reviews this FY
+  const scores    = data.map(r => wScore(r.scores, r.dept));
+  const avg       = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(2) : '—';
+  const tot       = data.reduce((a, r) => a + (r.kanban?.total || 0), 0);
+  const dn        = data.reduce((a, r) => a + (r.kanban?.done  || 0), 0);
+  const comp      = tot ? Math.round(dn / tot * 100) : 0;
+  const tops      = scores.length ? Math.max(...scores).toFixed(2) : '—';
+  const kbCount   = Object.keys(kanbanBoards).length;
+
+  document.getElementById('kpiStrip').innerHTML = `
+    <div class="kpi-card" style="--bar-color:var(--ac)"><div class="kpi-accent-bar"></div><div class="kpi-icon">🎯</div><div class="kpi-label">Avg Score</div><div class="kpi-value ${scCls(avg)}">${avg}</div><div class="kpi-sub">${fyLabel()}</div></div>
+    <div class="kpi-card" style="--bar-color:var(--bl)"><div class="kpi-accent-bar"></div><div class="kpi-icon">👥</div><div class="kpi-label">Total HC</div><div class="kpi-value">${totalHC}</div><div class="kpi-sub">${sepHC > 0 ? sepHC + ' separated' : 'active employees'}</div></div>
+    <div class="kpi-card" style="--bar-color:var(--gd)"><div class="kpi-accent-bar"></div><div class="kpi-icon">📋</div><div class="kpi-label">FY Reviews</div><div class="kpi-value">${empsInFY.length}</div><div class="kpi-sub">of ${totalHC} employees</div></div>
+    <div class="kpi-card" style="--bar-color:var(--gn)"><div class="kpi-accent-bar"></div><div class="kpi-icon">✅</div><div class="kpi-label">Task Rate</div><div class="kpi-value ${scCls(comp / 20)}">${comp}%</div><div class="kpi-sub">${dn} / ${tot} tasks</div></div>
+    <div class="kpi-card" style="--bar-color:var(--pu)"><div class="kpi-accent-bar"></div><div class="kpi-icon">🏆</div><div class="kpi-label">Top Score</div><div class="kpi-value ${scCls(tops)}">${tops}</div><div class="kpi-sub">highest this FY</div></div>
+    ${kbCount ? `<div class="kpi-card" style="--bar-color:var(--gn)"><div class="kpi-accent-bar"></div><div class="kpi-icon">🔗</div><div class="kpi-label">Boards Synced</div><div class="kpi-value sc-ex">${kbCount}</div><div class="kpi-sub">employee boards</div></div>` : ''}`;
+
+  // Trend canvas
+  const canvas = document.getElementById('trendCanvas');
+  const W = Math.max(canvas.parentElement.clientWidth - 48, 220);
+  canvas.width = W; canvas.height = 120;
+  const ctx = canvas.getContext('2d');
+  const MN  = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const md  = MN.map((_, i) => {
+    const mrs = data.filter(r => new Date(r.date).getMonth() === i);
+    const s   = mrs.map(r => wScore(r.scores, r.dept));
+    return s.length ? s.reduce((a, b) => a + b, 0) / s.length : 0;
+  });
+  const cH = 100, bW = (W / 12) - 7;
+  ctx.clearRect(0, 0, W, cH + 20);
+  const GN = cssv('--gn'), BL = cssv('--bl'), GD = cssv('--gd'), AC = cssv('--ac');
+  const BG3 = cssv('--bg3'), MU = cssv('--mu'), TX = cssv('--tx');
+  md.forEach((v, i) => {
+    const x = i * (W / 12) + 3.5;
+    const h = v ? (v / 5) * cH * .87 : 3;
+    const y = cH - h;
+    ctx.fillStyle = v >= 4.5 ? GN : v >= 3.5 ? BL : v >= 2.5 ? GD : v > 0 ? AC : BG3;
+    ctx.globalAlpha = v > 0 ? 1 : .3;
+    ctx.beginPath(); ctx.roundRect(x, y, bW, h, [4, 4, 0, 0]); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = MU; ctx.font = '10px DM Sans,sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(MN[i].slice(0, 1), x + bW / 2, cH + 14);
+    if (v > 0) {
+      ctx.fillStyle = TX; ctx.font = 'bold 10px DM Sans,sans-serif';
+      ctx.fillText(v.toFixed(1), x + bW / 2, y - 4);
+    }
+  });
+
+  // Donut
+  const bands = [
+    { l: 'Exceptional (≥4.5)', c: GN, n: 0 },
+    { l: 'Exceeds (3.5–4.4)',   c: BL, n: 0 },
+    { l: 'Meets (2.5–3.4)',     c: GD, n: 0 },
+    { l: 'Developing (<2.5)',   c: AC, n: 0 },
+  ];
+  scores.forEach(v => {
+    if (v >= 4.5) bands[0].n++;
+    else if (v >= 3.5) bands[1].n++;
+    else if (v >= 2.5) bands[2].n++;
+    else bands[3].n++;
+  });
+  const tot2 = scores.length || 1;
+  let ang = -Math.PI / 2, paths = '';
+  const R = 44, cx = 58, cy = 58;
+  bands.forEach(b => {
+    const a = (b.n / tot2) * Math.PI * 2;
+    if (!a) return;
+    const x1 = cx + R * Math.cos(ang), y1 = cy + R * Math.sin(ang);
+    const x2 = cx + R * Math.cos(ang + a), y2 = cy + R * Math.sin(ang + a);
+    paths += `<path d="M${cx},${cy} L${x1},${y1} A${R},${R},0,${a > Math.PI ? 1 : 0},1,${x2},${y2} Z" fill="${b.c}" opacity=".88"/>`;
+    ang += a;
+  });
+  const SUR = cssv('--sur'), BG2 = cssv('--bg2');
+  document.getElementById('donutWrap').innerHTML = `
+    <div class="donut-wrap">
+      <svg width="116" height="116" viewBox="0 0 116 116" style="flex-shrink:0">
+        <circle cx="${cx}" cy="${cy}" r="${R}" fill="${BG2}"/>${paths}
+        <circle cx="${cx}" cy="${cy}" r="28" fill="${SUR}"/>
+        <text x="${cx}" y="${cy - 4}" text-anchor="middle" font-family="Playfair Display,serif" font-size="18" font-weight="700" fill="${TX}">${tot2}</text>
+        <text x="${cx}" y="${cy + 12}" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="10" fill="${MU}">reviews</text>
+      </svg>
+      <div class="donut-legend">${bands.map(b => `
+        <div class="donut-row">
+          <div class="donut-dot" style="background:${b.c}"></div>
+          <span style="color:var(--mu)">${b.l}</span>
+          <span class="donut-count">${b.n}</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+
+  // Top performers — use all employees (reviews + kanban)
+  const emps = allEmps();
+  const ea = emps.map(e => {
+    const s = data.filter(r => r.employee === e).map(r => wScore(r.scores, r.dept));
+    return { n: e, a: s.length ? s.reduce((x, y) => x + y, 0) / s.length : 0 };
+  }).sort((a, b) => b.a - a.a).slice(0, 7);
+  document.getElementById('topBars').innerHTML = ea.length
+    ? ea.map(e => `<div class="bar-item"><div class="bar-label">${esc(e.n.split(' ')[0])}</div><div class="bar-track"><div class="bar-fill" style="width:${e.a / 5 * 100}%;background:${avatarColor(e.n)}"></div></div><div class="bar-val ${scCls(e.a)}">${e.a.toFixed(1)}</div></div>`).join('')
+    : '<div style="color:var(--mu);text-align:center;padding:24px;font-size:13px">No data yet</div>';
+
+  // Criteria averages (General)
+  document.getElementById('critAvgBars').innerHTML = getCrit('General').map(c => {
+    const vs = data.map(r => r.scores[c.id]).filter(v => v != null);
+    const a  = vs.length ? vs.reduce((x, y) => x + y, 0) / vs.length : 0;
+    return `<div class="bar-item"><div class="bar-label">${esc(c.name)}</div><div class="bar-track"><div class="bar-fill" style="width:${a / 5 * 100}%;background:${avatarColor(c.id)}"></div></div><div class="bar-val ${scCls(a)}">${a.toFixed(2)}</div></div>`;
+  }).join('');
+
+  // Heatmap
+  const MNAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const hv = MNAMES.map((_, i) => {
+    const mr = data.filter(r => new Date(r.date).getMonth() === i);
+    return mr.length ? mr.map(r => wScore(r.scores, r.dept)).reduce((a, b) => a + b, 0) / mr.length / 5 : 0;
+  });
+  document.getElementById('hmGrid').innerHTML = hv.map((v, i) => {
+    const c = v === 0 ? 'var(--bg2)'
+      : v > 0.7 ? `rgba(24,106,59,${.35 + v * .6})`
+      : v > 0.4 ? `rgba(160,95,10,${.35 + v * .6})`
+      : `rgba(193,59,14,${.35 + v * .6})`;
+    return `<div class="hm-cell" style="background:${c}" title="${MNAMES[i]}: ${v ? (v * 5).toFixed(1) : 0} / 5.0"></div>`;
+  }).join('');
+  document.getElementById('hmLabels').innerHTML = MNAMES.map(m => `<div class="hm-lbl">${m.slice(0, 1)}</div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// KANBAN PAGE — per-employee boards
+// ═══════════════════════════════════════════════════════════════════
+function renderKanbanPage() {
+  const el = document.getElementById('empBoardList');
+
+  // Merge sources: imported boards + live sync
+  const allKeys = new Set([...Object.keys(kanbanBoards)]);
+  if (kanbanSync?.metrics) {
+    kanbanSync.metrics.forEach(m => allKeys.add(m.assignee));
+  }
+
+  if (!allKeys.size) {
+    el.innerHTML = `<div class="empty-state">
+      <div class="empty-state-icon">🔗</div>
+      <h3>No Employee Boards Yet</h3>
+      <p>Employees export their Kanban board using <b>"📤 Send to Manager"</b> in <b>kanban-connected.html</b>. Import the .json bundle here using the button above.</p>
+      <button class="btn btn-primary" onclick="openBundleImport()" style="margin-top:8px">📥 Import Kanban Bundle</button>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = [...allKeys].sort().map(name => {
+    const brd  = kanbanBoards[name] || kanbanSync?.metrics?.find(m => m.assignee === name) || {};
+    const ds   = brd.derivedScores || {};
+    const pct  = brd.total ? Math.round(brd.done / brd.total * 100) : 0;
+    const avgDs = Object.values(ds).length ? (Object.values(ds).reduce((a, b) => a + b, 0) / Object.values(ds).length).toFixed(1) : '—';
+    const src  = kanbanBoards[name] ? (kanbanBoards[name].source === 'live' ? '🟢 Live' : '📦 Bundle') : '🟢 Live';
+
+    return `<div class="emp-board-card">
+      <div class="emp-board-header">
+        <div class="av av-md" style="background:${avatarColor(name)}">${initials(name)}</div>
+        <div class="emp-board-meta">
+          <div class="emp-board-name">${esc(name)}</div>
+          <div class="emp-board-info">${src} · ${brd.boardName || 'Kanban Board'} · Last sync: ${brd.lastSync ? new Date(brd.lastSync).toLocaleString() : 'unknown'}</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div class="emp-board-score ${scCls(avgDs)}">${avgDs}</div>
+          <div style="font-size:11px;color:var(--mu)">avg derived</div>
+          ${badgeHtml(avgDs)}
+        </div>
+        <button class="btn btn-sm" onclick="openReview('${esc(name)}')">＋ Review</button>
+        ${!separatedEmps[name] ? `<button class="btn btn-sm" onclick="openSeparationModal('${esc(name)}')" style="color:var(--gd);border-color:var(--gd)" title="Mark as separated">⬡</button>` : `<span class="badge" style="background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;font-size:11px">Separated</span>`}
+        <button class="btn btn-sm" onclick="deleteKanbanBoard('${esc(name)}')" style="color:var(--ac);border-color:var(--ac)" title="Remove this board">✕</button>
+      </div>
+      <div class="emp-board-body">
+        <div class="metric-row">
+          <div class="metric-cell"><div class="metric-val">${brd.total || 0}</div><div class="metric-lbl">Total Tasks</div></div>
+          <div class="metric-cell"><div class="metric-val sc-ex">${brd.done || 0}</div><div class="metric-lbl">Completed</div></div>
+          <div class="metric-cell"><div class="metric-val sc-lo">${brd.overdueCount || 0}</div><div class="metric-lbl">Overdue</div></div>
+          <div class="metric-cell"><div class="metric-val" style="color:var(--gd)">${pct}%</div><div class="metric-lbl">Completion</div></div>
+        </div>
+        <div style="font-size:12px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px">Auto-Derived Scores</div>
+        <div class="derived-scores">
+          ${[
+            { key:'task_completion', label:'Task Completion' },
+            { key:'quality',        label:'Work Quality' },
+            { key:'punctuality',    label:'Punctuality' },
+            { key:'initiative',     label:'Initiative' },
+          ].map(x => {
+            const v = ds[x.key] || 0;
+            return `<div class="derived-score-item">
+              <div class="ds-name">${x.label}</div>
+              <div class="ds-track"><div class="ds-fill" style="width:${v/5*100}%;background:${v>=4.5?'var(--gn)':v>=3.5?'var(--bl)':v>=2.5?'var(--gd)':'var(--ac)'}"></div></div>
+              <div class="ds-val ${scCls(v)}">${v.toFixed(1)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        ${brd.tags?.length ? `<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:5px">${brd.tags.slice(0,8).map(t=>`<span style="font-size:11px;padding:2px 8px;border-radius:99px;background:var(--bg2);color:var(--mu);border:1px solid var(--bdr)">${esc(t)}</span>`).join('')}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function convertKanbanToReviews() {
+  const allKeys = new Set([...Object.keys(kanbanBoards)]);
+  if (kanbanSync?.metrics) kanbanSync.metrics.forEach(m => allKeys.add(m.assignee));
+  if (!allKeys.size) { alert('No Kanban data — import a bundle or sync first.'); return; }
+  const fyParsed = parseFY(fyFilter);
+  // Default period: Q2 of the FY start year (Jul of start year)
+  const defaultPeriod = fyParsed ? `Q2-${fyParsed.startYear}` : 'Q2-2025';
+
+  let created = 0;
+  allKeys.forEach(name => {
+    const exists = reviews.find(r => r.employee === name && periodInFY(r.period, fyFilter));
+    if (exists) return;
+    const m = getKanbanMetric(name);
+    if (!m) return;
+    const ds = m.derivedScores || {};
+    const crit = getCrit('General');
+    const scores = {};
+    crit.forEach(c => { scores[c.id] = c.kanbanSource && ds[c.kanbanSource] ? ds[c.kanbanSource] : 3; });
+    reviews.push({
+      id: uid(), employee: name, role: '', dept: 'General',
+      period: defaultPeriod, reviewer: 'Auto (Kanban)',
+      scores, notes: `Auto from Kanban. ${m.done}/${m.total} tasks done. ${m.overdueCount || 0} overdue.`,
+      date: new Date().toISOString().slice(0, 10),
+      kanban: { total: m.total, done: m.done },
+    });
+    created++;
+  });
+  if (!created) { showToast(`All employees already have reviews for ${fyLabel()}`, 'var(--gd)'); return; }
+  persist(); updateEmpFilter(); rOverview();
+  showToast(`Created ${created} review${created !== 1 ? 's' : ''} from Kanban data!`);
+  document.querySelector('.tbn').click();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// QUARTERLY
+// ═══════════════════════════════════════════════════════════════════
+function setQ(q, btn) {
+  selQ = q;
+  document.querySelectorAll('.q-tab').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  rQuarterly();
+}
+function renderQTabs() {
+  const fyParsed = parseFY(fyFilter);
+  if (!fyParsed) return;
+  const tabEl = document.querySelector('.q-tabs');
+  if (!tabEl) return;
+  tabEl.innerHTML = fyParsed.quarters.map(q =>
+    `<button class="q-tab ${q.q === selQ ? 'on' : ''}" onclick="setQ('${q.q}',this)">${q.label}</button>`
+  ).join('');
+}
+function rQuarterly() {
+  renderQTabs();
+  const fyParsed = parseFY(fyFilter);
+  const qDef = fyParsed?.quarters.find(x => x.q === selQ);
+  const qr   = filteredQ(selQ);
+  const el   = document.getElementById('qContent');
+  const qLabel = qDef?.label || selQ;
+  if (!qr.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📊</div><h3>No reviews for ' + esc(qLabel) + '</h3><p>Add reviews for this quarter, or create them from Kanban data.</p></div>';
+    return;
+  }
+  const ss  = qr.map(r => wScore(r.scores, r.dept));
+  const avg = (ss.reduce((a, b) => a + b, 0) / ss.length).toFixed(2);
+  const tot = qr.reduce((a, r) => a + (r.kanban?.total || 0), 0);
+  const dn  = qr.reduce((a, r) => a + (r.kanban?.done  || 0), 0);
+  const totalHC = allEmps().filter(e => !separatedEmps[e]).length;
+  const depts = [...new Set(qr.map(r => r.dept || 'General'))];
+
+  function deptCard(d) {
+    const dr = qr.filter(r => (r.dept || 'General') === d);
+    const ds = dr.map(r => wScore(r.scores, r.dept));
+    const da = ds.length ? ds.reduce((x, y) => x + y, 0) / ds.length : 0;
+    const ca = getCrit(d).map(c => {
+      const vs = dr.map(r => r.scores[c.id]).filter(v => v != null);
+      return Object.assign({}, c, { a: vs.length ? vs.reduce((x, y) => x + y, 0) / vs.length : 0 });
+    });
+    const bars = ca.map(c =>
+      '<div class="bar-item">' +
+        '<div class="bar-label" style="width:var(--lbl-w);min-width:var(--lbl-w);max-width:var(--lbl-w);flex-shrink:0;font-size:12px">' + esc(c.name) + '</div>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + (c.a / 5 * 100) + '%;background:' + avatarColor(c.id) + '"></div></div>' +
+        '<div class="bar-val ' + scCls(c.a) + '">' + c.a.toFixed(1) + '</div>' +
+      '</div>'
+    ).join('');
+    return '<div class="card">' +
+      '<div class="card-title">' + esc(d) + '</div>' +
+      '<div style="display:flex;align-items:baseline;gap:10px;margin-bottom:16px">' +
+        '<span style="font-family:\'Playfair Display\',serif;font-size:38px;font-weight:700" class="' + scCls(da) + '">' + da.toFixed(2) + '</span>' +
+        badgeHtml(da) +
+        '<span style="font-size:12px;color:var(--mu)">' + dr.length + ' review' + (dr.length !== 1 ? 's' : '') + '</span>' +
+      '</div>' +
+      '<div class="bar-list" style="--lbl-w:130px">' + bars + '</div>' +
+    '</div>';
+  }
+
+  const critHeads = getCrit('General').slice(0,4).map(c => '<th>' + esc(c.name.split(' ')[0]) + '</th>').join('');
+  const sortedQR = [...qr].sort((a, b) => wScore(b.scores, b.dept) - wScore(a.scores, a.dept));
+  const rankRows = sortedQR.map((r, i) => {
+    const s    = wScore(r.scores, r.dept);
+    const comp = r.kanban?.total ? Math.round(r.kanban.done / r.kanban.total * 100) + '%' : '—';
+    const isSep = !!separatedEmps[r.employee];
+    const critCells = getCrit('General').slice(0,4).map(c =>
+      '<td><span class="' + scCls(r.scores[c.id]||0) + '">' + (r.scores[c.id]||0).toFixed(1) + '</span></td>'
+    ).join('');
+    return '<tr style="' + (isSep ? 'opacity:.6' : '') + '">' +
+      '<td style="color:var(--mu);font-weight:700">' + (i+1) + '</td>' +
+      '<td><div style="display:flex;align-items:center;gap:8px">' +
+        '<div class="av" style="background:' + (isSep?'#9ca3af':avatarColor(r.employee)) + '">' + initials(r.employee) + '</div>' +
+        '<span style="font-weight:600">' + esc(r.employee) + '</span>' +
+        (isSep ? '<span class="badge" style="background:#f3f4f6;color:#6b7280;font-size:10px;border:1px solid #d1d5db">Sep.</span>' : '') +
+      '</div></td>' +
+      '<td style="color:var(--mu);font-size:12px">' + esc(r.dept || 'General') + '</td>' +
+      critCells +
+      '<td><span class="' + scCls(s) + '" style="font-weight:700;font-size:15px">' + s.toFixed(2) + '</span></td>' +
+      '<td style="color:var(--mu)">' + comp + '</td>' +
+      '<td>' + badgeHtml(s) + '</td>' +
+      '<td><button class="btn btn-xs" onclick="openEmpDetail(\'' + esc(r.employee) + '\')">View</button></td>' +
+    '</tr>';
+  }).join('');
+
+  const gridStyle = depts.length > 2 ? 'grid-template-columns:1fr 1fr 1fr' : '';
+
+  el.innerHTML =
+    '<div class="kpi-strip" style="grid-template-columns:repeat(auto-fill,minmax(145px,1fr));margin-bottom:22px">' +
+      '<div class="kpi-card" style="--bar-color:var(--ac)"><div class="kpi-accent-bar"></div><div class="kpi-icon">🎯</div><div class="kpi-label">Quarter Avg</div><div class="kpi-value ' + scCls(avg) + '">' + avg + '</div><div class="kpi-sub">' + esc(qLabel) + '</div></div>' +
+      '<div class="kpi-card" style="--bar-color:var(--bl)"><div class="kpi-accent-bar"></div><div class="kpi-icon">📋</div><div class="kpi-label">Reviewed</div><div class="kpi-value">' + qr.length + '</div><div class="kpi-sub">of ' + totalHC + ' HC</div></div>' +
+      '<div class="kpi-card" style="--bar-color:var(--gn)"><div class="kpi-accent-bar"></div><div class="kpi-icon">✅</div><div class="kpi-label">Tasks Done</div><div class="kpi-value">' + dn + '</div><div class="kpi-sub">of ' + tot + ' assigned</div></div>' +
+    '</div>' +
+    '<div class="chart-grid" style="' + gridStyle + '">' + depts.map(deptCard).join('') + '</div>' +
+    '<div class="card" style="margin-top:16px">' +
+      '<div class="card-title">Rankings — ' + esc(qLabel) + '</div>' +
+      '<div style="overflow-x:auto">' +
+        '<table class="data-table">' +
+          '<thead><tr><th>#</th><th>Employee</th><th>Dept</th>' + critHeads + '<th>Overall</th><th>Tasks</th><th>Rating</th><th></th></tr></thead>' +
+          '<tbody>' + rankRows + '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</div>';
+}
+
+
+function rAnnual() {
+  const data = filtered();
+  const el   = document.getElementById('annContent');
+  const fyParsed = parseFY(fyFilter);
+  if (!data.length && !Object.keys(separatedEmps).length) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📋</div><h3>No data for ${fyLabel()}</h3><p>Add reviews or import from Kanban data.</p></div>`;
+    return;
+  }
+  const emps = [...new Set(data.map(r => r.employee))];
+  const totalHC = allEmps().filter(e => !separatedEmps[e]).length;
+  const sepList = Object.entries(separatedEmps);
+
+  // Build FY quarter labels for column headers
+  const qLabels = fyParsed ? fyParsed.quarters.map(q => q.q) : ['Q1','Q2','Q3','Q4'];
+  const qHeaderLabels = fyParsed ? fyParsed.quarters.map(q => `<th title="${q.label}">${q.q}</th>`).join('') : '<th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th>';
+
+  const rows = emps.map(e => {
+    const er = data.filter(r => r.employee === e);
+    const ss = er.map(r => wScore(r.scores, r.dept));
+    const a  = ss.length ? ss.reduce((x, y) => x + y, 0) / ss.length : 0;
+    const t  = er.reduce((x, r) => x + (r.kanban?.total || 0), 0);
+    const d  = er.reduce((x, r) => x + (r.kanban?.done  || 0), 0);
+    // FY-aware quarter scores
+    const qs = fyParsed ? fyParsed.quarters.map(q => {
+      const qr = er.find(r => r.period === `${q.q}-${q.year}`);
+      return qr ? wScore(qr.scores, qr.dept) : null;
+    }) : ['Q1','Q2','Q3','Q4'].map(q => { const qr = er.find(r => pq(r.period) === q); return qr ? wScore(qr.scores, qr.dept) : null; });
+    const sep = separatedEmps[e];
+    return { e, dept: er[0]?.dept || 'General', role: er[0]?.role || '', a, t, d, qs, sep };
+  }).sort((a, b) => b.a - a.a);
+
+  // SVG line chart
+  const W = 380, H = 152, mL = 30, mR = 14, mT = 14, mB = 24;
+  const iW = W - mL - mR, iH = H - mT - mB;
+  const BD = cssv('--bdr'), MU = cssv('--mu'), SUR = cssv('--sur');
+  let svg = `<svg width="100%" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  [1,2,3,4,5].forEach(v => {
+    const y = mT + iH - (v / 5) * iH;
+    svg += `<line x1="${mL}" y1="${y}" x2="${W - mR}" y2="${y}" stroke="${BD}" stroke-width="1"/>`;
+    svg += `<text x="${mL - 5}" y="${y + 4}" text-anchor="end" font-size="9" fill="${MU}">${v}</text>`;
+  });
+  qLabels.forEach((q, i) => {
+    svg += `<text x="${mL + i * (iW / 3)}" y="${H - 5}" text-anchor="middle" font-size="10" fill="${MU}">${q}</text>`;
+  });
+  rows.slice(0, 6).forEach(r => {
+    const c   = r.sep ? '#9ca3af' : avatarColor(r.e);
+    const pts = r.qs.map((s, i) => s != null ? { x: mL + i * (iW / 3), y: mT + iH - (s / 5) * iH } : null).filter(Boolean);
+    if (pts.length > 1) svg += `<polyline points="${pts.map(p => `${p.x},${p.y}`).join(' ')}" fill="none" stroke="${c}" stroke-width="${r.sep?'1.5':'2'}" opacity="${r.sep?'.5':'.85'}" stroke-linejoin="round" ${r.sep?'stroke-dasharray="4,3"':''}/>`;
+    pts.forEach(p => svg += `<circle cx="${p.x}" cy="${p.y}" r="4.5" fill="${c}" stroke="${SUR}" stroke-width="2"/>`);
+  });
+  svg += '</svg>';
+
+  // Separated employee EWAT section
+  const sepInFY = sepList.filter(([name]) => {
+    // Include if they were separated during or before this FY end
+    const sepDate = new Date(separatedEmps[name]?.date || '2000-01-01');
+    return fyParsed ? sepDate <= fyParsed.end : true;
+  });
+  const sepRows = sepInFY.map(([name, info]) => {
+    const er = reviews.filter(r => r.employee === name && (fyParsed ? periodInFY(r.period, fyFilter) : true));
+    const ss = er.map(r => wScore(r.scores, r.dept));
+    const fyAvg = ss.length ? ss.reduce((x, y) => x + y, 0) / ss.length : 0;
+    const qs = fyParsed ? fyParsed.quarters.map(q => {
+      const qr = er.find(r => r.period === `${q.q}-${q.year}`);
+      return qr ? wScore(qr.scores, qr.dept) : null;
+    }) : [];
+    return { name, info, fyAvg, qs, dept: er[0]?.dept || '—', role: er[0]?.role || '—' };
+  });
+
+  el.innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+        <div class="card-title">Annual Summary — ${fyLabel()}</div>
+        <span style="font-size:12px;color:var(--mu)">Total HC: <b style="color:var(--tx)">${totalHC}</b> active · <b style="color:var(--gd)">${sepList.length}</b> separated</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr><th>#</th><th>Employee</th><th>Dept</th>${qHeaderLabels}<th>FY Avg</th><th>Tasks</th><th>Rating</th><th></th></tr></thead>
+          <tbody>${rows.map((r, i) => `<tr style="${r.sep?'opacity:.65':''}">
+            <td style="color:var(--mu);font-weight:700">${i + 1}</td>
+            <td><div style="display:flex;align-items:center;gap:8px"><div class="av" style="background:${r.sep?'#9ca3af':avatarColor(r.e)}">${initials(r.e)}</div><div><span style="font-weight:600">${esc(r.e)}</span>${r.sep?`<div style="font-size:10px;color:var(--ac)">Sep. ${esc(r.sep.date)}</div>`:''}</div></div></td>
+            <td style="color:var(--mu);font-size:12px">${esc(r.dept)}</td>
+            ${r.qs.map(q => q != null ? `<td><span class="${scCls(q)}" style="font-weight:600">${q.toFixed(1)}</span></td>` : '<td style="color:var(--mu)">—</td>').join('')}
+            <td><span class="${scCls(r.a)}" style="font-weight:700;font-size:16px">${r.a.toFixed(2)}</span></td>
+            <td style="color:var(--mu)">${r.d}/${r.t}</td>
+            <td>${badgeHtml(r.a)}</td>
+            <td><button class="btn btn-xs" onclick="openEmpDetail('${esc(r.e)}')">View</button></td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="card">
+        <div class="card-title">Score Progression</div>
+        <div class="card-sub">${fyLabel()} · Q1 Apr → Q4 Mar</div>
+        ${svg}
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:8px">${rows.slice(0,6).map(r=>`<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--mu)"><div style="width:14px;height:2px;background:${r.sep?'#9ca3af':avatarColor(r.e)};border-radius:1px;${r.sep?'opacity:.5':''}"></div>${esc(r.e.split(' ')[0])}</div>`).join('')}</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Review Notes</div>
+        <div style="margin-top:10px;max-height:340px;overflow-y:auto">${data.filter(r => r.notes).map(r => `<div class="note-card"><div class="note-meta"><span>${esc(r.employee)} · ${esc(r.period)}</span><span>${esc(r.dept || '')}</span></div><div class="note-body">${esc(r.notes)}</div></div>`).join('') || '<div style="color:var(--mu);font-size:13px">No notes recorded.</div>'}</div>
+      </div>
+    </div>
+
+    ${sepRows.length ? `
+    <div class="card" style="margin-top:16px;border-left:3px solid var(--gd)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        <div class="card-title">EWAT — Separated Employees</div>
+        <span class="badge" style="background:var(--gdb);color:var(--gd);font-size:11px">End-of-Work Assessment Tracker</span>
+      </div>
+      <div class="card-sub">Performance record for employees who left during or before ${fyLabel()}. Retained for reference and compliance.</div>
+      <div style="overflow-x:auto">
+        <table class="data-table">
+          <thead><tr><th>Employee</th><th>Role</th><th>Dept</th><th>Separation</th><th>Reason</th>${qHeaderLabels}<th>FY Avg</th><th>Rating</th></tr></thead>
+          <tbody>${sepRows.map(r => `<tr style="opacity:.75">
+            <td><div style="display:flex;align-items:center;gap:8px"><div class="av" style="background:#9ca3af;filter:grayscale(.5)">${initials(r.name)}</div><span style="font-weight:600">${esc(r.name)}</span></div></td>
+            <td style="color:var(--mu);font-size:12px">${esc(r.role)}</td>
+            <td style="color:var(--mu);font-size:12px">${esc(r.dept)}</td>
+            <td style="color:var(--ac);font-size:12px;white-space:nowrap">${esc(r.info.date)}</td>
+            <td style="color:var(--mu);font-size:12px">${esc(r.info.reason || '—')}</td>
+            ${r.qs.map(q => q != null ? `<td><span class="${scCls(q)}" style="font-weight:600">${q.toFixed(1)}</span></td>` : '<td style="color:var(--mu)">—</td>').join('')}
+            <td><span class="${r.fyAvg > 0 ? scCls(r.fyAvg) : ''}" style="font-weight:700;font-size:15px">${r.fyAvg > 0 ? r.fyAvg.toFixed(2) : '—'}</span></td>
+            <td>${r.fyAvg > 0 ? badgeHtml(r.fyAvg) : '<span style="color:var(--mu);font-size:12px">No reviews</span>'}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>` : ''}`;
+
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// EMPLOYEES
+// ═══════════════════════════════════════════════════════════════════
+function rEmployees() {
+  const all = allEmps();
+  const el  = document.getElementById('empGrid');
+
+  // Update sep count label
+  const sepN = Object.keys(separatedEmps).length;
+  const scEl = document.getElementById('empSepCount');
+  if (scEl) scEl.textContent = sepN > 0 ? `${sepN} separated` : '';
+
+  // Header controls
+  const showSep = document.getElementById('empShowSep')?.checked ?? false;
+
+  // Partition active vs separated
+  const active = all.filter(e => !separatedEmps[e]);
+  const separated = all.filter(e => !!separatedEmps[e]);
+
+  const toShow = showSep ? all : active;
+
+  if (!toShow.length) {
+    el.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">👤</div><h3>No employees yet</h3><p>Add reviews, import Kanban bundles, or convert from Kanban data — employees will appear here automatically.</p></div>`;
+    return;
+  }
+
+  el.innerHTML = toShow.map(e => {
+    const er      = reviews.filter(r => r.employee === e);
+    const ss      = er.map(r => wScore(r.scores, r.dept));
+    const a       = ss.length ? ss.reduce((x, y) => x + y, 0) / ss.length : 0;
+    const t       = er.reduce((x, r) => x + (r.kanban?.total || 0), 0);
+    const d       = er.reduce((x, r) => x + (r.kanban?.done  || 0), 0);
+    const km      = getKanbanMetric(e);
+    const sep     = separatedEmps[e];
+    const kanbanOnly = !er.length && !!km; // exists only in Kanban, no review yet
+
+    return `<div class="emp-card${sep ? ' emp-card-sep' : ''}" onclick="openEmpDetail('${esc(e)}')">
+      <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:12px">
+        <div class="av av-md" style="background:${sep ? '#9ca3af' : avatarColor(e)};${sep ? 'filter:grayscale(.6)' : ''}">${initials(e)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+            <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;${sep ? 'color:var(--mu)' : ''}">${esc(e)}</div>
+            ${sep ? `<span class="badge" style="background:#f3f4f6;color:#6b7280;border:1px solid #d1d5db;font-size:10px">Separated</span>` : ''}
+            ${kanbanOnly ? `<span class="badge badge-gn" style="font-size:10px">Kanban only</span>` : ''}
+          </div>
+          <div style="font-size:12px;color:var(--mu);margin-top:2px">${esc(er[0]?.role || (km ? '(from Kanban)' : ''))} · ${esc(er[0]?.dept || 'General')}</div>
+          ${sep ? `<div style="font-size:11px;color:var(--ac);margin-top:3px">Left: ${esc(sep.date)}${sep.reason ? ' · ' + esc(sep.reason) : ''}</div>` : ''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-family:'Playfair Display',serif;font-size:26px;font-weight:700" class="${a > 0 ? scCls(a) : ''}">${a > 0 ? a.toFixed(2) : (km ? '—' : '—')}</div>
+          ${km ? '<div style="font-size:10px;color:var(--gn);font-weight:600;margin-top:2px">🔗 Kanban</div>' : ''}
+        </div>
+      </div>
+
+      ${km ? `<div class="bar-item" style="margin-bottom:6px">
+        <div class="bar-label" style="min-width:90px;font-size:12px;color:var(--mu)">Tasks</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${km.total ? km.done/km.total*100 : 0}%;background:var(--gn)"></div></div>
+        <div class="bar-val sc-ex">${km.total ? Math.round(km.done/km.total*100) : 0}%</div>
+      </div>` : (t > 0 ? `<div class="bar-item" style="margin-bottom:6px">
+        <div class="bar-label" style="min-width:90px;font-size:12px;color:var(--mu)">Completion</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${t ? d/t*100 : 0}%;background:var(--gn)"></div></div>
+        <div class="bar-val sc-gd">${t ? Math.round(d/t*100) : 0}%</div>
+      </div>` : '')}
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;flex-wrap:wrap;gap:5px">
+        <div style="display:flex;align-items:center;gap:6px">
+          ${a > 0 ? badgeHtml(a) : ''}
+          <span style="font-size:11px;color:var(--mu)">${er.length} review${er.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div style="display:flex;gap:5px" onclick="event.stopPropagation()">
+          ${!sep ? `<button class="btn btn-xs" onclick="openSeparationModal('${esc(e)}')" title="Mark as separated" style="color:var(--gd);border-color:var(--gd)">⬡ Separate</button>` : `<button class="btn btn-xs" onclick="reinstateEmp('${esc(e)}')" title="Reinstate employee" style="color:var(--gn);border-color:var(--gn)">↩ Reinstate</button>`}
+          <button class="btn btn-xs" onclick="deleteEmp('${esc(e)}')" title="Delete employee and all reviews" style="color:var(--ac);border-color:var(--ac)">✕ Delete</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── SEPARATION MODAL ────────────────────────────────────────────
+let sepTargetEmp = null;
+function openSeparationModal(name) {
+  sepTargetEmp = name;
+  // Inline simple modal
+  const today = new Date().toISOString().slice(0, 10);
+  const existing = `<div id="sepInlineModal" class="modal-overlay" onclick="if(event.target===this)closeSepModal()" style="z-index:600">
+    <div class="modal" style="width:480px">
+      <div class="modal-title">Mark as Separated</div>
+      <div class="modal-desc">Record the separation details for <b>${esc(name)}</b>. This employee will be tagged and can be hidden from active views.</div>
+      <div class="field-group">
+        <label>Separation Date</label>
+        <input type="date" id="sepDate" value="${today}" style="width:100%;padding:8px 12px;font-size:13px;border:1px solid var(--bdr);border-radius:var(--radius-sm);background:var(--sur2);color:var(--tx);outline:none">
+      </div>
+      <div class="field-group">
+        <label>Reason / Notes</label>
+        <select id="sepReason" style="width:100%;margin-bottom:8px;padding:8px 12px;font-size:13px;border:1px solid var(--bdr);border-radius:var(--radius-sm);background:var(--sur2);color:var(--tx);outline:none">
+          <option value="">Select reason…</option>
+          <option value="Resigned">Resigned</option>
+          <option value="Terminated">Terminated</option>
+          <option value="Contract ended">Contract ended</option>
+          <option value="Retired">Retired</option>
+          <option value="Transferred to another dept">Transferred to another dept</option>
+          <option value="Mutual agreement">Mutual agreement</option>
+          <option value="Restructuring / Layoff">Restructuring / Layoff</option>
+          <option value="Other">Other</option>
+        </select>
+        <textarea id="sepNotes" placeholder="Additional notes (optional)…" style="width:100%;min-height:60px;font-size:13px;padding:8px 12px;border:1px solid var(--bdr);border-radius:var(--radius-sm);background:var(--sur2);color:var(--tx);resize:vertical;outline:none;font-family:'DM Sans',sans-serif"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeSepModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="confirmSeparation()">Confirm Separation</button>
+      </div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend', existing);
+}
+function closeSepModal() { document.getElementById('sepInlineModal')?.remove(); }
+function confirmSeparation() {
+  if (!sepTargetEmp) return;
+  const date   = document.getElementById('sepDate')?.value || new Date().toISOString().slice(0, 10);
+  const reason = document.getElementById('sepReason')?.value || '';
+  const notes  = document.getElementById('sepNotes')?.value?.trim() || '';
+  separatedEmps[sepTargetEmp] = { date, reason: reason + (notes ? (reason ? ' — ' : '') + notes : '') };
+  persist(); closeSepModal(); rEmployees();
+  showToast(`${sepTargetEmp} marked as separated`, 'var(--gd)');
+}
+function syncKanbanToEmployees() {
+  let added = 0;
+  const kanbanNames = new Set(Object.keys(kanbanBoards));
+  if (kanbanSync?.metrics) kanbanSync.metrics.forEach(m => { if (m.assignee) kanbanNames.add(m.assignee); });
+  const fyParsed = parseFY(fyFilter);
+  const defaultPeriod = fyParsed ? `Q2-${fyParsed.startYear}` : 'Q2-2025';
+  kanbanNames.forEach(name => {
+    const existing = reviews.find(r => r.employee === name);
+    if (existing) return;
+    const m = getKanbanMetric(name);
+    if (!m) return;
+    const ds = m.derivedScores || {};
+    const crit = getCrit('General');
+    const scores = {};
+    crit.forEach(c => { scores[c.id] = c.kanbanSource && ds[c.kanbanSource] ? ds[c.kanbanSource] : 3; });
+    reviews.push({
+      id: uid(), employee: name, role: '', dept: 'General',
+      period: defaultPeriod, reviewer: 'Auto (Kanban)',
+      scores, notes: `Auto-imported from Kanban board. ${m.done}/${m.total} tasks done.`,
+      date: new Date().toISOString().slice(0, 10),
+      kanban: { total: m.total, done: m.done },
+    });
+    added++;
+  });
+  if (!added) { showToast('All Kanban employees are already in the list', 'var(--gd)'); return; }
+  persist(); updateEmpFilter(); rEmployees();
+  showToast(`Added ${added} employee${added !== 1 ? 's' : ''} from Kanban data`);
+}
+function deleteKanbanBoard(name) {
+  if (!confirm(`Remove Kanban board data for ${name}?\n\nThis only removes the synced board — reviews are kept.`)) return;
+  delete kanbanBoards[name];
+  // Also remove from live sync metrics if present
+  if (kanbanSync?.metrics) {
+    kanbanSync.metrics = kanbanSync.metrics.filter(m => m.assignee !== name);
+    localStorage.setItem(SYNC_SK, JSON.stringify(kanbanSync));
+  }
+  persist(); renderKanbanPage(); updateEmpFilter();
+  showToast(`Kanban board removed for ${name}`, 'var(--gd)');
+}
+function reinstateEmp(name) {
+  if (!confirm(`Reinstate ${name} as an active employee?`)) return;
+  delete separatedEmps[name];
+  persist(); rEmployees();
+  showToast(`${name} reinstated as active`);
+}
+function deleteEmp(name) {
+  if (!confirm(`Delete ${name} and ALL their reviews? This cannot be undone.`)) return;
+  reviews = reviews.filter(r => r.employee !== name);
+  delete kanbanBoards[name];
+  delete separatedEmps[name];
+  persist(); updateEmpFilter(); rEmployees();
+  showToast(`${name} deleted`, 'var(--ac)');
+}
+
+function openEmpDetail(e) {
+  curEmpModal = e;
+  const er  = reviews.filter(r => r.employee === e).sort((a, b) => a.period.localeCompare(b.period));
+  const ss  = er.map(r => wScore(r.scores, r.dept));
+  const a   = ss.length ? ss.reduce((x, y) => x + y, 0) / ss.length : 0;
+  const t   = er.reduce((x, r) => x + (r.kanban?.total || 0), 0);
+  const d   = er.reduce((x, r) => x + (r.kanban?.done  || 0), 0);
+  const km  = getKanbanMetric(e);
+  const dept = er[0]?.dept || 'General';
+  const ca  = getCrit(dept).map(c => { const v = er.map(r => r.scores[c.id]).filter(v => v != null); return { ...c, a: v.length ? v.reduce((x, y) => x + y, 0) / v.length : 0 }; });
+
+  document.getElementById('empModalBody').innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--bdr)">
+      <div class="av av-lg" style="background:${avatarColor(e)}">${initials(e)}</div>
+      <div style="flex:1">
+        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:700">${esc(e)}</div>
+        <div style="font-size:13px;color:var(--mu)">${esc(er[0]?.role || '')} · <b style="color:var(--tx2)">${esc(dept)}</b></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'Playfair Display',serif;font-size:40px;font-weight:700" class="${scCls(a)}">${a.toFixed(2)}</div>
+        <div style="font-size:11px;color:var(--mu)">overall average</div>
+        <div style="margin-top:6px">${badgeHtml(a)}</div>
+      </div>
+    </div>
+    ${km ? `<div class="success-box" style="margin-bottom:16px;font-size:13px"><b>🔗 Kanban Board Linked:</b> ${km.done}/${km.total} tasks done · ${km.overdueCount || 0} overdue · Auto scores: Task ${(km.derivedScores?.task_completion || 0).toFixed(1)} · Quality ${(km.derivedScores?.quality || 0).toFixed(1)} · Punctuality ${(km.derivedScores?.punctuality || 0).toFixed(1)}</div>` : ''}
+    <div class="chart-grid" style="margin-bottom:16px">
+      <div>
+        <div class="section-heading" style="margin-bottom:12px">Criteria Scores (${esc(dept)})</div>
+        <div class="bar-list">${ca.map(c => `<div class="bar-item"><div class="bar-label">${esc(c.name)}</div><div class="bar-track"><div class="bar-fill" style="width:${c.a / 5 * 100}%;background:${avatarColor(c.id)}"></div></div><div class="bar-val ${scCls(c.a)}">${c.a.toFixed(1)}</div></div>`).join('')}</div>
+      </div>
+      <div>
+        <div class="section-heading" style="margin-bottom:12px">Review Timeline</div>
+        <div class="tl">${er.map(r => {
+          const s = wScore(r.scores, r.dept);
+          return `<div class="tl-item"><div class="tl-date">${r.period} · ${esc(r.reviewer || 'N/A')}</div><div class="tl-body"><span class="${scCls(s)}" style="font-weight:700">${s.toFixed(2)}</span> ${badgeHtml(s)}${r.notes ? `<br><span style="color:var(--mu);font-size:12px">${esc(r.notes)}</span>` : ''}</div></div>`;
+        }).join('') || '<div style="color:var(--mu);font-size:13px">No reviews yet.</div>'}</div>
+      </div>
+    </div>
+    <div class="section-heading" style="margin-bottom:12px">Task Statistics</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+      ${[{ v: d, l: 'Completed', c: 'var(--gn)' }, { v: t, l: 'Assigned', c: 'var(--bl)' }, { v: t ? Math.round(d/t*100) : 0, l: 'Rate %', c: 'var(--ac)' }, { v: er.length, l: 'Reviews', c: 'var(--pu)' }]
+        .map(x => `<div style="background:var(--sur2);border:1px solid var(--bdr);border-radius:var(--radius);padding:16px;text-align:center"><div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:${x.c}">${x.v}</div><div style="font-size:11px;color:var(--mu);margin-top:4px">${x.l}</div></div>`).join('')}
+    </div>`;
+  document.getElementById('empModal').style.display = 'flex';
+}
+function closeEmpModal() { document.getElementById('empModal').style.display = 'none'; }
+function reviewForCurEmp() { closeEmpModal(); openReview(curEmpModal); }
+
+// ═══════════════════════════════════════════════════════════════════
+// CRITERIA EDITOR
+// ═══════════════════════════════════════════════════════════════════
+function renderCriteria() {
+  const depts = Object.keys(departments);
+  if (!depts.includes(activeDept)) activeDept = depts[0];
+
+  document.getElementById('deptTabs').innerHTML = depts.map(d =>
+    `<button class="dept-tab ${d === activeDept ? 'on' : ''}" onclick="selectDept('${esc(d)}')">
+      ${esc(d)}
+      ${d !== 'General' ? `<span class="x" onclick="event.stopPropagation();deleteDept('${esc(d)}')" title="Delete">✕</span>` : ''}
+    </button>`
+  ).join('');
+
+  const crit = getCrit(activeDept);
+  const total = crit.reduce((a, c) => a + c.weight, 0);
+
+  document.getElementById('critEditorContent').innerHTML = `
+    <div class="card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:10px">
+        <div>
+          <div class="card-title">${esc(activeDept)} — ${crit.length} Criteria</div>
+          <div class="card-sub" style="margin-bottom:0">Edit names, weights, and Kanban sources. Weights must total 100%.</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-sm btn-ghost" onclick="duplicateDept()">⧉ Duplicate dept</button>
+          <button class="btn btn-sm" onclick="addCrit()">＋ Add Criterion</button>
+          <button class="btn btn-primary btn-sm" onclick="saveDeptCrit()">Save ${esc(activeDept)}</button>
+        </div>
+      </div>
+      <div class="crit-grid" id="critGrid">${buildCritItems(crit)}</div>
+      <div class="weight-total-bar">
+        <div class="weight-total-label">Total weight:</div>
+        <div class="weight-total-val" id="wtTotal" style="color:${total === 100 ? 'var(--gn)' : total > 100 ? 'var(--ac)' : 'var(--gd)'}">${total}%</div>
+        <div class="weight-bar-track">
+          <div class="weight-bar-fill" style="width:${Math.min(total, 100)}%;background:${total === 100 ? 'var(--gn)' : total > 100 ? 'var(--ac)' : 'var(--gd)'}"></div>
+        </div>
+        <button class="btn btn-sm btn-ghost" onclick="resetDept()">↺ Reset</button>
+      </div>
+    </div>`;
+}
+
+function buildCritItems(crit) {
+  return crit.map((c, i) => `
+    <div class="crit-item" id="ci_${i}">
+      <button class="crit-item-del" onclick="deleteCrit(${i})" title="Remove">✕</button>
+      <div class="crit-name-wrap">
+        <div class="crit-color" style="background:${avatarColor(c.id)}"></div>
+        <input class="crit-name-in" type="text" value="${esc(c.name)}" placeholder="Criterion name" oninput="updCritName(${i},this.value)">
+      </div>
+      <input class="crit-desc-in" type="text" value="${esc(c.desc || '')}" placeholder="Description (optional)" oninput="updCritDesc(${i},this.value)">
+      <div class="crit-weight-row" style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:10px 12px;background:var(--bg2);border-radius:var(--radius-sm)">
+        <span style="font-size:13px;color:var(--mu);font-weight:500">Weight:</span>
+        <input class="crit-wt-in" type="number" min="0" max="100" value="${c.weight}" oninput="updCritWt(${i},this.value)">
+        <span style="font-size:15px;font-weight:700;color:var(--mu)">%</span>
+        <span style="font-size:11px;color:var(--mu);margin-left:4px">(of 100%)</span>
+      </div>
+      <div class="crit-src-label">Auto-score from Kanban board:</div>
+      <select class="crit-src-sel" oninput="updCritSrc(${i},this.value)">
+        ${KANBAN_SOURCES.map(s => `<option value="${s.val}" ${c.kanbanSource === s.val ? 'selected' : ''}>${s.label}</option>`).join('')}
+      </select>
+    </div>`).join('');
+}
+
+function updCritName(i, v) { getCrit(activeDept)[i].name = v; updWtDisplay(); }
+function updCritDesc(i, v) { getCrit(activeDept)[i].desc = v; }
+function updCritWt(i, v)   { getCrit(activeDept)[i].weight = parseInt(v) || 0; updWtDisplay(); }
+function updCritSrc(i, v)  { getCrit(activeDept)[i].kanbanSource = v; }
+
+function updWtDisplay() {
+  const tot = getCrit(activeDept).reduce((a, c) => a + c.weight, 0);
+  const el  = document.getElementById('wtTotal');
+  if (el) { el.textContent = tot + '%'; el.style.color = tot === 100 ? 'var(--gn)' : tot > 100 ? 'var(--ac)' : 'var(--gd)'; }
+}
+
+function addCrit() { getCrit(activeDept).push({ id: 'c_' + Date.now(), name: 'New Criterion', weight: 0, desc: '', kanbanSource: '' }); renderCriteria(); }
+function deleteCrit(i) { const c = getCrit(activeDept); if (c.length <= 1) { showToast('Need at least 1 criterion', 'var(--ac)'); return; } c.splice(i, 1); renderCriteria(); }
+function saveDeptCrit() { const t = getCrit(activeDept).reduce((a, c) => a + c.weight, 0); if (t !== 100) { alert(`${activeDept}: Weights must total 100%. Current: ${t}%`); return; } persist(); showToast(`${activeDept} criteria saved!`); }
+function selectDept(d) { activeDept = d; renderCriteria(); }
+function resetDept() { if (!confirm(`Reset "${activeDept}" to default General criteria?`)) return; departments[activeDept] = JSON.parse(JSON.stringify(departments['General'])); renderCriteria(); }
+function duplicateDept() { const name = prompt('New department name:'); if (!name?.trim()) return; departments[name.trim()] = JSON.parse(JSON.stringify(getCrit(activeDept))); activeDept = name.trim(); renderCriteria(); persist(); showToast(`"${name.trim()}" created from ${activeDept}`); }
+function addDept() { const name = prompt('New department name:'); if (!name?.trim()) return; if (departments[name.trim()]) { alert('Department already exists.'); return; } departments[name.trim()] = JSON.parse(JSON.stringify(departments['General'])); activeDept = name.trim(); renderCriteria(); persist(); showToast(`Department "${name.trim()}" created`); }
+function deleteDept(d) { if (d === 'General') { showToast('Cannot delete General', 'var(--ac)'); return; } if (!confirm(`Delete "${d}" department?`)) return; delete departments[d]; activeDept = 'General'; renderCriteria(); persist(); }
+
+// ═══════════════════════════════════════════════════════════════════
+// REVIEW MODAL
+// ═══════════════════════════════════════════════════════════════════
+function openReview(preEmp) {
+  // Populate dept selector
+  const dSel = document.getElementById('rDept');
+  dSel.innerHTML = Object.keys(departments).map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join('');
+
+  if (preEmp) {
+    document.getElementById('rEmp').value = preEmp;
+    const er = reviews.filter(r => r.employee === preEmp);
+    if (er[0]) { document.getElementById('rRole').value = er[0].role || ''; dSel.value = er[0].dept || 'General'; }
+    const km = getKanbanMetric(preEmp);
+    if (km) { document.getElementById('rTT').value = km.total; document.getElementById('rTD').value = km.done; }
+    else { document.getElementById('rTT').value = ''; document.getElementById('rTD').value = ''; }
+  } else {
+    ['rEmp','rRole','rRvr','rNotes'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+    document.getElementById('rTT').value = '';
+    document.getElementById('rTD').value = '';
+  }
+  document.getElementById('rRvr').value  = '';
+  document.getElementById('rNotes').value = '';
+  buildReviewFields(preEmp);
+  document.getElementById('rvModal').style.display = 'flex';
+}
+function closeReview() { document.getElementById('rvModal').style.display = 'none'; }
+
+function buildReviewFields(preEmp) {
+  const empName = preEmp || document.getElementById('rEmp')?.value?.trim();
+  const dept    = document.getElementById('rDept')?.value || 'General';
+  const crit    = getCrit(dept);
+  const km      = getKanbanMetric(empName);
+
+  const banner = document.getElementById('kanbanAutoBanner');
+  if (km && banner) {
+    const n = crit.filter(c => c.kanbanSource).length;
+    banner.style.display = '';
+    banner.innerHTML = `🔗 <b>Kanban board found</b> for ${esc(empName)} — ${n} criterion${n !== 1 ? 'a' : 'ion'} auto-filled from board activity. You can adjust any score.`;
+  } else if (banner) { banner.style.display = 'none'; }
+
+  document.getElementById('reviewSliders').innerHTML = crit.map(c => {
+    const auto  = km && c.kanbanSource ? (km.derivedScores?.[c.kanbanSource] || null) : null;
+    const defV  = auto ? auto.toFixed(1) : '3.0';
+    return `<div class="slider-field">
+      <div class="slider-field-label">
+        <span class="name">${esc(c.name)}</span>
+        <span class="meta">${c.weight}%${auto ? ' · <span style="color:var(--gn)">🔗 auto</span>' : ''}</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-edge">1</span>
+        <input type="range" min="1" max="5" step="0.1" value="${defV}" id="sc_${c.id}"
+          oninput="document.getElementById('sv_${c.id}').textContent=parseFloat(this.value).toFixed(1);document.getElementById('sv_${c.id}').className='slider-value '+scCls(parseFloat(this.value))"
+          style="accent-color:${avatarColor(c.id)}">
+        <span class="slider-edge">5</span>
+        <div class="slider-value ${scCls(parseFloat(defV))}" id="sv_${c.id}">${defV}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function saveReview() {
+  const e = document.getElementById('rEmp').value.trim();
+  if (!e) { alert('Employee name is required.'); return; }
+  const dept  = document.getElementById('rDept').value || 'General';
+  const crit  = getCrit(dept);
+  const scores = {};
+  crit.forEach(c => { scores[c.id] = parseFloat(document.getElementById('sc_' + c.id)?.value || 3); });
+  const tt = parseInt(document.getElementById('rTT').value) || 0;
+  const td = parseInt(document.getElementById('rTD').value) || 0;
+  reviews.push({
+    id: uid(), employee: e,
+    role:     document.getElementById('rRole').value.trim(),
+    dept,
+    period:   document.getElementById('rPer').value,
+    reviewer: document.getElementById('rRvr').value.trim(),
+    scores, notes: document.getElementById('rNotes').value.trim(),
+    date:     new Date().toISOString().slice(0, 10),
+    kanban:   { total: tt, done: td },
+  });
+  persist(); updateEmpFilter(); closeReview();
+  showToast('Review saved for ' + e + '!');
+  rOverview();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// IMPORT (Excel + JSON bundle via same modal)
+// ═══════════════════════════════════════════════════════════════════
+function openImport() { document.getElementById('impModal').style.display = 'flex'; document.getElementById('impPreview').innerHTML = ''; document.getElementById('impConfirmBtn').style.display = 'none'; importRows = []; }
+function closeImport() { document.getElementById('impModal').style.display = 'none'; }
+
+function handleImpFile(e) { const f = e.target.files[0]; if (f) processImpFile(f); }
+function processImpFile(file) {
+  if (file.name.endsWith('.json')) { processJsonBundle(file, 'impPreview', 'impConfirmBtn'); return; }
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const wb   = XLSX.read(ev.target.result, { type: file.name.endsWith('.csv') ? 'string' : 'array' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+      prevImpRows(rows);
+    } catch (err) { document.getElementById('impPreview').innerHTML = `<div class="info-box" style="border-color:var(--ac)">⚠ ${esc(err.message)}</div>`; }
+  };
+  file.name.endsWith('.csv') ? reader.readAsText(file) : reader.readAsArrayBuffer(file);
+}
+
+function prevImpRows(rows) {
+  if (!rows.length) { document.getElementById('impPreview').innerHTML = '<div style="color:var(--mu)">No data rows found.</div>'; return; }
+  importRows = rows;
+  const keys = Object.keys(rows[0]);
+  document.getElementById('impPreview').innerHTML = `
+    <div style="font-size:13px;font-weight:600;color:var(--gn);margin-bottom:10px">✓ Found ${rows.length} row(s). Columns detected: ${keys.slice(0,10).map(k=>`<code style="background:var(--bg2);padding:1px 6px;border-radius:4px;font-size:11px">${esc(k)}</code>`).join(' ')}</div>
+    <div style="overflow-x:auto;max-height:160px;border:1px solid var(--bdr);border-radius:8px">
+      <table class="data-table" style="font-size:12px"><thead><tr>${keys.slice(0,8).map(k=>`<th>${esc(k)}</th>`).join('')}</tr></thead>
+      <tbody>${rows.slice(0,4).map(r=>`<tr>${keys.slice(0,8).map(k=>`<td>${esc(String(r[k]||'').slice(0,26))}</td>`).join('')}</tr>`).join('')}</tbody></table>
+    </div>`;
+  document.getElementById('impConfirmBtn').style.display = '';
+}
+
+function fCol(row, ...ns) {
+  const ks = Object.keys(row);
+  for (const n of ns) {
+    const h = ks.find(k => k.toLowerCase().replace(/[\s_\-]/g,'') === n.toLowerCase().replace(/[\s_\-]/g,''));
+    if (h != null) return row[h];
+  }
+  return undefined;
+}
+
+function doImport() {
+  if (!importRows.length) return;
+  let added = 0, skipped = 0;
+  importRows.forEach(row => {
+    const e = String(fCol(row, 'Employee','Name','EmployeeName') || '').trim();
+    if (!e) { skipped++; return; }
+    const dept  = String(fCol(row, 'Department','Dept','Team') || 'General').trim();
+    const crit  = getCrit(dept);
+    const scores = {};
+    let hasCrit = false;
+    crit.forEach(c => { const v = parseFloat(fCol(row, c.name, c.id) || 0); if (v > 0) { scores[c.id] = Math.min(5, v); hasCrit = true; } });
+    if (!hasCrit) { const ov = parseFloat(fCol(row, 'Score','Overall','OverallScore','Rating') || 0); crit.forEach(c => { scores[c.id] = ov > 0 ? Math.min(5, ov) : 3; }); }
+    reviews.push({
+      id: uid(), employee: e, dept,
+      role:     String(fCol(row, 'Role','Title') || '').trim(),
+      period:   String(fCol(row, 'Period','ReviewPeriod','Quarter') || (() => { const fyP = parseFY(fyFilter); return fyP ? `Q1-${fyP.startYear}` : 'Q1-2025'; })()).trim(),
+      reviewer: String(fCol(row, 'Reviewer','Manager') || '').trim(),
+      scores,
+      notes:    String(fCol(row, 'Notes','Comments') || '').trim(),
+      date:     new Date().toISOString().slice(0, 10),
+      kanban: { total: parseInt(fCol(row,'TasksTotal','TotalTasks') || 0)||0, done: parseInt(fCol(row,'TasksDone','DoneTasks') || 0)||0 },
+    });
+    added++;
+  });
+  persist(); updateEmpFilter(); closeImport();
+  showToast(`Imported ${added} review${added !== 1 ? 's' : ''}.${skipped ? ` (${skipped} skipped)` : ''}`);
+  rOverview();
+}
+
+function dlTemplate() {
+  const wb = XLSX.utils.book_new();
+  Object.entries(departments).forEach(([dept, crit]) => {
+    const hdr = ['Employee','Role','Department','Period','Reviewer','Notes','TasksTotal','TasksDone', ...crit.map(c => c.name)];
+    const ex  = ['Jane Doe', dept === 'Engineering' ? 'Software Engineer' : 'Team Member', dept, 'Q1-2025', 'Manager Name', 'Strong quarter.', 20, 18, ...crit.map(() => 4.0)];
+    const ws  = XLSX.utils.aoa_to_sheet([hdr, ex]);
+    ws['!cols'] = hdr.map(h => ({ wch: Math.max(h.length + 4, 14) }));
+    XLSX.utils.book_append_sheet(wb, ws, dept.slice(0, 31));
+  });
+  XLSX.writeFile(wb, 'PerformanceReview_Template.xlsx');
+  showToast('Template downloaded with all departments!');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// BUNDLE IMPORT (manager receives .json from employee)
+// ═══════════════════════════════════════════════════════════════════
+function openBundleImport() { document.getElementById('bundleModal').style.display = 'flex'; document.getElementById('bundlePreview').innerHTML = ''; document.getElementById('bundleConfirmBtn').style.display = 'none'; bundleData = null; }
+function closeBundleImport() { document.getElementById('bundleModal').style.display = 'none'; }
+
+function handleBundleFile(e) { const f = e.target.files[0]; if (f) processJsonBundle(f, 'bundlePreview', 'bundleConfirmBtn'); }
+
+function processJsonBundle(file, previewId, btnId) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data._type !== 'kanban_perf_bundle') throw new Error('This is not a Kanban bundle file. Please use a file exported via "📤 Send to Manager".');
+      bundleData = data;
+      const owner   = data.ownerName || 'Unknown';
+      const metrics = data.metrics || [];
+      const ownerM  = metrics.find(m => m.assignee?.toLowerCase() === owner.toLowerCase()) || metrics[0];
+      document.getElementById(previewId).innerHTML = `
+        <div class="success-box">
+          <b>✓ Valid bundle from: ${esc(owner)}</b><br>
+          Board: ${esc(data.boardName || '—')} · ${data.totalCards || 0} total cards · ${metrics.length} assignee${metrics.length !== 1 ? 's' : ''} · Exported: ${new Date(data.exportedAt).toLocaleString()}
+          ${ownerM ? `<br>Owner stats: ${ownerM.done}/${ownerM.total} tasks done · ${ownerM.overdueCount||0} overdue · Derived scores: Task ${(ownerM.derivedScores?.task_completion||0).toFixed(1)}, Quality ${(ownerM.derivedScores?.quality||0).toFixed(1)}, Punctuality ${(ownerM.derivedScores?.punctuality||0).toFixed(1)}` : ''}
+        </div>`;
+      document.getElementById(btnId).style.display = '';
+    } catch (err) {
+      document.getElementById(previewId).innerHTML = `<div class="info-box" style="border-color:var(--ac)">⚠ ${esc(err.message)}</div>`;
+    }
+  };
+  reader.readAsText(file);
+}
+
+function confirmBundle() {
+  if (!bundleData) return;
+  const owner   = bundleData.ownerName || 'Unknown';
+  const metrics = bundleData.metrics || [];
+
+  // Register each employee from the bundle
+  metrics.forEach(m => {
+    kanbanBoards[m.assignee] = {
+      ...m,
+      boardName: bundleData.boardName || 'Kanban Board',
+      source: 'bundle',
+      ownerName: owner,
+      importedAt: new Date().toISOString(),
+    };
+  });
+
+  // Also write to SYNC_SK so it can be picked up by existing logic
+  localStorage.setItem(SYNC_SK, JSON.stringify({
+    columns: bundleData.columns || [],
+    metrics,
+    totalCards: bundleData.totalCards || 0,
+    lastSync: bundleData.exportedAt || new Date().toISOString(),
+    ownerName: owner,
+    boardName: bundleData.boardName || 'Kanban Board',
+  }));
+  kanbanSync = JSON.parse(localStorage.getItem(SYNC_SK));
+
+  persist();
+  updateSyncPill(true, `Bundle: ${owner} · ${metrics.length} employees · ${bundleData.totalCards || 0} cards`);
+  closeBundleImport();
+  showToast(`Bundle imported for ${owner}! ${metrics.length} employee board${metrics.length !== 1 ? 's' : ''} added.`);
+  renderKanbanPage();
+  updateEmpFilter();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════════
+function updateEmpFilter() {
+  const sel  = document.getElementById('empF');
+  const cur  = sel.value;
+  const emps = allEmps();
+  sel.innerHTML = '<option value="all">All Employees (' + emps.filter(e => !separatedEmps[e]).length + ' active)</option>'
+    + emps.map(e => {
+        const sep = separatedEmps[e];
+        const label = esc(e) + (sep ? ' [Sep.]' : '');
+        return `<option value="${esc(e)}"${e === cur ? ' selected' : ''}>${label}</option>`;
+      }).join('');
+  document.getElementById('empDL').innerHTML = emps.map(e => `<option value="${esc(e)}">`).join('');
+}
+
+// Drag-and-drop on import zones
+window.addEventListener('DOMContentLoaded', () => {
+  [['impDropZone','impFileIn'], ['bundleDropZone','bundleFileIn']].forEach(([zoneId, inputId]) => {
+    const zone = document.getElementById(zoneId);
+    if (!zone) return;
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.style.borderColor = 'var(--ac)'; });
+    zone.addEventListener('dragleave', () => zone.style.borderColor = '');
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.style.borderColor = '';
+      const f = e.dataTransfer.files[0];
+      if (!f) return;
+      if (zoneId === 'bundleDropZone') { processJsonBundle(f, 'bundlePreview', 'bundleConfirmBtn'); }
+      else { processImpFile(f); }
+    });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
+const savedTheme = localStorage.getItem('prvTheme6') || 'light';
+setTheme(savedTheme);
+const ok = loadPersist();
+if (!ok) seedData();
+
+// Auto-detect current FY (April–March)
+(function autoSetFY() {
+  const now = new Date();
+  const m   = now.getMonth(); // 0=Jan, 3=Apr
+  const y   = now.getFullYear();
+  // If we're in Apr–Dec, FY start = this year; if Jan–Mar, FY start = last year
+  const fyStartYear = m >= 3 ? y : y - 1;
+  const fyEndYr     = String(fyStartYear + 1).slice(2);
+  const fyVal       = `FY${fyStartYear}-${fyEndYr}`;
+  const sel         = document.getElementById('fyF');
+  if (sel) {
+    // Check if option exists, add it if not
+    if (![...sel.options].find(o => o.value === fyVal)) {
+      const opt = document.createElement('option');
+      opt.value = fyVal;
+      opt.textContent = `FY ${fyStartYear}–${fyEndYr} (Apr ${fyStartYear} – Mar ${fyStartYear + 1})`;
+      sel.insertBefore(opt, sel.firstChild);
+    }
+    sel.value = fyVal;
+    fyFilter  = fyVal;
+  }
+})();
+
+updateEmpFilter();
+pullKanban();
+rOverview();
+
+// Poll for Kanban updates every 30s
+setInterval(() => {
+  const raw = localStorage.getItem(SYNC_SK);
+  if (raw) {
+    try {
+      const p = JSON.parse(raw);
+      if (!kanbanSync || p.lastSync !== kanbanSync?.lastSync) {
+        kanbanSync = p;
+        const age = Math.round((Date.now() - new Date(p.lastSync)) / 60000);
+        updateSyncPill(true, `Synced ${age < 1 ? 'just now' : age + 'm ago'} · ${p.metrics?.length || 0} people · ${p.totalCards || 0} cards`);
+      }
+    } catch (e) {}
+  }
+}, 30000);
+</script>
+</body>
+</html>
