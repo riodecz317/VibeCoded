@@ -1524,61 +1524,42 @@ function exportBundleForManager() {
   const inProgIds = columns.filter(c => /progress|doing|active|wip/i.test(c.title)).map(c => c.id);
   const now = new Date(); now.setHours(0,0,0,0);
 
-  // Build owner-specific metrics
-  const mine   = cards.filter(c => !c.assignee || c.assignee.toLowerCase() === owner.toLowerCase() || cards.length <= 1);
-  const allCards = cards; // full board
-  const assignees = [...new Set(cards.map(c => c.assignee).filter(Boolean))];
-
-  const metrics = assignees.map(name => {
-    const ac = cards.filter(c => c.assignee === name);
-    const done = ac.filter(c => doneIds.includes(c.status));
-    const inProg = ac.filter(c => inProgIds.includes(c.status));
-    const high = ac.filter(c => c.priority === 'high');
-    const subtaskAll = ac.flatMap(c => c.subtasks || []);
-    const subtaskDone = subtaskAll.filter(s => s.done);
-    const dated = ac.filter(c => c.endDate);
-    const overdue = dated.filter(c => { const d = new Date(c.endDate); return !doneIds.includes(c.status) && d < now; });
-    const compRate = ac.length ? done.length / ac.length : 0;
-    const subtaskRate = subtaskAll.length ? subtaskDone.length / subtaskAll.length : compRate;
-    const overdueRate = dated.length ? overdue.length / dated.length : 0;
-    const highRate = ac.length ? high.length / ac.length : 0;
-    return {
-      assignee: name,
-      total: ac.length, done: done.length, inProgress: inProg.length,
-      todo: ac.length - done.length - inProg.length,
-      high: high.length, overdueCount: overdue.length,
-      subtasksTotal: subtaskAll.length, subtasksDone: subtaskDone.length,
-      tags: [...new Set(ac.flatMap(c => c.tags || []))],
-      completionRate: +compRate.toFixed(3),
-      derivedScores: {
-        task_completion: Math.max(1, Math.min(5, +(1 + compRate * 4).toFixed(2))),
-        quality:         Math.max(1, Math.min(5, +(1 + subtaskRate * 4).toFixed(2))),
-        punctuality:     Math.max(1, Math.min(5, +(5 - overdueRate * 4).toFixed(2))),
-        initiative:      Math.max(1, Math.min(5, +(1 + Math.min(highRate * 1.5, 1) * 4).toFixed(2))),
-      },
-      lastSync: new Date().toISOString(),
-    };
-  });
-
-  // Also include the owner as a self-entry if their name isn't an assignee
-  const ownerMetric = metrics.find(m => m.assignee.toLowerCase() === owner.toLowerCase());
-  if (!ownerMetric) {
-    const oc = cards; // treat all cards as owner's if no assignee matches
-    const done = oc.filter(c => doneIds.includes(c.status));
-    const compRate = oc.length ? done.length / oc.length : 0;
-    metrics.unshift({
-      assignee: owner, total: oc.length, done: done.length,
-      inProgress: oc.filter(c => inProgIds.includes(c.status)).length,
-      todo: oc.length - done.length, high: oc.filter(c => c.priority==='high').length,
-      overdueCount: 0, subtasksTotal: 0, subtasksDone: 0, tags: [],
-      completionRate: +compRate.toFixed(3),
-      derivedScores: {
-        task_completion: Math.max(1, Math.min(5, +(1 + compRate * 4).toFixed(2))),
-        quality: 3, punctuality: 3, initiative: 3,
-      },
-      lastSync: new Date().toISOString(),
-    });
-  }
+  // The board OWNER is the employee — all cards represent their performance
+  const allC       = cards;
+  const oDone      = allC.filter(c => doneIds.includes(c.status));
+  const oInProg    = allC.filter(c => inProgIds.includes(c.status));
+  const oHigh      = allC.filter(c => c.priority === 'high');
+  const oSubs      = allC.flatMap(c => c.subtasks || []);
+  const oSubsDone  = oSubs.filter(s => s.done);
+  const oDated     = allC.filter(c => c.endDate);
+  const oOverdue   = oDated.filter(c => { const d = new Date(c.endDate); return !doneIds.includes(c.status) && d < now; });
+  const oCR = allC.length ? oDone.length / allC.length : 0;
+  const oSR = oSubs.length ? oSubsDone.length / oSubs.length : oCR;
+  const oOR = oDated.length ? oOverdue.length / oDated.length : 0;
+  const oHR = allC.length ? oHigh.length / allC.length : 0;
+  const metrics = [{
+    assignee:      owner,
+    ownerName:     owner,
+    total:         allC.length,
+    done:          oDone.length,
+    inProgress:    oInProg.length,
+    todo:          allC.length - oDone.length - oInProg.length,
+    high:          oHigh.length,
+    overdueCount:  oOverdue.length,
+    onTimeCount:   oDone.length - oOverdue.length,
+    subtasksTotal: oSubs.length,
+    subtasksDone:  oSubsDone.length,
+    withNotes:     allC.filter(c => c.notes && c.notes.trim()).length,
+    tags:          [...new Set(allC.flatMap(c => c.tags || []))],
+    completionRate: +oCR.toFixed(3),
+    derivedScores: {
+      task_completion: Math.max(1, Math.min(5, +(1 + oCR * 4).toFixed(2))),
+      quality:         Math.max(1, Math.min(5, +(1 + oSR * 4).toFixed(2))),
+      punctuality:     Math.max(1, Math.min(5, +(5 - oOR * 4).toFixed(2))),
+      initiative:      Math.max(1, Math.min(5, +(1 + Math.min(oHR * 1.5, 1) * 4).toFixed(2))),
+    },
+    lastSync: new Date().toISOString(),
+  }];
 
   const bundle = {
     _type: 'kanban_perf_bundle',
@@ -1660,68 +1641,53 @@ function saveState() {
 
 function syncToPerformanceTool() {
   try {
-    // Identify "done" column ids
-    const doneIds = columns.filter(c => /done|complete|finished|closed/i.test(c.title)).map(c => c.id);
+    const doneIds   = columns.filter(c => /done|complete|finished|closed/i.test(c.title)).map(c => c.id);
     const inProgIds = columns.filter(c => /progress|doing|active|wip/i.test(c.title)).map(c => c.id);
-
-    // Build per-assignee metrics
-    const assignees = [...new Set(cards.map(c => c.assignee).filter(Boolean))];
-    const metrics = assignees.map(name => {
-      const mine = cards.filter(c => c.assignee === name);
-      const done = mine.filter(c => doneIds.includes(c.status));
-      const inProg = mine.filter(c => inProgIds.includes(c.status));
-      const high = mine.filter(c => c.priority === 'high');
-      const withNotes = mine.filter(c => c.notes && c.notes.trim());
-      const subtaskAll = mine.flatMap(c => c.subtasks || []);
-      const subtaskDone = subtaskAll.filter(s => s.done);
-      // Date-based timeliness: cards with endDate in past that are done vs overdue
-      const now = new Date(); now.setHours(0,0,0,0);
-      const dated = mine.filter(c => c.endDate);
-      const onTime = dated.filter(c => { const d = new Date(c.endDate); return doneIds.includes(c.status) && d >= now || (doneIds.includes(c.status) && d < now); });
-      const overdue = dated.filter(c => { const d = new Date(c.endDate); return !doneIds.includes(c.status) && d < now; });
-      const tags = [...new Set(mine.flatMap(c => c.tags || []))];
-      // derive scores (1-5 scale) from raw kanban data
-      const compRate   = mine.length ? done.length / mine.length : 0;
-      const subtaskRate = subtaskAll.length ? subtaskDone.length / subtaskAll.length : compRate;
-      const overdueRate = dated.length ? overdue.length / dated.length : 0;
-      const highPriRate = mine.length ? high.length / mine.length : 0;
-      // score formulas
-      const taskCompScore  = +(1 + compRate   * 4).toFixed(2);
-      const qualityScore   = +(1 + subtaskRate * 4).toFixed(2);
-      const punctualScore  = +(5 - overdueRate * 4).toFixed(2);
-      const initiativeScore= +(1 + Math.min(highPriRate * 1.5, 1) * 4).toFixed(2);
-      // store columns data for the PR tool
-      return {
-        assignee: name,
-        total: mine.length,
-        done: done.length,
-        inProgress: inProg.length,
-        todo: mine.length - done.length - inProg.length,
-        high: high.length,
-        overdueCount: overdue.length,
-        onTimeCount: done.length - overdue.length,
-        subtasksTotal: subtaskAll.length,
-        subtasksDone: subtaskDone.length,
-        withNotes: withNotes.length,
-        tags,
-        completionRate: +compRate.toFixed(3),
-        derivedScores: {
-          task_completion: Math.max(1, Math.min(5, taskCompScore)),
-          quality: Math.max(1, Math.min(5, qualityScore)),
-          punctuality: Math.max(1, Math.min(5, punctualScore)),
-          initiative: Math.max(1, Math.min(5, initiativeScore)),
-        },
-        lastSync: new Date().toISOString(),
-      };
-    });
-
-    localStorage.setItem(SYNC_KEY, JSON.stringify({
-      columns: columns.map(c => ({ id: c.id, title: c.title, color: c.color, isDone: doneIds.includes(c.id), isInProg: inProgIds.includes(c.id) })),
-      metrics,
-      totalCards: cards.length,
+    const now = new Date(); now.setHours(0,0,0,0);
+    // The board owner IS the employee — all cards represent their work
+    const owner = boardOwnerName || document.getElementById('appLogo')?.textContent?.trim() || 'Board Owner';
+    const allC       = cards;
+    const oDone      = allC.filter(c => doneIds.includes(c.status));
+    const oInProg    = allC.filter(c => inProgIds.includes(c.status));
+    const oHigh      = allC.filter(c => c.priority === 'high');
+    const oSubs      = allC.flatMap(c => c.subtasks || []);
+    const oSubsDone  = oSubs.filter(s => s.done);
+    const oDated     = allC.filter(c => c.endDate);
+    const oOverdue   = oDated.filter(c => { const d = new Date(c.endDate); return !doneIds.includes(c.status) && d < now; });
+    const oCR = allC.length ? oDone.length / allC.length : 0;
+    const oSR = oSubs.length ? oSubsDone.length / oSubs.length : oCR;
+    const oOR = oDated.length ? oOverdue.length / oDated.length : 0;
+    const oHR = allC.length ? oHigh.length / allC.length : 0;
+    const ownerMetric = {
+      assignee:      owner,
+      ownerName:     owner,
+      total:         allC.length,
+      done:          oDone.length,
+      inProgress:    oInProg.length,
+      todo:          allC.length - oDone.length - oInProg.length,
+      high:          oHigh.length,
+      overdueCount:  oOverdue.length,
+      onTimeCount:   oDone.length - oOverdue.length,
+      subtasksTotal: oSubs.length,
+      subtasksDone:  oSubsDone.length,
+      withNotes:     allC.filter(c => c.notes && c.notes.trim()).length,
+      tags:          [...new Set(allC.flatMap(c => c.tags || []))],
+      completionRate: +oCR.toFixed(3),
+      derivedScores: {
+        task_completion: Math.max(1, Math.min(5, +(1 + oCR * 4).toFixed(2))),
+        quality:         Math.max(1, Math.min(5, +(1 + oSR * 4).toFixed(2))),
+        punctuality:     Math.max(1, Math.min(5, +(5 - oOR * 4).toFixed(2))),
+        initiative:      Math.max(1, Math.min(5, +(1 + Math.min(oHR * 1.5, 1) * 4).toFixed(2))),
+      },
       lastSync: new Date().toISOString(),
-      ownerName: boardOwnerName || '',
-      boardName: document.getElementById('appLogo')?.textContent?.trim() || 'Kanban Board',
+    };
+    localStorage.setItem(SYNC_KEY, JSON.stringify({
+      columns:    columns.map(c => ({ id: c.id, title: c.title, color: c.color, isDone: doneIds.includes(c.id), isInProg: inProgIds.includes(c.id) })),
+      metrics:    [ownerMetric],
+      totalCards: cards.length,
+      lastSync:   new Date().toISOString(),
+      ownerName:  owner,
+      boardName:  document.getElementById('appLogo')?.textContent?.trim() || 'Kanban Board',
     }));
   } catch(e) { console.warn('Sync failed:', e); }
 }

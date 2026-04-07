@@ -701,6 +701,7 @@ input[type="range"]::-webkit-slider-thumb {
   <button class="tbn" onclick="switchTab('annual',this)">Annual</button>
   <button class="tbn" onclick="switchTab('employees',this)">Employees</button>
   <button class="tbn" onclick="switchTab('criteria',this)">Criteria Editor</button>
+  <button class="tbn" onclick="switchTab('guide',this)">📖 Guide</button>
 </div>
 
 <!-- ═══ OVERVIEW ═══ -->
@@ -958,6 +959,159 @@ input[type="range"]::-webkit-slider-thumb {
   </div>
 </div>
 
+<!-- ═══ GUIDE ═══ -->
+<div class="page" id="pg-guide">
+  <div class="section-heading">Usage Guide</div>
+
+  <div style="max-width:860px">
+
+    <!-- WORKFLOW OVERVIEW -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">How the System Works</div>
+      <div class="card-sub">The Kanban Board and Performance Review tool share data through browser storage. Each employee owns one board; the manager collects bundles.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:4px">
+        <div style="background:var(--bg2);border-radius:var(--radius);padding:16px;border:1px solid var(--bdr)">
+          <div style="font-size:22px;margin-bottom:8px">1️⃣</div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:5px">Employee Sets Up Kanban</div>
+          <div style="font-size:12px;color:var(--mu);line-height:1.6">Opens <b>kanban-connected.html</b> in their browser. Clicks <b>Owner:</b> field in the header and types their full name. This name is their identity in the performance review system.</div>
+        </div>
+        <div style="background:var(--bg2);border-radius:var(--radius);padding:16px;border:1px solid var(--bdr)">
+          <div style="font-size:22px;margin-bottom:8px">2️⃣</div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:5px">Employee Works &amp; Exports</div>
+          <div style="font-size:12px;color:var(--mu);line-height:1.6">Works on their board throughout the quarter. When ready, clicks <b>📤 Send to Manager</b> in the header. A <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:11px">KanbanBundle_Name_Date.json</code> file is downloaded and sent to the manager.</div>
+        </div>
+        <div style="background:var(--bg2);border-radius:var(--radius);padding:16px;border:1px solid var(--bdr)">
+          <div style="font-size:22px;margin-bottom:8px">3️⃣</div>
+          <div style="font-weight:600;font-size:13px;margin-bottom:5px">Manager Imports &amp; Reviews</div>
+          <div style="font-size:12px;color:var(--mu);line-height:1.6">Opens the <b>Kanban Data</b> tab → <b>📥 Import Manager Bundle</b>. The employee appears automatically. Click <b>＋ Review</b> on their board card to open a pre-filled review form.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- IMPORTANT: OWNER NAME RULE -->
+    <div style="background:var(--acl);border:1px solid var(--bdr);border-left:4px solid var(--ac);border-radius:0 var(--radius) var(--radius) 0;padding:16px 20px;margin-bottom:16px">
+      <div style="font-weight:700;font-size:14px;color:var(--ac);margin-bottom:8px">⚠ Important — Owner Name = Employee Identity</div>
+      <div style="font-size:13px;color:var(--tx2);line-height:1.7">
+        The <b>Owner name</b> set in the Kanban board header is the employee's identity across the entire system. All performance data, reviews, and headcount counts are linked to this name.<br>
+        • The name must be set <b>before</b> using <b>📤 Send to Manager</b><br>
+        • Names are <b>case-sensitive</b> — "Maria Santos" and "maria santos" are two different employees<br>
+        • If the name changes, existing reviews must be manually updated
+      </div>
+    </div>
+
+    <!-- TAB GUIDE -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Tab Reference</div>
+      <table class="data-table" style="margin-top:8px">
+        <thead><tr><th>Tab</th><th>What it shows</th><th>Key actions</th></tr></thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:600;white-space:nowrap">Overview</td>
+            <td style="color:var(--mu)">KPI strip, monthly trend chart, score distribution donut, top performers bar chart, criteria averages, activity heatmap</td>
+            <td style="color:var(--mu)">Change FY selector to switch fiscal year. All charts update automatically.</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;white-space:nowrap">Kanban Data</td>
+            <td style="color:var(--mu)">Per-employee Kanban board cards with derived scores (Task Completion, Quality, Punctuality, Initiative)</td>
+            <td style="color:var(--mu)"><b>📥 Import Manager Bundle</b> — receive bundles from employees. <b>⇒ Create Reviews</b> — auto-generate reviews from board data. <b>✕</b> removes board, <b>⬡</b> separates employee.</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;white-space:nowrap">Quarterly</td>
+            <td style="color:var(--mu)">Quarter-by-quarter breakdown per department with bar charts and ranking table</td>
+            <td style="color:var(--mu)">Tabs show FY-correct dates: Q1=Apr–Jun, Q2=Jul–Sep, Q3=Oct–Dec, Q4=Jan–Mar.</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;white-space:nowrap">Annual</td>
+            <td style="color:var(--mu)">Full FY summary table, score progression chart, review notes, and <b>EWAT</b> section for separated employees</td>
+            <td style="color:var(--mu)"><b>EWAT</b> (End-of-Work Assessment Tracker) automatically lists employees who left and their final FY scores.</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;white-space:nowrap">Employees</td>
+            <td style="color:var(--mu)">All employees including Kanban-only, with completion bars and board link indicator</td>
+            <td style="color:var(--mu)"><b>⬡ Separate</b> — log separation with date and reason. <b>↩ Reinstate</b> — bring back. <b>✕ Delete</b> — remove all data. Toggle <b>Show separated</b> to view former employees.</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;white-space:nowrap">Criteria Editor</td>
+            <td style="color:var(--mu)">Per-department criteria with editable names, weights, and Kanban auto-score sources</td>
+            <td style="color:var(--mu)">Weights must total 100% per department. Criteria with a <b>Kanban source</b> are auto-filled from board data when adding reviews.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- SCORING -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">How Kanban Scores Are Derived</div>
+      <div class="card-sub">Kanban board activity is automatically converted into 1–5 performance scores</div>
+      <table class="data-table" style="margin-top:8px">
+        <thead><tr><th>Score</th><th>Derived from Kanban</th><th>Formula</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:600">Task Completion</td><td style="color:var(--mu)">Cards moved to Done columns</td><td style="color:var(--mu)">1 + (done ÷ total) × 4</td></tr>
+          <tr><td style="font-weight:600">Work Quality</td><td style="color:var(--mu)">Subtask completion rate</td><td style="color:var(--mu)">1 + (subtasks done ÷ total subtasks) × 4</td></tr>
+          <tr><td style="font-weight:600">Punctuality</td><td style="color:var(--mu)">Cards with past due dates not completed</td><td style="color:var(--mu)">5 − (overdue ÷ dated cards) × 4</td></tr>
+          <tr><td style="font-weight:600">Initiative</td><td style="color:var(--mu)">High-priority card handling rate</td><td style="color:var(--mu)">1 + min(high-pri rate × 1.5, 1) × 4</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:12px;color:var(--mu);margin-top:10px;line-height:1.6">Criteria linked to a Kanban source are <span style="color:var(--gn);font-weight:600">🔗 auto</span>-filled in the review modal. All scores remain manually editable — Kanban data is a starting point, not a final grade.</div>
+    </div>
+
+    <!-- FY CALENDAR -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Fiscal Year Calendar (April – March)</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px">
+        <div style="text-align:center;background:var(--gnb);border:1px solid var(--bdr);border-radius:var(--radius);padding:14px">
+          <div style="font-weight:700;color:var(--gn);font-size:14px">Q1</div>
+          <div style="font-size:13px;font-weight:600;margin:4px 0">Apr – Jun</div>
+          <div style="font-size:11px;color:var(--mu)">FY Start Year</div>
+        </div>
+        <div style="text-align:center;background:var(--blb);border:1px solid var(--bdr);border-radius:var(--radius);padding:14px">
+          <div style="font-weight:700;color:var(--bl);font-size:14px">Q2</div>
+          <div style="font-size:13px;font-weight:600;margin:4px 0">Jul – Sep</div>
+          <div style="font-size:11px;color:var(--mu)">FY Start Year</div>
+        </div>
+        <div style="text-align:center;background:var(--gdb);border:1px solid var(--bdr);border-radius:var(--radius);padding:14px">
+          <div style="font-weight:700;color:var(--gd);font-size:14px">Q3</div>
+          <div style="font-size:13px;font-weight:600;margin:4px 0">Oct – Dec</div>
+          <div style="font-size:11px;color:var(--mu)">FY Start Year</div>
+        </div>
+        <div style="text-align:center;background:var(--pub);border:1px solid var(--bdr);border-radius:var(--radius);padding:14px">
+          <div style="font-weight:700;color:var(--pu);font-size:14px">Q4</div>
+          <div style="font-size:13px;font-weight:600;margin:4px 0">Jan – Mar</div>
+          <div style="font-size:11px;color:var(--mu)">FY End Year</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--mu);margin-top:10px">Example: FY 2024–25 runs from <b>1 Apr 2024</b> to <b>31 Mar 2025</b>. Q4 of FY 2024–25 = Jan–Mar <b>2025</b> (the end year). The tool auto-detects the current FY on load.</div>
+    </div>
+
+    <!-- KANBAN BOARD TIPS -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Kanban Board Tips</div>
+      <table class="data-table" style="margin-top:8px">
+        <thead><tr><th>Action</th><th>Where</th><th>Why it matters</th></tr></thead>
+        <tbody>
+          <tr><td style="font-weight:600">Set Owner name</td><td style="color:var(--mu)">Header — <b>Owner:</b> field</td><td style="color:var(--mu)">This is the employee's identity. Must be set before exporting.</td></tr>
+          <tr><td style="font-weight:600">Name your columns</td><td style="color:var(--mu)">Board columns — click to rename</td><td style="color:var(--mu)">Columns containing "Done", "Complete" or "Finished" are detected as completion columns. Columns with "Progress" or "Doing" as in-progress.</td></tr>
+          <tr><td style="font-weight:600">Set End Dates on cards</td><td style="color:var(--mu)">Card edit modal</td><td style="color:var(--mu)">Cards with past end dates not in Done = overdue. Drives the Punctuality score.</td></tr>
+          <tr><td style="font-weight:600">Add Subtasks</td><td style="color:var(--mu)">Card edit modal → Subtasks</td><td style="color:var(--mu)">Subtask completion rate drives the Work Quality score.</td></tr>
+          <tr><td style="font-weight:600">Mark High Priority</td><td style="color:var(--mu)">Card edit modal → Priority</td><td style="color:var(--mu)">High-priority card count drives the Initiative score.</td></tr>
+          <tr><td style="font-weight:600">📤 Send to Manager</td><td style="color:var(--mu)">Header button</td><td style="color:var(--mu)">Exports a <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:11px">.json</code> bundle. Send via email or shared drive. One bundle per employee per quarter.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- EXCEL IMPORT/EXPORT -->
+    <div class="card">
+      <div class="card-title">Excel Import / Export</div>
+      <div class="card-sub">Alternative to Kanban bundles — useful for bulk data entry</div>
+      <div style="font-size:13px;color:var(--tx2);line-height:1.7;margin-top:4px">
+        Click <b>⬆ Import</b> in the header to upload an <code style="background:var(--bg2);padding:1px 5px;border-radius:3px;font-size:12px">.xlsx</code>, <code style="background:var(--bg2);padding:1px 5px;border-radius:3px;font-size:12px">.xls</code>, or <code style="background:var(--bg2);padding:1px 5px;border-radius:3px;font-size:12px">.csv</code> file.<br>
+        Required columns: <b>Employee</b>, <b>Period</b> (e.g. Q1-2025). Optional: <b>Department</b>, <b>Role</b>, <b>Reviewer</b>, <b>Notes</b>, <b>TasksTotal</b>, <b>TasksDone</b>, plus one column per criterion with scores 1–5, or a single <b>Score</b>/<b>Overall</b> column.<br><br>
+        Download a pre-formatted template from <b>⬆ Import → ⬇ Download Template</b>. The template contains one sheet per department with the correct column headers.
+      </div>
+    </div>
+
+  </div>
+</div>
 <datalist id="empDL"></datalist>
 <div class="toast" id="toast"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -1108,8 +1262,10 @@ function initials(n) { return (n || '?').split(' ').map(p => p[0]).join('').toUp
 
 function allEmps() {
   const fromReviews = [...new Set(reviews.map(r => r.employee))].filter(Boolean);
+  // Kanban boards are keyed by ownerName — that IS the employee name
   const fromKanban = Object.keys(kanbanBoards);
-  if (kanbanSync?.metrics) kanbanSync.metrics.forEach(m => { if (m.assignee) fromKanban.push(m.assignee); });
+  // Also include live sync owner (not assignees)
+  if (kanbanSync?.ownerName) fromKanban.push(kanbanSync.ownerName);
   return [...new Set([...fromReviews, ...fromKanban])].filter(Boolean).sort();
 }
 
@@ -1185,11 +1341,16 @@ function seedData() {
 // KANBAN SYNC
 // ═══════════════════════════════════════════════════════════════════
 function getKanbanMetric(name) {
-  // Priority 1: per-employee imported board
-  if (kanbanBoards[name]) return kanbanBoards[name];
-  // Priority 2: live same-browser sync
-  if (kanbanSync?.metrics) {
-    return kanbanSync.metrics.find(m => m.assignee?.toLowerCase() === name?.toLowerCase()) || null;
+  if (!name) return null;
+  const key = name.toLowerCase();
+  // Priority 1: per-employee imported board (keyed by ownerName)
+  const boardEntry = Object.entries(kanbanBoards).find(([k]) => k.toLowerCase() === key);
+  if (boardEntry) return boardEntry[1];
+  // Priority 2: live same-browser sync — match by ownerName
+  if (kanbanSync) {
+    if (kanbanSync.ownerName?.toLowerCase() === key) return kanbanSync.metrics?.[0] || null;
+    const m = kanbanSync.metrics?.find(m => (m.ownerName || m.assignee)?.toLowerCase() === key);
+    if (m) return m;
   }
   return null;
 }
@@ -1209,13 +1370,17 @@ function pullKanban() {
     const owner = kanbanSync.ownerName ? `  ·  Owner: ${kanbanSync.ownerName}` : '';
     updateSyncPill(true, `Synced ${ageStr} · ${kanbanSync.metrics?.length || 0} people · ${kanbanSync.totalCards || 0} cards${owner}`);
 
-    // Register the owner's board into kanbanBoards
-    if (kanbanSync.ownerName && kanbanSync.metrics) {
-      const ownerM = kanbanSync.metrics.find(m => m.assignee?.toLowerCase() === kanbanSync.ownerName?.toLowerCase());
-      if (ownerM) {
-        kanbanBoards[kanbanSync.ownerName] = { ...ownerM, boardName: kanbanSync.boardName, source: 'live' };
-        persist();
-      }
+    // Register under ownerName — the board owner IS the employee
+    if (kanbanSync.ownerName && kanbanSync.metrics?.length) {
+      const ownerM = kanbanSync.metrics[0]; // first (and primary) entry is always the owner
+      kanbanBoards[kanbanSync.ownerName] = {
+        ...ownerM,
+        assignee:  kanbanSync.ownerName,
+        ownerName: kanbanSync.ownerName,
+        boardName: kanbanSync.boardName,
+        source:    'live',
+      };
+      persist();
     }
     renderKanbanPage();
     showToast('Kanban synced — ' + (kanbanSync.metrics?.length || 0) + ' employees');
@@ -1232,44 +1397,48 @@ function readKanbanDirect() {
     const cards = state.cards || [], columns = state.columns || [];
     const doneIds   = columns.filter(c => /done|complete|finished|closed/i.test(c.title)).map(c => c.id);
     const inProgIds = columns.filter(c => /progress|doing|active|wip/i.test(c.title)).map(c => c.id);
-    const assignees = [...new Set(cards.map(c => c.assignee).filter(Boolean))];
-    const now = new Date(); now.setHours(0, 0, 0, 0);
-    const metrics = assignees.map(name => {
-      const mine = cards.filter(c => c.assignee === name);
-      const done  = mine.filter(c => doneIds.includes(c.status));
-      const inProg = mine.filter(c => inProgIds.includes(c.status));
-      const high   = mine.filter(c => c.priority === 'high');
-      const subs   = mine.flatMap(c => c.subtasks || []);
-      const subsDone = subs.filter(s => s.done);
-      const dated  = mine.filter(c => c.endDate);
-      const overdue = dated.filter(c => { const d = new Date(c.endDate); return !doneIds.includes(c.status) && d < now; });
-      const cr = mine.length ? done.length / mine.length : 0;
-      const sr = subs.length ? subsDone.length / subs.length : cr;
-      const or = dated.length ? overdue.length / dated.length : 0;
-      const hr = mine.length ? high.length / mine.length : 0;
-      return {
-        assignee: name, total: mine.length, done: done.length, inProgress: inProg.length,
-        todo: mine.length - done.length - inProg.length,
-        high: high.length, overdueCount: overdue.length,
-        subtasksTotal: subs.length, subtasksDone: subsDone.length,
-        tags: [...new Set(mine.flatMap(c => c.tags || []))],
-        completionRate: +cr.toFixed(3),
-        derivedScores: {
-          task_completion: Math.max(1, Math.min(5, +(1 + cr * 4).toFixed(2))),
-          quality:         Math.max(1, Math.min(5, +(1 + sr * 4).toFixed(2))),
-          punctuality:     Math.max(1, Math.min(5, +(5 - or * 4).toFixed(2))),
-          initiative:      Math.max(1, Math.min(5, +(1 + Math.min(hr * 1.5, 1) * 4).toFixed(2))),
-        },
-        lastSync: new Date().toISOString(),
-      };
-    });
+    // Owner-based: all cards = owner's performance
+    const owner  = state.ownerName || state.appName || 'Board Owner';
+    const now    = new Date(); now.setHours(0, 0, 0, 0);
+    const allC   = cards;
+    const done   = allC.filter(c => doneIds.includes(c.status));
+    const inProg = allC.filter(c => inProgIds.includes(c.status));
+    const high   = allC.filter(c => c.priority === 'high');
+    const subs   = allC.flatMap(c => c.subtasks || []);
+    const subsDone = subs.filter(s => s.done);
+    const dated  = allC.filter(c => c.endDate);
+    const overdue = dated.filter(c => { const d = new Date(c.endDate); return !doneIds.includes(c.status) && d < now; });
+    const cr = allC.length ? done.length / allC.length : 0;
+    const sr = subs.length ? subsDone.length / subs.length : cr;
+    const orr = dated.length ? overdue.length / dated.length : 0;
+    const hr = allC.length ? high.length / allC.length : 0;
+    const metrics = [{
+      assignee: owner, ownerName: owner,
+      total: allC.length, done: done.length, inProgress: inProg.length,
+      todo: allC.length - done.length - inProg.length,
+      high: high.length, overdueCount: overdue.length,
+      subtasksTotal: subs.length, subtasksDone: subsDone.length,
+      tags: [...new Set(allC.flatMap(c => c.tags || []))],
+      completionRate: +cr.toFixed(3),
+      derivedScores: {
+        task_completion: Math.max(1, Math.min(5, +(1 + cr * 4).toFixed(2))),
+        quality:         Math.max(1, Math.min(5, +(1 + sr * 4).toFixed(2))),
+        punctuality:     Math.max(1, Math.min(5, +(5 - orr * 4).toFixed(2))),
+        initiative:      Math.max(1, Math.min(5, +(1 + Math.min(hr * 1.5, 1) * 4).toFixed(2))),
+      },
+      lastSync: new Date().toISOString(),
+    }];
     const payload = {
       columns: columns.map(c => ({ id: c.id, title: c.title, color: c.color })),
       metrics, totalCards: cards.length,
       lastSync: new Date().toISOString(),
-      ownerName: state.ownerName || '',
+      ownerName: owner,
       boardName: state.appName || 'Kanban Board',
     };
+    // Also register into kanbanBoards by owner name
+    if (owner && metrics[0]) {
+      // This will be picked up by pullKanban registering logic
+    }
     localStorage.setItem(SYNC_SK, JSON.stringify(payload));
     return JSON.stringify(payload);
   } catch (e) { return null; }
@@ -1301,6 +1470,7 @@ function renderPage(n) {
   else if (n === 'annual')    rAnnual();
   else if (n === 'employees') rEmployees();
   else if (n === 'criteria')  renderCriteria();
+  // guide is static HTML — no render needed
 }
 function applyF() {
   empFilter = document.getElementById('empF').value;
@@ -2305,16 +2475,19 @@ function confirmBundle() {
   const owner   = bundleData.ownerName || 'Unknown';
   const metrics = bundleData.metrics || [];
 
-  // Register each employee from the bundle
-  metrics.forEach(m => {
-    kanbanBoards[m.assignee] = {
-      ...m,
-      boardName: bundleData.boardName || 'Kanban Board',
-      source: 'bundle',
+  // Register under ownerName — the board owner IS the employee
+  // The bundle has one primary entry (the owner); register it by their name
+  const primaryMetric = metrics.find(m => (m.ownerName || m.assignee)?.toLowerCase() === owner.toLowerCase()) || metrics[0];
+  if (primaryMetric) {
+    kanbanBoards[owner] = {
+      ...primaryMetric,
+      assignee:  owner,
       ownerName: owner,
+      boardName: bundleData.boardName || 'Kanban Board',
+      source:    'bundle',
       importedAt: new Date().toISOString(),
     };
-  });
+  }
 
   // Also write to SYNC_SK so it can be picked up by existing logic
   localStorage.setItem(SYNC_SK, JSON.stringify({
