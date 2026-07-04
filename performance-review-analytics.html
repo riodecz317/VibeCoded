@@ -697,6 +697,7 @@ input[type="range"]::-webkit-slider-thumb {
 <div class="tab-nav">
   <button class="tbn on" onclick="switchTab('overview',this)">Overview</button>
   <button class="tbn" onclick="switchTab('kanban',this)">Kanban Data</button>
+  <button class="tbn" onclick="switchTab('monthly',this)">Monthly</button>
   <button class="tbn" onclick="switchTab('quarterly',this)">Quarterly</button>
   <button class="tbn" onclick="switchTab('annual',this)">Annual</button>
   <button class="tbn" onclick="switchTab('employees',this)">Employees</button>
@@ -761,6 +762,15 @@ input[type="range"]::-webkit-slider-thumb {
   <div id="empBoardList" class="emp-board-list"></div>
 </div>
 
+
+<!-- ═══ MONTHLY ═══ -->
+<div class="page" id="pg-monthly">
+  <div class="section-heading">Monthly Review</div>
+  <div class="q-tabs" id="monthTabs"></div>
+  <div id="monthContent"></div>
+</div>
+
+
 <!-- ═══ QUARTERLY ═══ -->
 <div class="page" id="pg-quarterly">
   <div class="section-heading">Quarterly Analysis</div>
@@ -772,6 +782,7 @@ input[type="range"]::-webkit-slider-thumb {
   </div>
   <div id="qContent"></div>
 </div>
+
 
 <!-- ═══ ANNUAL ═══ -->
 <div class="page" id="pg-annual">
@@ -792,6 +803,7 @@ input[type="range"]::-webkit-slider-thumb {
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-sm" onclick="syncKanbanToEmployees()" title="Auto-add any Kanban board employees not yet in list">⟳ Sync from Kanban</button>
+      <button class="btn btn-sm" onclick="hardDeleteEmp()" title="Force-remove a stuck employee by name" style="color:var(--ac);border-color:var(--ac)">⚠ Force Remove</button>
     </div>
   </div>
   <div class="emp-grid" id="empGrid"></div>
@@ -857,16 +869,48 @@ input[type="range"]::-webkit-slider-thumb {
       <div class="field-group">
         <label>Review Period</label>
         <select id="rPer">
+          <optgroup label="── Monthly FY 2025–26 ──">
+          <option value="M04-2025">April 2025</option>
+          <option value="M05-2025">May 2025</option>
+          <option value="M06-2025">June 2025</option>
+          <option value="M07-2025">July 2025</option>
+          <option value="M08-2025">August 2025</option>
+          <option value="M09-2025">September 2025</option>
+          <option value="M10-2025">October 2025</option>
+          <option value="M11-2025">November 2025</option>
+          <option value="M12-2025">December 2025</option>
+          <option value="M01-2026">January 2026</option>
+          <option value="M02-2026">February 2026</option>
+          <option value="M03-2026">March 2026</option>
+          </optgroup>
+          <optgroup label="── Quarterly FY 2025–26 ──">
           <option value="Q1-2025">Q1 2025 — Apr–Jun 2025</option>
           <option value="Q2-2025">Q2 2025 — Jul–Sep 2025</option>
           <option value="Q3-2025">Q3 2025 — Oct–Dec 2025</option>
           <option value="Q4-2026">Q4 2026 — Jan–Mar 2026</option>
           <option value="Annual-2025">Annual FY 2025–26</option>
+          </optgroup>
+          <optgroup label="── Monthly FY 2024–25 ──">
+          <option value="M04-2024">April 2024</option>
+          <option value="M05-2024">May 2024</option>
+          <option value="M06-2024">June 2024</option>
+          <option value="M07-2024">July 2024</option>
+          <option value="M08-2024">August 2024</option>
+          <option value="M09-2024">September 2024</option>
+          <option value="M10-2024">October 2024</option>
+          <option value="M11-2024">November 2024</option>
+          <option value="M12-2024">December 2024</option>
+          <option value="M01-2025">January 2025</option>
+          <option value="M02-2025">February 2025</option>
+          <option value="M03-2025">March 2025</option>
+          </optgroup>
+          <optgroup label="── Quarterly FY 2024–25 ──">
           <option value="Q1-2024">Q1 2024 — Apr–Jun 2024</option>
           <option value="Q2-2024">Q2 2024 — Jul–Sep 2024</option>
           <option value="Q3-2024">Q3 2024 — Oct–Dec 2024</option>
           <option value="Q4-2025">Q4 2025 — Jan–Mar 2025</option>
           <option value="Annual-2024">Annual FY 2024–25</option>
+          </optgroup>
         </select>
       </div>
     </div>
@@ -963,43 +1007,172 @@ input[type="range"]::-webkit-slider-thumb {
 <div class="page" id="pg-guide">
   <div class="section-heading">Usage Guide</div>
 
-  <div style="max-width:860px">
+  <div style="max-width:900px">
 
-    <!-- WORKFLOW OVERVIEW -->
+    <!-- WORKFLOW -->
     <div class="card" style="margin-bottom:16px">
       <div class="card-title">How the System Works</div>
       <div class="card-sub">The Kanban Board and Performance Review tool share data through browser storage. Each employee owns one board; the manager collects bundles.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:4px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px">
         <div style="background:var(--bg2);border-radius:var(--radius);padding:16px;border:1px solid var(--bdr)">
           <div style="font-size:22px;margin-bottom:8px">1️⃣</div>
           <div style="font-weight:600;font-size:13px;margin-bottom:5px">Employee Sets Up Kanban</div>
-          <div style="font-size:12px;color:var(--mu);line-height:1.6">Opens <b>kanban-connected.html</b> in their browser. Clicks <b>Owner:</b> field in the header and types their full name. This name is their identity in the performance review system.</div>
+          <div style="font-size:12px;color:var(--mu);line-height:1.6">Opens <b>kanban-connected.html</b>. Clicks <b>Owner:</b> field in the header and types their full name. This name is their identity across the entire system.</div>
         </div>
         <div style="background:var(--bg2);border-radius:var(--radius);padding:16px;border:1px solid var(--bdr)">
           <div style="font-size:22px;margin-bottom:8px">2️⃣</div>
           <div style="font-weight:600;font-size:13px;margin-bottom:5px">Employee Works &amp; Exports</div>
-          <div style="font-size:12px;color:var(--mu);line-height:1.6">Works on their board throughout the quarter. When ready, clicks <b>📤 Send to Manager</b> in the header. A <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:11px">KanbanBundle_Name_Date.json</code> file is downloaded and sent to the manager.</div>
+          <div style="font-size:12px;color:var(--mu);line-height:1.6">Works on the board through the month or quarter. Clicks <b>📤 Send to Manager</b> to export a <code style="background:var(--bg3);padding:1px 5px;border-radius:3px;font-size:11px">KanbanBundle_Name_Date.json</code> file and sends it to the manager.</div>
         </div>
         <div style="background:var(--bg2);border-radius:var(--radius);padding:16px;border:1px solid var(--bdr)">
           <div style="font-size:22px;margin-bottom:8px">3️⃣</div>
           <div style="font-weight:600;font-size:13px;margin-bottom:5px">Manager Imports &amp; Reviews</div>
-          <div style="font-size:12px;color:var(--mu);line-height:1.6">Opens the <b>Kanban Data</b> tab → <b>📥 Import Manager Bundle</b>. The employee appears automatically. Click <b>＋ Review</b> on their board card to open a pre-filled review form.</div>
+          <div style="font-size:12px;color:var(--mu);line-height:1.6">Opens <b>Kanban Data</b> tab → <b>📥 Import Manager Bundle</b>. Employee appears automatically. Click <b>＋ Review</b> on their card — scores are pre-filled from the bundle.</div>
         </div>
       </div>
     </div>
 
-    <!-- IMPORTANT: OWNER NAME RULE -->
+    <!-- OWNER NAME RULE -->
     <div style="background:var(--acl);border:1px solid var(--bdr);border-left:4px solid var(--ac);border-radius:0 var(--radius) var(--radius) 0;padding:16px 20px;margin-bottom:16px">
       <div style="font-weight:700;font-size:14px;color:var(--ac);margin-bottom:8px">⚠ Important — Owner Name = Employee Identity</div>
       <div style="font-size:13px;color:var(--tx2);line-height:1.7">
         The <b>Owner name</b> set in the Kanban board header is the employee's identity across the entire system. All performance data, reviews, and headcount counts are linked to this name.<br>
-        • The name must be set <b>before</b> using <b>📤 Send to Manager</b><br>
-        • Names are <b>case-sensitive</b> — "Maria Santos" and "maria santos" are two different employees<br>
-        • If the name changes, existing reviews must be manually updated
+        • Set the name <b>before</b> clicking <b>📤 Send to Manager</b><br>
+        • Names are <b>case-sensitive</b> — "Maria Santos" and "maria santos" are treated as different people<br>
+        • If a name changes after reviews exist, use <b>⚠ Force Remove</b> on the old entry and re-import
       </div>
     </div>
 
-    <!-- TAB GUIDE -->
+    <!-- REVIEW TIMELINE -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Review Timeline — Monthly → Quarterly → Annual</div>
+      <div class="card-sub">Reviews are entered at any granularity and aggregate upward automatically</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin-top:14px;border:1px solid var(--bdr);border-radius:var(--radius);overflow:hidden">
+        <div style="padding:18px 20px;border-right:1px solid var(--bdr);background:var(--gnb)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="width:32px;height:32px;background:var(--gn);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px">📅</div>
+            <span style="font-weight:700;font-size:15px;color:var(--gn)">Monthly</span>
+          </div>
+          <div style="font-size:12px;color:var(--tx2);line-height:1.65">
+            <b>Period format:</b> <code style="background:var(--bg2);padding:1px 5px;border-radius:3px">M04-2025</code> = April 2025<br><br>
+            • Granular month-by-month tracking<br>
+            • Best for fast-moving teams or high-output roles<br>
+            • FY order: Apr → May → Jun → … → Mar<br>
+            • Jan–Mar use the FY <b>end year</b> (e.g. M01-<b>2026</b> for FY 2025–26)<br>
+            • Each month tab shows count badge if data exists
+          </div>
+        </div>
+        <div style="padding:18px 20px;border-right:1px solid var(--bdr);background:var(--blb)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="width:32px;height:32px;background:var(--bl);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px">📊</div>
+            <span style="font-weight:700;font-size:15px;color:var(--bl)">Quarterly</span>
+          </div>
+          <div style="font-size:12px;color:var(--tx2);line-height:1.65">
+            <b>Period format:</b> <code style="background:var(--bg2);padding:1px 5px;border-radius:3px">Q1-2025</code> = Q1 FY25–26<br><br>
+            • Q1 = Apr–Jun (start year)<br>
+            • Q2 = Jul–Sep (start year)<br>
+            • Q3 = Oct–Dec (start year)<br>
+            • Q4 = Jan–Mar (<b>end year</b>)<br>
+            • Shows per-department bar charts and rankings
+          </div>
+        </div>
+        <div style="padding:18px 20px;background:var(--pub)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="width:32px;height:32px;background:var(--pu);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px">📋</div>
+            <span style="font-weight:700;font-size:15px;color:var(--pu)">Annual</span>
+          </div>
+          <div style="font-size:12px;color:var(--tx2);line-height:1.65">
+            <b>Period format:</b> <code style="background:var(--bg2);padding:1px 5px;border-radius:3px">Annual-2025</code><br><br>
+            • Full FY summary with Q1–Q4 column breakdown<br>
+            • Score progression SVG line chart<br>
+            • <b>EWAT</b> section — separated employees' final FY scores retained for compliance<br>
+            • Shows all HC including separated staff
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--mu);margin-top:10px;line-height:1.6">
+        💡 You can mix granularities — an employee can have both a monthly review (<code style="background:var(--bg2);padding:1px 4px;border-radius:3px">M05-2025</code>) and a quarterly review (<code style="background:var(--bg2);padding:1px 4px;border-radius:3px">Q1-2025</code>) for the same period. Each tab shows only its own period type.
+      </div>
+    </div>
+
+    <!-- FY CALENDAR -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Fiscal Year Calendar (April – March)</div>
+      <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:5px;margin-top:14px">
+        <!-- Q1: Apr–Jun (startYear) -->
+        <div style="background:var(--gnb);border:1px solid var(--bdr);border-radius:6px;padding:8px 4px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--gn)">Q1</div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px">Apr</div>
+          <div style="font-size:10px;color:var(--mu)">M04</div>
+        </div>
+        <div style="background:var(--gnb);border:1px solid var(--bdr);border-radius:6px;padding:8px 4px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--gn)">Q1</div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px">May</div>
+          <div style="font-size:10px;color:var(--mu)">M05</div>
+        </div>
+        <div style="background:var(--gnb);border:1px solid var(--bdr);border-radius:6px;padding:8px 4px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--gn)">Q1</div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px">Jun</div>
+          <div style="font-size:10px;color:var(--mu)">M06</div>
+        </div>
+        <!-- Q2: Jul–Sep -->
+        <div style="background:var(--blb);border:1px solid var(--bdr);border-radius:6px;padding:8px 4px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--bl)">Q2</div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px">Jul</div>
+          <div style="font-size:10px;color:var(--mu)">M07</div>
+        </div>
+        <div style="background:var(--blb);border:1px solid var(--bdr);border-radius:6px;padding:8px 4px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--bl)">Q2</div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px">Aug</div>
+          <div style="font-size:10px;color:var(--mu)">M08</div>
+        </div>
+        <div style="background:var(--blb);border:1px solid var(--bdr);border-radius:6px;padding:8px 4px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--bl)">Q2</div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px">Sep</div>
+          <div style="font-size:10px;color:var(--mu)">M09</div>
+        </div>
+        <!-- Q3: Oct–Dec -->
+        <div style="background:var(--gdb);border:1px solid var(--bdr);border-radius:6px;padding:8px 4px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--gd)">Q3</div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px">Oct</div>
+          <div style="font-size:10px;color:var(--mu)">M10</div>
+        </div>
+        <div style="background:var(--gdb);border:1px solid var(--bdr);border-radius:6px;padding:8px 4px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--gd)">Q3</div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px">Nov</div>
+          <div style="font-size:10px;color:var(--mu)">M11</div>
+        </div>
+        <div style="background:var(--gdb);border:1px solid var(--bdr);border-radius:6px;padding:8px 4px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--gd)">Q3</div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px">Dec</div>
+          <div style="font-size:10px;color:var(--mu)">M12</div>
+        </div>
+        <!-- Q4: Jan–Mar (endYear) -->
+        <div style="background:var(--pub);border:1px solid var(--bdr);border-radius:6px;padding:8px 4px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--pu)">Q4</div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px">Jan</div>
+          <div style="font-size:10px;color:var(--mu)">M01</div>
+        </div>
+        <div style="background:var(--pub);border:1px solid var(--bdr);border-radius:6px;padding:8px 4px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--pu)">Q4</div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px">Feb</div>
+          <div style="font-size:10px;color:var(--mu)">M02</div>
+        </div>
+        <div style="background:var(--pub);border:1px solid var(--bdr);border-radius:6px;padding:8px 4px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--pu)">Q4</div>
+          <div style="font-size:12px;font-weight:600;margin-top:2px">Mar</div>
+          <div style="font-size:10px;color:var(--mu)">M03</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--mu)">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--gn);display:inline-block"></span>Q1 Apr–Jun — start year</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--bl);display:inline-block"></span>Q2 Jul–Sep — start year</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--gd);display:inline-block"></span>Q3 Oct–Dec — start year</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:2px;background:var(--pu);display:inline-block"></span>Q4 Jan–Mar — end year</span>
+      </div>
+    </div>
+
+    <!-- TAB REFERENCE (updated with Monthly, new order) -->
     <div class="card" style="margin-bottom:16px">
       <div class="card-title">Tab Reference</div>
       <table class="data-table" style="margin-top:8px">
@@ -1007,106 +1180,86 @@ input[type="range"]::-webkit-slider-thumb {
         <tbody>
           <tr>
             <td style="font-weight:600;white-space:nowrap">Overview</td>
-            <td style="color:var(--mu)">KPI strip, monthly trend chart, score distribution donut, top performers bar chart, criteria averages, activity heatmap</td>
-            <td style="color:var(--mu)">Change FY selector to switch fiscal year. All charts update automatically.</td>
+            <td style="color:var(--mu)">KPI strip (HC, avg score, task rate, top score, boards synced), monthly trend chart, score distribution donut, top performers, criteria averages, activity heatmap</td>
+            <td style="color:var(--mu)">Change the <b>FY selector</b> in the header to switch fiscal year. All charts and counts update automatically.</td>
           </tr>
           <tr>
             <td style="font-weight:600;white-space:nowrap">Kanban Data</td>
-            <td style="color:var(--mu)">Per-employee Kanban board cards with derived scores (Task Completion, Quality, Punctuality, Initiative)</td>
-            <td style="color:var(--mu)"><b>📥 Import Manager Bundle</b> — receive bundles from employees. <b>⇒ Create Reviews</b> — auto-generate reviews from board data. <b>✕</b> removes board, <b>⬡</b> separates employee.</td>
+            <td style="color:var(--mu)">Per-employee board cards with live or imported Kanban data, derived scores, task stats</td>
+            <td style="color:var(--mu)"><b>📥 Import Manager Bundle</b> — receive .json bundles. <b>⇒ Create Reviews</b> — auto-generate reviews from board data. <b>⬡</b> separate, <b>✕</b> remove board.</td>
+          </tr>
+          <tr style="background:var(--gnb)">
+            <td style="font-weight:600;white-space:nowrap;color:var(--gn)">Monthly 📅</td>
+            <td style="color:var(--mu)">Month-by-month review: KPI strip, FY trend bar chart with selected month highlighted, employee score bars, criteria averages, review notes, full rankings table</td>
+            <td style="color:var(--mu)">Click any month tab (Apr–Mar in FY order). Badge shows how many reviews exist. Add reviews via <b>＋ Add Review</b> — select a monthly period like <code style="background:var(--bg2);padding:1px 4px;border-radius:3px">M05-2025</code>.</td>
           </tr>
           <tr>
-            <td style="font-weight:600;white-space:nowrap">Quarterly</td>
-            <td style="color:var(--mu)">Quarter-by-quarter breakdown per department with bar charts and ranking table</td>
-            <td style="color:var(--mu)">Tabs show FY-correct dates: Q1=Apr–Jun, Q2=Jul–Sep, Q3=Oct–Dec, Q4=Jan–Mar.</td>
+            <td style="font-weight:600;white-space:nowrap">Quarterly 📊</td>
+            <td style="color:var(--mu)">Q1–Q4 breakdown with per-department bar charts, criteria averages, and ranked employee table</td>
+            <td style="color:var(--mu)">Tabs show FY-correct labels: Q1=Apr–Jun, Q2=Jul–Sep, Q3=Oct–Dec, Q4=Jan–Mar (end year).</td>
           </tr>
           <tr>
-            <td style="font-weight:600;white-space:nowrap">Annual</td>
-            <td style="color:var(--mu)">Full FY summary table, score progression chart, review notes, and <b>EWAT</b> section for separated employees</td>
-            <td style="color:var(--mu)"><b>EWAT</b> (End-of-Work Assessment Tracker) automatically lists employees who left and their final FY scores.</td>
+            <td style="font-weight:600;white-space:nowrap">Annual 📋</td>
+            <td style="color:var(--mu)">Full FY summary table with Q1–Q4 columns, score progression line chart, review notes, <b>EWAT</b> section for separated employees</td>
+            <td style="color:var(--mu)"><b>EWAT</b> (End-of-Work Assessment Tracker) — separated employees' FY performance retained for compliance. Use period <code style="background:var(--bg2);padding:1px 4px;border-radius:3px">Annual-2025</code> for annual-only reviews.</td>
           </tr>
           <tr>
             <td style="font-weight:600;white-space:nowrap">Employees</td>
-            <td style="color:var(--mu)">All employees including Kanban-only, with completion bars and board link indicator</td>
-            <td style="color:var(--mu)"><b>⬡ Separate</b> — log separation with date and reason. <b>↩ Reinstate</b> — bring back. <b>✕ Delete</b> — remove all data. Toggle <b>Show separated</b> to view former employees.</td>
+            <td style="color:var(--mu)">All active and separated employees with linked Kanban board indicator, completion bars, and rating</td>
+            <td style="color:var(--mu)"><b>⬡ Separate</b> — log exit date and reason. <b>↩ Reinstate</b> — restore. <b>✕ Delete</b> — remove all data. <b>⚠ Force Remove</b> — for stuck entries.</td>
           </tr>
           <tr>
             <td style="font-weight:600;white-space:nowrap">Criteria Editor</td>
-            <td style="color:var(--mu)">Per-department criteria with editable names, weights, and Kanban auto-score sources</td>
-            <td style="color:var(--mu)">Weights must total 100% per department. Criteria with a <b>Kanban source</b> are auto-filled from board data when adding reviews.</td>
+            <td style="color:var(--mu)">Per-department criteria with editable names, weights, and optional Kanban auto-score source</td>
+            <td style="color:var(--mu)">Weights must total 100% per department. Criteria with a Kanban source are <span style="color:var(--gn);font-weight:600">🔗 auto</span>-filled in the review form.</td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- SCORING -->
+    <!-- KANBAN SCORE DERIVATION -->
     <div class="card" style="margin-bottom:16px">
       <div class="card-title">How Kanban Scores Are Derived</div>
-      <div class="card-sub">Kanban board activity is automatically converted into 1–5 performance scores</div>
+      <div class="card-sub">All cards on the board = the owner's work. Four scores are computed automatically on every sync.</div>
       <table class="data-table" style="margin-top:8px">
-        <thead><tr><th>Score</th><th>Derived from Kanban</th><th>Formula</th></tr></thead>
+        <thead><tr><th>Score</th><th>Derived from</th><th>Formula</th></tr></thead>
         <tbody>
           <tr><td style="font-weight:600">Task Completion</td><td style="color:var(--mu)">Cards moved to Done columns</td><td style="color:var(--mu)">1 + (done ÷ total) × 4</td></tr>
           <tr><td style="font-weight:600">Work Quality</td><td style="color:var(--mu)">Subtask completion rate</td><td style="color:var(--mu)">1 + (subtasks done ÷ total subtasks) × 4</td></tr>
-          <tr><td style="font-weight:600">Punctuality</td><td style="color:var(--mu)">Cards with past due dates not completed</td><td style="color:var(--mu)">5 − (overdue ÷ dated cards) × 4</td></tr>
-          <tr><td style="font-weight:600">Initiative</td><td style="color:var(--mu)">High-priority card handling rate</td><td style="color:var(--mu)">1 + min(high-pri rate × 1.5, 1) × 4</td></tr>
+          <tr><td style="font-weight:600">Punctuality</td><td style="color:var(--mu)">Cards with past due dates not in Done</td><td style="color:var(--mu)">5 − (overdue ÷ dated cards) × 4</td></tr>
+          <tr><td style="font-weight:600">Initiative</td><td style="color:var(--mu)">High-priority card rate</td><td style="color:var(--mu)">1 + min(high-pri rate × 1.5, 1) × 4</td></tr>
         </tbody>
       </table>
-      <div style="font-size:12px;color:var(--mu);margin-top:10px;line-height:1.6">Criteria linked to a Kanban source are <span style="color:var(--gn);font-weight:600">🔗 auto</span>-filled in the review modal. All scores remain manually editable — Kanban data is a starting point, not a final grade.</div>
-    </div>
-
-    <!-- FY CALENDAR -->
-    <div class="card" style="margin-bottom:16px">
-      <div class="card-title">Fiscal Year Calendar (April – March)</div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px">
-        <div style="text-align:center;background:var(--gnb);border:1px solid var(--bdr);border-radius:var(--radius);padding:14px">
-          <div style="font-weight:700;color:var(--gn);font-size:14px">Q1</div>
-          <div style="font-size:13px;font-weight:600;margin:4px 0">Apr – Jun</div>
-          <div style="font-size:11px;color:var(--mu)">FY Start Year</div>
-        </div>
-        <div style="text-align:center;background:var(--blb);border:1px solid var(--bdr);border-radius:var(--radius);padding:14px">
-          <div style="font-weight:700;color:var(--bl);font-size:14px">Q2</div>
-          <div style="font-size:13px;font-weight:600;margin:4px 0">Jul – Sep</div>
-          <div style="font-size:11px;color:var(--mu)">FY Start Year</div>
-        </div>
-        <div style="text-align:center;background:var(--gdb);border:1px solid var(--bdr);border-radius:var(--radius);padding:14px">
-          <div style="font-weight:700;color:var(--gd);font-size:14px">Q3</div>
-          <div style="font-size:13px;font-weight:600;margin:4px 0">Oct – Dec</div>
-          <div style="font-size:11px;color:var(--mu)">FY Start Year</div>
-        </div>
-        <div style="text-align:center;background:var(--pub);border:1px solid var(--bdr);border-radius:var(--radius);padding:14px">
-          <div style="font-weight:700;color:var(--pu);font-size:14px">Q4</div>
-          <div style="font-size:13px;font-weight:600;margin:4px 0">Jan – Mar</div>
-          <div style="font-size:11px;color:var(--mu)">FY End Year</div>
-        </div>
+      <div style="font-size:12px;color:var(--mu);margin-top:10px;line-height:1.6">
+        Criteria linked to a Kanban source are <span style="color:var(--gn);font-weight:600">🔗 auto</span>-filled in the review modal. All scores remain manually editable — Kanban data is a starting point, not a final grade.
       </div>
-      <div style="font-size:12px;color:var(--mu);margin-top:10px">Example: FY 2024–25 runs from <b>1 Apr 2024</b> to <b>31 Mar 2025</b>. Q4 of FY 2024–25 = Jan–Mar <b>2025</b> (the end year). The tool auto-detects the current FY on load.</div>
     </div>
 
-    <!-- KANBAN BOARD TIPS -->
+    <!-- KANBAN TIPS -->
     <div class="card" style="margin-bottom:16px">
       <div class="card-title">Kanban Board Tips</div>
       <table class="data-table" style="margin-top:8px">
         <thead><tr><th>Action</th><th>Where</th><th>Why it matters</th></tr></thead>
         <tbody>
-          <tr><td style="font-weight:600">Set Owner name</td><td style="color:var(--mu)">Header — <b>Owner:</b> field</td><td style="color:var(--mu)">This is the employee's identity. Must be set before exporting.</td></tr>
-          <tr><td style="font-weight:600">Name your columns</td><td style="color:var(--mu)">Board columns — click to rename</td><td style="color:var(--mu)">Columns containing "Done", "Complete" or "Finished" are detected as completion columns. Columns with "Progress" or "Doing" as in-progress.</td></tr>
-          <tr><td style="font-weight:600">Set End Dates on cards</td><td style="color:var(--mu)">Card edit modal</td><td style="color:var(--mu)">Cards with past end dates not in Done = overdue. Drives the Punctuality score.</td></tr>
-          <tr><td style="font-weight:600">Add Subtasks</td><td style="color:var(--mu)">Card edit modal → Subtasks</td><td style="color:var(--mu)">Subtask completion rate drives the Work Quality score.</td></tr>
-          <tr><td style="font-weight:600">Mark High Priority</td><td style="color:var(--mu)">Card edit modal → Priority</td><td style="color:var(--mu)">High-priority card count drives the Initiative score.</td></tr>
-          <tr><td style="font-weight:600">📤 Send to Manager</td><td style="color:var(--mu)">Header button</td><td style="color:var(--mu)">Exports a <code style="background:var(--bg3);padding:1px 4px;border-radius:3px;font-size:11px">.json</code> bundle. Send via email or shared drive. One bundle per employee per quarter.</td></tr>
+          <tr><td style="font-weight:600">Set Owner name</td><td style="color:var(--mu)">Header → <b>Owner:</b> field</td><td style="color:var(--mu)">This is the employee's identity. Must be set before exporting.</td></tr>
+          <tr><td style="font-weight:600">Name columns correctly</td><td style="color:var(--mu)">Click column title to rename</td><td style="color:var(--mu)">"Done", "Complete", "Finished" = completion columns. "Progress", "Doing", "WIP" = in-progress.</td></tr>
+          <tr><td style="font-weight:600">Set End Dates on cards</td><td style="color:var(--mu)">Card edit → End Date</td><td style="color:var(--mu)">Past due dates on non-Done cards = overdue → drives Punctuality score.</td></tr>
+          <tr><td style="font-weight:600">Add Subtasks</td><td style="color:var(--mu)">Card edit → Subtasks</td><td style="color:var(--mu)">Subtask completion rate → Work Quality score.</td></tr>
+          <tr><td style="font-weight:600">Mark High Priority</td><td style="color:var(--mu)">Card edit → Priority → High</td><td style="color:var(--mu)">High-priority card rate → Initiative score.</td></tr>
+          <tr><td style="font-weight:600">📤 Send to Manager</td><td style="color:var(--mu)">Header button</td><td style="color:var(--mu)">Exports a .json bundle. Send via email or shared drive. One bundle per review cycle.</td></tr>
         </tbody>
       </table>
     </div>
 
-    <!-- EXCEL IMPORT/EXPORT -->
+    <!-- EXCEL IMPORT -->
     <div class="card">
       <div class="card-title">Excel Import / Export</div>
-      <div class="card-sub">Alternative to Kanban bundles — useful for bulk data entry</div>
+      <div class="card-sub">Alternative to Kanban bundles — useful for bulk data entry or historical records</div>
       <div style="font-size:13px;color:var(--tx2);line-height:1.7;margin-top:4px">
-        Click <b>⬆ Import</b> in the header to upload an <code style="background:var(--bg2);padding:1px 5px;border-radius:3px;font-size:12px">.xlsx</code>, <code style="background:var(--bg2);padding:1px 5px;border-radius:3px;font-size:12px">.xls</code>, or <code style="background:var(--bg2);padding:1px 5px;border-radius:3px;font-size:12px">.csv</code> file.<br>
-        Required columns: <b>Employee</b>, <b>Period</b> (e.g. Q1-2025). Optional: <b>Department</b>, <b>Role</b>, <b>Reviewer</b>, <b>Notes</b>, <b>TasksTotal</b>, <b>TasksDone</b>, plus one column per criterion with scores 1–5, or a single <b>Score</b>/<b>Overall</b> column.<br><br>
-        Download a pre-formatted template from <b>⬆ Import → ⬇ Download Template</b>. The template contains one sheet per department with the correct column headers.
+        Click <b>⬆ Import</b> in the header to upload <code style="background:var(--bg2);padding:1px 5px;border-radius:3px">.xlsx</code>, <code style="background:var(--bg2);padding:1px 5px;border-radius:3px">.xls</code>, or <code style="background:var(--bg2);padding:1px 5px;border-radius:3px">.csv</code>.<br>
+        <b>Required:</b> <code style="background:var(--bg2);padding:1px 5px;border-radius:3px">Employee</code>, <code style="background:var(--bg2);padding:1px 5px;border-radius:3px">Period</code> (e.g. <code style="background:var(--bg2);padding:1px 5px;border-radius:3px">M05-2025</code>, <code style="background:var(--bg2);padding:1px 5px;border-radius:3px">Q1-2025</code>, or <code style="background:var(--bg2);padding:1px 5px;border-radius:3px">Annual-2025</code>).<br>
+        <b>Optional:</b> Department, Role, Reviewer, Notes, TasksTotal, TasksDone, plus one column per criterion (scores 1–5) or a single Score/Overall column.<br><br>
+        Download a pre-formatted template from <b>⬆ Import → ⬇ Download Template</b> — one sheet per department with all column headers.
       </div>
     </div>
 
@@ -1129,6 +1282,7 @@ let kanbanSync   = null; // latest live sync (same-browser kanban)
 let importRows   = [];
 let bundleData   = null;
 let selQ         = 'Q1';
+let selMonth     = 'M04';  // current selected month tab (M04–M03 in FY order)
 let empFilter    = 'all', fyFilter = 'FY2024-25';
 
 // ── FISCAL YEAR HELPERS (April 1 – March 31) ──────────────────────
@@ -1163,7 +1317,15 @@ function dateInFY(dateStr, fy) {
 function periodInFY(period, fy) {
   const fyParsed = parseFY(fy);
   if (!fyParsed || !period) return false;
-  // Q1=Apr-Jun startYear, Q2=Jul-Sep startYear, Q3=Oct-Dec startYear, Q4=Jan-Mar endYear, Annual=any in FY
+  // Monthly format: M04-2024 (Apr 2024), M01-2025 (Jan 2025)
+  if (period.startsWith('M')) {
+    const mm = parseInt(period.slice(1,3), 10); // 1-12
+    const yr = parseInt(period.slice(4),   10);
+    // Apr-Dec of startYear OR Jan-Mar of endYear
+    if (mm >= 4  && yr === fyParsed.startYear) return true;
+    if (mm <= 3  && yr === fyParsed.endYear)   return true;
+    return false;
+  }
   if (period.startsWith('Q1')) return period.includes(String(fyParsed.startYear));
   if (period.startsWith('Q2')) return period.includes(String(fyParsed.startYear));
   if (period.startsWith('Q3')) return period.includes(String(fyParsed.startYear));
@@ -1264,8 +1426,18 @@ function allEmps() {
   const fromReviews = [...new Set(reviews.map(r => r.employee))].filter(Boolean);
   // Kanban boards are keyed by ownerName — that IS the employee name
   const fromKanban = Object.keys(kanbanBoards);
-  // Also include live sync owner (not assignees)
-  if (kanbanSync?.ownerName) fromKanban.push(kanbanSync.ownerName);
+  // Add live sync owner ONLY if they aren't already covered and haven't been deleted
+  // (kanbanBoards takes priority — if they were deleted, kanbanBoards entry is gone)
+  if (kanbanSync?.ownerName && !kanbanBoards[kanbanSync.ownerName]) {
+    // Only include if they still have reviews OR the sync is fresh (< 24h old)
+    const syncAge = kanbanSync.lastSync
+      ? (Date.now() - new Date(kanbanSync.lastSync)) / 3600000
+      : 999;
+    const hasReview = fromReviews.some(n => n.toLowerCase() === kanbanSync.ownerName.toLowerCase());
+    if (hasReview || syncAge < 24) {
+      fromKanban.push(kanbanSync.ownerName);
+    }
+  }
   return [...new Set([...fromReviews, ...fromKanban])].filter(Boolean).sort();
 }
 
@@ -1467,6 +1639,7 @@ function renderPage(n) {
   if (n === 'overview')   rOverview();
   else if (n === 'kanban')    renderKanbanPage();
   else if (n === 'quarterly') rQuarterly();
+  else if (n === 'monthly')   rMonthly();
   else if (n === 'annual')    rAnnual();
   else if (n === 'employees') rEmployees();
   else if (n === 'criteria')  renderCriteria();
@@ -1828,6 +2001,234 @@ function rQuarterly() {
 }
 
 
+
+// ═══════════════════════════════════════════════════════════════════
+// MONTHLY
+// ═══════════════════════════════════════════════════════════════════
+
+// Returns the 12 FY months in order: Apr→Mar, with correct year for each
+function fyMonths() {
+  var fyParsed = parseFY(fyFilter);
+  if (!fyParsed) return [];
+  var sy = fyParsed.startYear, ey = fyParsed.endYear;
+  return [
+    { key:'M04', label:'Apr', year:sy, monthIdx:3 },
+    { key:'M05', label:'May', year:sy, monthIdx:4 },
+    { key:'M06', label:'Jun', year:sy, monthIdx:5 },
+    { key:'M07', label:'Jul', year:sy, monthIdx:6 },
+    { key:'M08', label:'Aug', year:sy, monthIdx:7 },
+    { key:'M09', label:'Sep', year:sy, monthIdx:8 },
+    { key:'M10', label:'Oct', year:sy, monthIdx:9 },
+    { key:'M11', label:'Nov', year:sy, monthIdx:10 },
+    { key:'M12', label:'Dec', year:sy, monthIdx:11 },
+    { key:'M01', label:'Jan', year:ey, monthIdx:0 },
+    { key:'M02', label:'Feb', year:ey, monthIdx:1 },
+    { key:'M03', label:'Mar', year:ey, monthIdx:2 },
+  ];
+}
+
+// Get reviews for a specific month key e.g. 'M04' in current FY
+function filteredMonth(mk) {
+  var months = fyMonths();
+  var mDef = months.find(function(m) { return m.key === mk; });
+  if (!mDef) return [];
+  var period = mk + '-' + mDef.year;
+  return reviews.filter(function(r) {
+    var empOk = empFilter === 'all' || r.employee === empFilter;
+    return empOk && r.period === period;
+  });
+}
+
+function setMonth(mk, btn) {
+  selMonth = mk;
+  document.querySelectorAll('#monthTabs .q-tab').forEach(function(b) { b.classList.remove('on'); });
+  btn.classList.add('on');
+  renderMonthContent();
+}
+
+function renderMonthTabs() {
+  var months = fyMonths();
+  var tabEl = document.getElementById('monthTabs');
+  if (!tabEl) return;
+  tabEl.innerHTML = months.map(function(m) {
+    var period = m.key + '-' + m.year;
+    var count  = reviews.filter(function(r) {
+      return r.period === period && (empFilter === 'all' || r.employee === empFilter);
+    }).length;
+    var active = m.key === selMonth ? ' on' : '';
+    var badge  = count > 0 ? ' <span style="font-size:10px;background:var(--ac);color:#fff;border-radius:99px;padding:1px 6px;margin-left:3px">' + count + '</span>' : '';
+    return '<button class="q-tab' + active + '" onclick="setMonth(\'' + m.key + '\',this)">' + m.label + badge + '</button>';
+  }).join('');
+}
+
+function renderMonthContent() {
+  var el = document.getElementById('monthContent');
+  if (!el) return;
+  var months  = fyMonths();
+  var mDef    = months.find(function(m) { return m.key === selMonth; }) || months[0];
+  var period  = mDef.key + '-' + mDef.year;
+  var mr      = filteredMonth(selMonth);
+  var monthLabel = mDef.label + ' ' + mDef.year;
+  var totalHC = allEmps().filter(function(e) { return !separatedEmps[e]; }).length;
+
+  if (!mr.length) {
+    el.innerHTML =
+      '<div class="empty-state">' +
+        '<div class="empty-state-icon">📅</div>' +
+        '<h3>No reviews for ' + esc(monthLabel) + '</h3>' +
+        '<p>Add a review and select <b>' + esc(monthLabel) + '</b> as the period, or import from Excel.</p>' +
+        '<button class="btn btn-primary" onclick="openReview()" style="margin-top:12px">＋ Add Monthly Review</button>' +
+      '</div>';
+    return;
+  }
+
+  var scores = mr.map(function(r) { return wScore(r.scores, r.dept); });
+  var avg    = (scores.reduce(function(a,b){return a+b;},0) / scores.length).toFixed(2);
+  var tot    = mr.reduce(function(a,r){return a+(r.kanban&&r.kanban.total||0);},0);
+  var dn     = mr.reduce(function(a,r){return a+(r.kanban&&r.kanban.done||0);},0);
+  var taskPct = tot ? Math.round(dn/tot*100) : 0;
+  var topScore = Math.max.apply(null, scores).toFixed(2);
+
+  // KPI strip
+  var kpi =
+    '<div class="kpi-strip" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));margin-bottom:22px">' +
+      '<div class="kpi-card" style="--bar-color:var(--ac)"><div class="kpi-accent-bar"></div><div class="kpi-icon">🎯</div><div class="kpi-label">Month Avg</div><div class="kpi-value ' + scCls(avg) + '">' + avg + '</div><div class="kpi-sub">' + esc(monthLabel) + '</div></div>' +
+      '<div class="kpi-card" style="--bar-color:var(--bl)"><div class="kpi-accent-bar"></div><div class="kpi-icon">📋</div><div class="kpi-label">Reviewed</div><div class="kpi-value">' + mr.length + '</div><div class="kpi-sub">of ' + totalHC + ' HC</div></div>' +
+      '<div class="kpi-card" style="--bar-color:var(--gn)"><div class="kpi-accent-bar"></div><div class="kpi-icon">✅</div><div class="kpi-label">Task Rate</div><div class="kpi-value ' + scCls(taskPct/20) + '">' + taskPct + '%</div><div class="kpi-sub">' + dn + ' / ' + tot + ' tasks</div></div>' +
+      '<div class="kpi-card" style="--bar-color:var(--pu)"><div class="kpi-accent-bar"></div><div class="kpi-icon">🏆</div><div class="kpi-label">Top Score</div><div class="kpi-value ' + scCls(topScore) + '">' + topScore + '</div><div class="kpi-sub">highest this month</div></div>' +
+    '</div>';
+
+  // Score bars (all employees in month, sorted)
+  var sorted = mr.slice().sort(function(a,b){ return wScore(b.scores,b.dept)-wScore(a.scores,a.dept); });
+  var empBars = sorted.map(function(r) {
+    var s = wScore(r.scores, r.dept);
+    var comp = (r.kanban&&r.kanban.total) ? Math.round(r.kanban.done/r.kanban.total*100)+'%' : '—';
+    var isSep = !!separatedEmps[r.employee];
+    return '<div class="bar-item" style="margin-bottom:12px">' +
+      '<div style="display:flex;align-items:center;gap:8px;min-width:160px;flex-shrink:0">' +
+        '<div class="av" style="background:' + (isSep?'#9ca3af':avatarColor(r.employee)) + '">' + initials(r.employee) + '</div>' +
+        '<div>' +
+          '<div style="font-size:13px;font-weight:600">' + esc(r.employee) + '</div>' +
+          '<div style="font-size:11px;color:var(--mu)">' + esc(r.dept||'General') + ' · Tasks: ' + comp + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="bar-track" style="flex:1"><div class="bar-fill" style="width:' + (s/5*100) + '%;background:' + avatarColor(r.employee) + '"></div></div>' +
+      '<div class="bar-val ' + scCls(s) + '" style="font-size:16px;font-weight:700;min-width:42px">' + s.toFixed(2) + '</div>' +
+      '<div style="min-width:90px;text-align:right">' + badgeHtml(s) + '</div>' +
+    '</div>';
+  }).join('');
+
+  // Criteria averages for this month
+  var critBars = getCrit('General').map(function(c) {
+    var vs = mr.map(function(r){return r.scores[c.id];}).filter(function(v){return v!=null;});
+    var a  = vs.length ? vs.reduce(function(x,y){return x+y;})/vs.length : 0;
+    return '<div class="bar-item">' +
+      '<div class="bar-label" style="width:140px;min-width:140px;font-size:12px">' + esc(c.name) + '</div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + (a/5*100) + '%;background:' + avatarColor(c.id) + '"></div></div>' +
+      '<div class="bar-val ' + scCls(a) + '">' + a.toFixed(1) + '</div>' +
+    '</div>';
+  }).join('');
+
+  // Monthly trend mini chart — all 12 FY months
+  var allFyMonths = fyMonths();
+  var monthAvgs = allFyMonths.map(function(m) {
+    var p = m.key + '-' + m.year;
+    var rs = reviews.filter(function(r){ return r.period===p && (empFilter==='all'||r.employee===empFilter); });
+    return rs.length ? rs.map(function(r){return wScore(r.scores,r.dept);}).reduce(function(a,b){return a+b;})/rs.length : 0;
+  });
+  var trendBars = allFyMonths.map(function(m, i) {
+    var v = monthAvgs[i];
+    var isActive = m.key === selMonth;
+    var bg = isActive ? 'var(--ac)' : (v>=4.5?'var(--gn)':v>=3.5?'var(--bl)':v>=2.5?'var(--gd)':v>0?'var(--ac)':'var(--bdr)');
+    var ht = v ? Math.round(v/5*80) : 3;
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">' +
+      '<div style="font-size:10px;font-weight:600;color:' + (v>0?'var(--tx)':'var(--mu)') + '">' + (v>0?v.toFixed(1):'') + '</div>' +
+      '<div style="width:100%;height:84px;display:flex;align-items:flex-end">' +
+        '<div style="width:100%;height:' + ht + 'px;background:' + bg + ';border-radius:4px 4px 0 0;opacity:' + (isActive?'1':'0.72') + ';' + (isActive?'outline:2px solid var(--ac);outline-offset:2px':'') + ';transition:height .4s"></div>' +
+      '</div>' +
+      '<div style="font-size:10px;color:var(--mu);margin-top:2px">' + m.label + '</div>' +
+    '</div>';
+  }).join('');
+
+  // Notes section
+  var noteCards = mr.filter(function(r){return r.notes;}).map(function(r){
+    return '<div class="note-card">' +
+      '<div class="note-meta"><span>' + esc(r.employee) + ' · ' + esc(r.reviewer||'') + '</span><span>' + esc(r.dept||'') + '</span></div>' +
+      '<div class="note-body">' + esc(r.notes) + '</div>' +
+    '</div>';
+  }).join('') || '<div style="color:var(--mu);font-size:13px">No notes for this month.</div>';
+
+  // Rankings table
+  var critHeads = getCrit('General').slice(0,4).map(function(c){
+    return '<th>' + esc(c.name.split(' ')[0]) + '</th>';
+  }).join('');
+  var rankRows = sorted.map(function(r, i) {
+    var s = wScore(r.scores, r.dept);
+    var comp = (r.kanban&&r.kanban.total) ? Math.round(r.kanban.done/r.kanban.total*100)+'%' : '—';
+    var isSep = !!separatedEmps[r.employee];
+    var critCells = getCrit('General').slice(0,4).map(function(c){
+      return '<td><span class="' + scCls(r.scores[c.id]||0) + '">' + (r.scores[c.id]||0).toFixed(1) + '</span></td>';
+    }).join('');
+    return '<tr style="' + (isSep?'opacity:.6':'') + '">' +
+      '<td style="color:var(--mu);font-weight:700">' + (i+1) + '</td>' +
+      '<td><div style="display:flex;align-items:center;gap:8px">' +
+        '<div class="av" style="background:' + (isSep?'#9ca3af':avatarColor(r.employee)) + '">' + initials(r.employee) + '</div>' +
+        '<span style="font-weight:600">' + esc(r.employee) + '</span>' +
+      '</div></td>' +
+      '<td style="color:var(--mu);font-size:12px">' + esc(r.dept||'General') + '</td>' +
+      critCells +
+      '<td><span class="' + scCls(s) + '" style="font-weight:700;font-size:15px">' + s.toFixed(2) + '</span></td>' +
+      '<td style="color:var(--mu)">' + comp + '</td>' +
+      '<td>' + badgeHtml(s) + '</td>' +
+      '<td><button class="btn btn-xs" onclick="openEmpDetail(\'' + esc(r.employee) + '\')">View</button></td>' +
+    '</tr>';
+  }).join('');
+
+  el.innerHTML = kpi +
+    '<div class="chart-grid wide" style="margin-bottom:16px">' +
+      '<div class="card">' +
+        '<div class="card-title">FY Trend — ' + esc(fyLabel()) + '</div>' +
+        '<div class="card-sub">Monthly average scores across the fiscal year</div>' +
+        '<div style="display:flex;gap:4px;align-items:flex-end;padding:8px 0">' + trendBars + '</div>' +
+      '</div>' +
+      '<div class="card">' +
+        '<div class="card-title">Criteria Averages</div>' +
+        '<div class="card-sub">' + esc(monthLabel) + ' · all employees</div>' +
+        '<div class="bar-list" style="margin-top:4px">' + critBars + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="chart-grid" style="margin-bottom:16px">' +
+      '<div class="card">' +
+        '<div class="card-title">Employee Scores</div>' +
+        '<div class="card-sub">Ranked by weighted average · ' + esc(monthLabel) + '</div>' +
+        '<div class="bar-list" style="margin-top:6px">' + empBars + '</div>' +
+      '</div>' +
+      '<div class="card">' +
+        '<div class="card-title">Review Notes</div>' +
+        '<div class="card-sub">' + esc(monthLabel) + '</div>' +
+        '<div style="margin-top:8px;max-height:320px;overflow-y:auto">' + noteCards + '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">' +
+        '<div class="card-title">Full Rankings — ' + esc(monthLabel) + '</div>' +
+        '<button class="btn btn-sm btn-primary" onclick="openReview()">＋ Add Review</button>' +
+      '</div>' +
+      '<div style="overflow-x:auto">' +
+        '<table class="data-table">' +
+          '<thead><tr><th>#</th><th>Employee</th><th>Dept</th>' + critHeads + '<th>Overall</th><th>Tasks</th><th>Rating</th><th></th></tr></thead>' +
+          '<tbody>' + rankRows + '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</div>';
+}
+
+function rMonthly() {
+  renderMonthTabs();
+  renderMonthContent();
+}
+
+
 function rAnnual() {
   const data = filtered();
   const el   = document.getElementById('annContent');
@@ -2113,29 +2514,94 @@ function syncKanbanToEmployees() {
   showToast(`Added ${added} employee${added !== 1 ? 's' : ''} from Kanban data`);
 }
 function deleteKanbanBoard(name) {
-  if (!confirm(`Remove Kanban board data for ${name}?\n\nThis only removes the synced board — reviews are kept.`)) return;
+  if (!confirm('Remove Kanban board data for ' + name + '?\n\nThis only removes the synced board — reviews are kept.')) return;
   delete kanbanBoards[name];
-  // Also remove from live sync metrics if present
-  if (kanbanSync?.metrics) {
-    kanbanSync.metrics = kanbanSync.metrics.filter(m => m.assignee !== name);
-    localStorage.setItem(SYNC_SK, JSON.stringify(kanbanSync));
+  // Clear kanbanSync if this person is the owner
+  if (kanbanSync) {
+    if (kanbanSync.ownerName?.toLowerCase() === name.toLowerCase()) {
+      kanbanSync = null;
+      localStorage.removeItem(SYNC_SK);
+    } else if (kanbanSync.metrics) {
+      kanbanSync.metrics = kanbanSync.metrics.filter(m =>
+        (m.ownerName || m.assignee)?.toLowerCase() !== name.toLowerCase()
+      );
+      localStorage.setItem(SYNC_SK, JSON.stringify(kanbanSync));
+    }
   }
   persist(); renderKanbanPage(); updateEmpFilter();
-  showToast(`Kanban board removed for ${name}`, 'var(--gd)');
+  showToast('Kanban board removed for ' + name, 'var(--gd)');
 }
 function reinstateEmp(name) {
-  if (!confirm(`Reinstate ${name} as an active employee?`)) return;
+  if (!confirm('Reinstate ' + name + ' as an active employee?')) return;
   delete separatedEmps[name];
   persist(); rEmployees();
-  showToast(`${name} reinstated as active`);
+  showToast(name + ' reinstated as active');
 }
 function deleteEmp(name) {
-  if (!confirm(`Delete ${name} and ALL their reviews? This cannot be undone.`)) return;
+  if (!confirm('Permanently delete ' + name + ' and ALL their data?\n\nThis removes:\n• All performance reviews\n• Kanban board data\n• Separation record\n\nThis cannot be undone.')) return;
+  // Remove reviews
   reviews = reviews.filter(r => r.employee !== name);
+  // Remove board entry
   delete kanbanBoards[name];
+  // Remove separation record
   delete separatedEmps[name];
+  // Clear kanbanSync if this person is the live-sync owner
+  if (kanbanSync?.ownerName?.toLowerCase() === name.toLowerCase()) {
+    kanbanSync = null;
+    localStorage.removeItem(SYNC_SK);
+  } else if (kanbanSync?.metrics) {
+    kanbanSync.metrics = kanbanSync.metrics.filter(m =>
+      (m.ownerName || m.assignee)?.toLowerCase() !== name.toLowerCase()
+    );
+    if (kanbanSync.metrics.length === 0) {
+      kanbanSync = null;
+      localStorage.removeItem(SYNC_SK);
+    } else {
+      localStorage.setItem(SYNC_SK, JSON.stringify(kanbanSync));
+    }
+  }
   persist(); updateEmpFilter(); rEmployees();
-  showToast(`${name} deleted`, 'var(--ac)');
+  showToast(name + ' and all their data deleted', 'var(--ac)');
+}
+
+// Force-remove any employee by name — clears ALL storage sources including localStorage
+function hardDeleteEmp() {
+  const name = prompt('Enter the EXACT name of the employee to force-remove:');
+  if (!name?.trim()) return;
+  const n = name.trim();
+  const lc = n.toLowerCase();
+  if (!confirm('Force-remove "' + n + '"?\n\nThis will scrub ALL traces from:\n• Reviews\n• Kanban boards\n• Separation records\n• Live sync cache\n• Browser storage\n\nCannot be undone.')) return;
+
+  // 1. Reviews
+  reviews = reviews.filter(r => r.employee?.toLowerCase() !== lc);
+
+  // 2. kanbanBoards — case-insensitive key search
+  Object.keys(kanbanBoards).forEach(k => { if (k.toLowerCase() === lc) delete kanbanBoards[k]; });
+
+  // 3. separatedEmps
+  Object.keys(separatedEmps).forEach(k => { if (k.toLowerCase() === lc) delete separatedEmps[k]; });
+
+  // 4. Kill kanbanSync if they are the owner
+  if (kanbanSync?.ownerName?.toLowerCase() === lc) {
+    kanbanSync = null;
+    localStorage.removeItem(SYNC_SK);
+  } else if (kanbanSync?.metrics) {
+    kanbanSync.metrics = kanbanSync.metrics.filter(m =>
+      (m.ownerName || m.assignee)?.toLowerCase() !== lc
+    );
+    if (kanbanSync.metrics.length === 0) {
+      kanbanSync = null;
+      localStorage.removeItem(SYNC_SK);
+    } else {
+      localStorage.setItem(SYNC_SK, JSON.stringify(kanbanSync));
+    }
+  }
+
+  // 5. Re-write main storage immediately
+  persist();
+  updateEmpFilter();
+  rEmployees();
+  showToast('"' + n + '" fully removed from all sources', 'var(--ac)');
 }
 
 function openEmpDetail(e) {

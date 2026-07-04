@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Metro Manila Transit Tracker</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0c0f1a;
+    --panel: #111827;
+    --panel2: #1a2236;
+    --border: #1e2d45;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --fx: #f59e0b;
+    --puv: #22d3ee;
+    --bus: #4ade80;
+    --p2p: #c084fc;
+    --accent: #3b82f6;
+    --danger: #f87171;
+    --card-hover: #1e2d45;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+
+  /* HEADER */
+  header { background:var(--panel); border-bottom:1px solid var(--border); padding:0 20px; height:56px; display:flex; align-items:center; justify-content:space-between; z-index:1000; flex-shrink:0; }
+  .logo { font-family:'Space Mono',monospace; font-size:15px; font-weight:700; letter-spacing:-0.5px; }
+  .logo span { color:var(--accent); }
+  .logo .dot { color:var(--fx); }
+  .header-right { display:flex; gap:10px; align-items:center; }
+  .badge-row { display:flex; gap:6px; }
+  .badge { font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px; letter-spacing:0.5px; }
+  .badge.fx { background:rgba(245,158,11,0.15); color:var(--fx); border:1px solid rgba(245,158,11,0.3); }
+  .badge.puv { background:rgba(34,211,238,0.15); color:var(--puv); border:1px solid rgba(34,211,238,0.3); }
+  .badge.bus { background:rgba(74,222,128,0.15); color:var(--bus); border:1px solid rgba(74,222,128,0.3); }
+  .badge.p2p { background:rgba(192,132,252,0.15); color:var(--p2p); border:1px solid rgba(192,132,252,0.3); }
+
+  /* LAYOUT */
+  .app { display:flex; flex:1; overflow:hidden; }
+
+  /* SIDE PANEL */
+  .panel { width:340px; flex-shrink:0; background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+
+  /* SEARCH */
+  .search-box { padding:14px; border-bottom:1px solid var(--border); }
+  .search-wrap { position:relative; }
+  .search-wrap input { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:9px 36px 9px 14px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:13px; outline:none; transition:border-color 0.2s; }
+  .search-wrap input:focus { border-color:var(--accent); }
+  .search-wrap input::placeholder { color:var(--muted); }
+  .search-icon { position:absolute; right:10px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:14px; pointer-events:none; }
+  .search-results { background:var(--panel2); border:1px solid var(--border); border-radius:8px; margin-top:6px; max-height:180px; overflow-y:auto; display:none; }
+  .search-results.active { display:block; }
+  .search-result-item { padding:10px 14px; cursor:pointer; font-size:12px; border-bottom:1px solid var(--border); transition:background 0.15s; }
+  .search-result-item:last-child { border-bottom:none; }
+  .search-result-item:hover { background:var(--card-hover); }
+  .search-result-item .stop-name { font-weight:600; }
+  .search-result-item .route-name { color:var(--muted); font-size:11px; margin-top:2px; }
+
+  /* TABS */
+  .tabs { display:flex; padding:10px 14px 0; gap:4px; border-bottom:1px solid var(--border); }
+  .tab { font-size:11px; font-weight:600; padding:6px 10px; border-radius:6px 6px 0 0; cursor:pointer; letter-spacing:0.3px; border:1px solid transparent; border-bottom:none; transition:all 0.2s; color:var(--muted); }
+  .tab:hover { color:var(--text); }
+  .tab.active { color:var(--text); background:var(--panel2); border-color:var(--border); }
+  .tab[data-tab="all"].active { color:var(--accent); }
+  .tab[data-tab="fx"].active { color:var(--fx); }
+  .tab[data-tab="puv"].active { color:var(--puv); }
+  .tab[data-tab="bus"].active { color:var(--bus); }
+  .tab[data-tab="p2p"].active { color:var(--p2p); }
+
+  /* ROUTE LIST */
+  .route-list { flex:1; overflow-y:auto; padding:10px; }
+  .route-list::-webkit-scrollbar { width:4px; }
+  .route-list::-webkit-scrollbar-track { background:transparent; }
+  .route-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+  .route-card { background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:12px; margin-bottom:8px; cursor:pointer; transition:all 0.2s; position:relative; overflow:hidden; }
+  .route-card::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; }
+  .route-card.fx::before { background:var(--fx); }
+  .route-card.puv::before { background:var(--puv); }
+  .route-card.bus::before { background:var(--bus); }
+  .route-card.p2p::before { background:var(--p2p); }
+  .route-card:hover, .route-card.selected { background:var(--card-hover); border-color:var(--accent); }
+  .route-card.selected { border-color:var(--accent); }
+  .rc-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px; }
+  .rc-name { font-size:13px; font-weight:600; line-height:1.3; }
+  .rc-gate { font-family:'Space Mono',monospace; font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(59,130,246,0.15); color:var(--accent); border:1px solid rgba(59,130,246,0.25); flex-shrink:0; margin-left:8px; }
+  .rc-sched { font-size:11px; color:var(--muted); margin-bottom:6px; display:flex; align-items:center; gap:4px; }
+  .rc-stops { display:flex; flex-wrap:wrap; gap:4px; }
+  .stop-tag { font-size:10px; padding:2px 7px; border-radius:12px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--muted); }
+
+  /* ADD ROUTE BTN */
+  .add-btn-wrap { padding:12px 14px; border-top:1px solid var(--border); }
+  .add-btn { width:100%; background:var(--accent); color:#fff; border:none; border-radius:8px; padding:10px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; transition:background 0.2s; }
+  .add-btn:hover { background:#2563eb; }
+
+  /* MAP */
+  #map { flex:1; background:#0c0f1a; }
+
+  /* MAP INFO BOX */
+  .map-info { position:absolute; bottom:20px; left:360px; z-index:1000; background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:14px 16px; max-width:320px; display:none; }
+  .map-info.active { display:block; }
+  .mi-title { font-size:14px; font-weight:700; margin-bottom:6px; }
+  .mi-type { font-size:11px; margin-bottom:8px; }
+  .mi-row { font-size:12px; color:var(--muted); margin-bottom:4px; display:flex; gap:6px; }
+  .mi-row strong { color:var(--text); }
+  .mi-stops-list { display:flex; flex-wrap:wrap; gap:4px; margin-top:8px; }
+  .mi-close { position:absolute; top:10px; right:12px; background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; }
+  .mi-close:hover { color:var(--text); }
+
+  /* MODAL */
+  .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000; display:none; align-items:center; justify-content:center; }
+  .modal-overlay.active { display:flex; }
+  .modal { background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:24px; width:480px; max-width:95vw; max-height:90vh; overflow-y:auto; }
+  .modal h2 { font-size:16px; font-weight:700; margin-bottom:16px; }
+  .form-group { margin-bottom:14px; }
+  .form-group label { display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:6px; letter-spacing:0.3px; }
+  .form-group input, .form-group select, .form-group textarea { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:9px 12px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:13px; outline:none; transition:border-color 0.2s; }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--accent); }
+  .form-group select option { background:var(--panel); }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .modal-btns { display:flex; gap:10px; justify-content:flex-end; margin-top:18px; }
+  .btn-cancel { background:transparent; border:1px solid var(--border); color:var(--text); padding:8px 16px; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; cursor:pointer; }
+  .btn-save { background:var(--accent); color:#fff; border:none; padding:8px 16px; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; }
+  .btn-save:hover { background:#2563eb; }
+
+  /* TOAST */
+  .toast { position:fixed; bottom:20px; right:20px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px 16px; font-size:13px; z-index:3000; transform:translateY(60px); opacity:0; transition:all 0.3s; }
+  .toast.show { transform:translateY(0); opacity:1; }
+  .toast.success { border-left:3px solid var(--bus); }
+
+  /* CATEGORY HEADER */
+  .cat-header { font-family:'Space Mono',monospace; font-size:10px; font-weight:700; letter-spacing:1px; color:var(--muted); padding:8px 4px 4px; text-transform:uppercase; }
+
+  /* LEGEND */
+  .legend { position:absolute; top:68px; right:12px; z-index:1000; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:10px 14px; }
+  .legend-title { font-size:10px; font-weight:700; letter-spacing:0.5px; color:var(--muted); margin-bottom:8px; }
+  .legend-item { display:flex; align-items:center; gap:8px; font-size:11px; margin-bottom:5px; }
+  .legend-line { width:20px; height:3px; border-radius:2px; }
+
+  /* STATUS INDICATOR */
+  .status-dot { width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:4px; }
+  .status-dot.green { background:#22c55e; }
+  .status-dot.yellow { background:#eab308; }
+  .status-dot.grey { background:#64748b; }
+
+  /* ORIGIN MARKERS */
+  .origin-badge { font-size:10px; font-weight:700; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">METRO<span>TRANSIT</span><span class="dot">•</span>PH</div>
+  <div class="header-right">
+    <div class="badge-row">
+      <span class="badge fx">FX/UV Express</span>
+      <span class="badge puv">PUV/PUJ</span>
+      <span class="badge bus">City Bus</span>
+      <span class="badge p2p">P2P Bus</span>
+    </div>
+  </div>
+</header>
+
+<div class="app">
+  <!-- SIDE PANEL -->
+  <div class="panel">
+    <div class="search-box">
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="Search stop or landmark…" autocomplete="off"/>
+        <span class="search-icon">⌕</span>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="all">All</div>
+      <div class="tab" data-tab="fx">FX/UV</div>
+      <div class="tab" data-tab="puv">PUV</div>
+      <div class="tab" data-tab="bus">Bus</div>
+      <div class="tab" data-tab="p2p">P2P</div>
+    </div>
+
+    <div class="route-list" id="routeList"></div>
+
+    <div class="add-btn-wrap">
+      <button class="add-btn" onclick="openModal()">+ Add New Route</button>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div style="position:relative;flex:1;">
+    <div id="map"></div>
+
+    <!-- LEGEND -->
+    <div class="legend">
+      <div class="legend-title">ROUTE TYPE</div>
+      <div class="legend-item"><div class="legend-line" style="background:#f59e0b"></div>FX / UV Express</div>
+      <div class="legend-item"><div class="legend-line" style="background:#22d3ee"></div>PUV / PUJ</div>
+      <div class="legend-item"><div class="legend-line" style="background:#4ade80"></div>City Bus</div>
+      <div class="legend-item"><div class="legend-line" style="background:#c084fc"></div>P2P Bus</div>
+    </div>
+
+    <!-- MAP INFO -->
+    <div class="map-info" id="mapInfo">
+      <button class="mi-close" onclick="closeInfo()">✕</button>
+      <div class="mi-title" id="miTitle"></div>
+      <div class="mi-type" id="miType"></div>
+      <div class="mi-row"><strong>Schedule:</strong> <span id="miSched"></span></div>
+      <div class="mi-row" id="miGateRow"><strong>Gate:</strong> <span id="miGate"></span></div>
+      <div class="mi-row"><strong>Stops:</strong></div>
+      <div class="mi-stops-list" id="miStops"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ROUTE MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <h2>Add New Route</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>ROUTE NAME</label>
+        <input type="text" id="fName" placeholder="e.g. Alabang via SLEX"/>
+      </div>
+      <div class="form-group">
+        <label>TRANSPORT TYPE</label>
+        <select id="fType">
+          <option value="fx">FX / UV Express</option>
+          <option value="puv">PUV / PUJ</option>
+          <option value="bus">City Bus</option>
+          <option value="p2p">P2P Bus</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>ORIGIN HUB</label>
+        <select id="fOrigin">
+          <option value="ortigas">Ortigas (P. Casal St.)</option>
+          <option value="ayala">One Ayala, Makati</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>GATE</label>
+        <input type="text" id="fGate" placeholder="e.g. Gate 5"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>SCHEDULE</label>
+      <input type="text" id="fSched" placeholder="e.g. Monday to Friday, 10:00 AM – 4:00 PM"/>
+    </div>
+    <div class="form-group">
+      <label>STOPS (comma-separated)</label>
+      <textarea id="fStops" rows="3" placeholder="e.g. Alabang Exit, Festival Mall, Filinvest"></textarea>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveRoute()">Save Route</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+// ─── ROUTE DATA ──────────────────────────────────────────────────────────────
+
+const ORTIGAS = [14.5878, 121.0613];
+const AYALA   = [14.5547, 121.0244];
+
+const ROUTES = [
+  // ═══ FX / UV EXPRESS (Ortigas) ═══
+  {
+    id:'fx-1', type:'fx', name:'Suki Market – Mayon',
+    gate:'Gate 5', origin:'Ortigas', schedule:'Mon–Fri, 10:00 AM – 4:00 PM',
+    stops:['Nagtahan','Zamora','Loyola','España','Banawe Ave.'],
+    coords:[ORTIGAS,[14.6012,120.9882],[14.6047,120.9895],[14.6150,121.0010],[14.6087,120.9938],[14.6312,120.9894]]
+  },
+  {
+    id:'fx-2', type:'fx', name:'FTI – Palar Arca South',
+    gate:'Gate 5', origin:'Ortigas', schedule:'Mon–Sat, 4:00 PM – 10:00 PM (limited Sat)',
+    stops:['Villamor','Tesda','Apobay','Katipunan','C5 Sto. Niño','Tenement','FTI Terminal'],
+    coords:[ORTIGAS,[14.5109,121.0163],[14.5143,121.0300],[14.5180,121.0420],[14.5250,121.0500],[14.5143,121.0545],[14.5050,121.0480],[14.5014,121.0545]]
+  },
+  {
+    id:'fx-3', type:'fx', name:'Antipolo',
+    gate:'Gate 6', origin:'Ortigas', schedule:'Mon–Sat 3:00–10:00 PM, Sun 5:00–7:00 PM',
+    stops:['Kalayaan','Buting','IPI','Rosario','Tikling','Antipolo Terminal'],
+    coords:[ORTIGAS,[14.5700,121.0800],[14.5600,121.0850],[14.5750,121.1050],[14.5620,121.1080],[14.5820,121.1200],[14.6265,121.1224]]
+  },
+  {
+    id:'fx-4', type:'fx', name:'Pacita – Biñan',
+    gate:'Gate 6', origin:'Ortigas', schedule:'Mon–Sat, 4:00 PM – 10:00 PM',
+    stops:['Exit Southwood','Las Villas','Juana Juan','Southwoods Mall'],
+    coords:[ORTIGAS,[14.3600,121.0800],[14.3400,121.0600],[14.3200,121.0500],[14.3500,121.0700]]
+  },
+  {
+    id:'fx-5', type:'fx', name:'Sucat Evacom – Parañaque',
+    gate:'Gate 7', origin:'Ortigas', schedule:'Mon–Sat, 3:00 PM – 10:00 PM',
+    stops:['Valley 1 & 2','Evacom','Lopez','Green Heights','SM BF'],
+    coords:[ORTIGAS,[14.4700,121.0100],[14.4600,121.0000],[14.4750,121.0050],[14.4800,121.0150],[14.4790,121.0205]]
+  },
+  {
+    id:'fx-6', type:'fx', name:'BF El Grande – Parañaque',
+    gate:'Gate 7', origin:'Ortigas', schedule:'Mon–Sat, 3:00 PM – 10:00 PM',
+    stops:['SM BF','Baliwag','Green Heights','Lopez','BF Subdivision'],
+    coords:[ORTIGAS,[14.4790,121.0205],[14.4720,120.9900],[14.4800,121.0150],[14.4750,121.0050],[14.4640,121.0000]]
+  },
+  {
+    id:'fx-7', type:'fx', name:'BF Resort – Las Piñas',
+    gate:'Gate 7', origin:'Ortigas', schedule:'Mon–Sat, 4:00 PM – 9:00 PM (1–2 trips Sat)',
+    stops:['Zapote','RFC','SM Center','Casimiro','Moonwalk'],
+    coords:[ORTIGAS,[14.4600,120.9700],[14.4500,120.9750],[14.4476,121.0007],[14.4400,121.0000],[14.4600,121.0100]]
+  },
+  {
+    id:'fx-8', type:'fx', name:'Molino via Skyway MCX',
+    gate:'Gate 8', origin:'Ortigas', schedule:'Daily, 3:00 PM – 10:00 PM',
+    stops:['MCX via Daang Hari','Pag-asa'],
+    coords:[ORTIGAS,[14.4200,120.9800],[14.4100,120.9700]]
+  },
+  {
+    id:'fx-9', type:'fx', name:'Molino via Coastal Road – Ligas',
+    gate:'Gate 8', origin:'Ortigas', schedule:'Mon–Sat, 4:00 PM – 10:00 PM',
+    stops:['Zapote','Jollibee Molino','Soldiers','Bayanan','Ligas','San Nicolas'],
+    coords:[ORTIGAS,[14.4600,120.9700],[14.4300,120.9650],[14.4200,120.9600],[14.4100,120.9550],[14.4000,120.9500],[14.3900,120.9450]]
+  },
+  {
+    id:'fx-10', type:'fx', name:'Imus via Coastal Road',
+    gate:'Gate 8', origin:'Ortigas', schedule:'Mon–Sat, 4:00 PM – 10:00 PM',
+    stops:['SM Bacoor','MC1','Dominique via Aguinaldo','Panapaan','Camella Bacoor','BDO Imus'],
+    coords:[ORTIGAS,[14.4300,120.9600],[14.4250,120.9500],[14.4200,120.9400],[14.4100,120.9300],[14.4000,120.9250],[14.4200,120.9368]]
+  },
+  {
+    id:'fx-11', type:'fx', name:'Russia – Moonwalk',
+    gate:'Gate 9', origin:'Ortigas', schedule:'Mon–Sat 3:00–10:00 PM, Sun 5:00–7:00 PM',
+    stops:['Bicutan Exit','Doña Soledad','Russia Moonwalk'],
+    coords:[ORTIGAS,[14.4800,121.0400],[14.4700,121.0300],[14.4600,121.0150]]
+  },
+  {
+    id:'fx-12', type:'fx', name:'Bicutan',
+    gate:'Gate 9', origin:'Ortigas', schedule:'Mon–Sat 3:00–10:00 PM, Sun 5:00–7:00 PM',
+    stops:['SM Bicutan','Russia Moonwalk','Russia Village Gate 1 & 2','McDo Moonwalk'],
+    coords:[ORTIGAS,[14.4835,121.0397],[14.4600,121.0150],[14.4580,121.0120],[14.4620,121.0180]]
+  },
+
+  // ═══ PUV / PUJ (One Ayala) ═══
+  {
+    id:'puv-1', type:'puv', name:'Pasay Road – Libertad',
+    gate:'Gate 3', origin:'One Ayala', schedule:'Daily, 5:00 AM – 10:30 PM',
+    stops:['Paseo de Roxas','Makati Square','Amorsolo','Greenbelt Ave.','Pasong Tamo','Aurora','Rufino','Pasay Road'],
+    coords:[AYALA,[14.5540,121.0190],[14.5500,121.0150],[14.5510,121.0170],[14.5510,121.0200],[14.5420,121.0150],[14.5570,121.0100],[14.5550,121.0230],[14.5490,121.0180]]
+  },
+  {
+    id:'puv-2', type:'puv', name:'Makati Loop – PRC Circuit',
+    gate:'Gate 4', origin:'One Ayala', schedule:'Mon–Fri, 10:00 AM – 4:00 PM',
+    stops:['Makati Ave & Buendia','Reposo','JP Rizal','Makati Circuit','Puregold Delpan','Landmark'],
+    coords:[AYALA,[14.5547,121.0244],[14.5650,121.0280],[14.5600,121.0280],[14.5450,121.0450],[14.5950,121.0050],[14.5557,121.0202]]
+  },
+  {
+    id:'puv-3', type:'puv', name:'Ayala – Washington',
+    gate:'UGF', origin:'One Ayala', schedule:'Daily, Hourly',
+    stops:['Makati Ave & Buendia','JP Rizal','Jazz Mall','Puregold Delpan','Landmark'],
+    coords:[AYALA,[14.5547,121.0244],[14.5600,121.0280],[14.5530,121.0240],[14.5950,121.0050],[14.5557,121.0202]]
+  },
+  {
+    id:'puv-4', type:'puv', name:'Makati Circuit E-Jeep',
+    gate:'UGF', origin:'One Ayala', schedule:'Daily, Hourly',
+    stops:['Makati Ave & Buendia','JP Rizal','Jazz Mall','Puregold Delpan','Landmark'],
+    coords:[AYALA,[14.5547,121.0244],[14.5600,121.0280],[14.5530,121.0240],[14.5950,121.0050],[14.5557,121.0202]]
+  },
+
+  // ═══ CITY BUS (One Ayala) ═══
+  {
+    id:'bus-1', type:'bus', name:'EDSA Carousel (Southbound)',
+    gate:'—', origin:'One Ayala', schedule:'Daily, 24 Hours',
+    stops:['Pasay Rotonda','Pasay Taft','Baclaran','Heritage','MOA','PITX'],
+    coords:[AYALA,[14.5388,120.9932],[14.5300,120.9900],[14.5220,121.0000],[14.5150,120.9950],[14.5310,120.9790],[14.5088,120.9822]]
+  },
+  {
+    id:'bus-2', type:'bus', name:'Sta. Rosa / Balibago',
+    gate:'—', origin:'One Ayala', schedule:'Daily, 6:00 AM – 12:00 MN',
+    stops:['Sta. Rosa Toll Gate','Sta. Rosa Exit','Walter Mart Sta. Rosa','Balibago Complex'],
+    coords:[AYALA,[14.2866,121.0555],[14.2900,121.0600],[14.2950,121.0650],[14.3100,121.0700]]
+  },
+  {
+    id:'bus-3', type:'bus', name:'Pacita / Biñan',
+    gate:'—', origin:'One Ayala', schedule:'Biñan: Daily 5AM–9PM | Pacita: Daily 5AM–11PM',
+    stops:['Susana Heights','Savemore San Pedro','Pacita Terminal','Biñan Terminal'],
+    coords:[AYALA,[14.3800,121.0700],[14.3500,121.0600],[14.2903,121.0477],[14.3362,121.1178]]
+  },
+  {
+    id:'bus-4', type:'bus', name:'Alabang / Sucat',
+    gate:'—', origin:'One Ayala', schedule:'Daily, 5:00 AM – 12:00 MN',
+    stops:['SM Bicutan','Loyal Memorial Park Sucat','Starmall Alabang'],
+    coords:[AYALA,[14.4835,121.0397],[14.4700,121.0400],[14.4230,121.0400]]
+  },
+  {
+    id:'bus-5', type:'bus', name:'Bicutan',
+    gate:'—', origin:'One Ayala', schedule:'Daily, 5:00 AM – 12:00 MN',
+    stops:['SM Bicutan'],
+    coords:[AYALA,[14.4835,121.0397]]
+  },
+  {
+    id:'bus-6', type:'bus', name:'FTI',
+    gate:'—', origin:'One Ayala', schedule:'Daily, 6:00 AM – 11:00 PM',
+    stops:['Villamor Pasay','Gate 3 Bonifacio','Tesda','Katipunan','Masagana Taguig','Sto. Niño Taguig','Tenement','FTI Terminal'],
+    coords:[AYALA,[14.5109,121.0163],[14.5300,121.0400],[14.5143,121.0300],[14.5250,121.0500],[14.5200,121.0580],[14.5143,121.0545],[14.5050,121.0480],[14.5014,121.0545]]
+  },
+
+  // ═══ P2P BUS (One Ayala) ═══
+  {
+    id:'p2p-1', type:'p2p', name:'Calamba',
+    gate:'—', origin:'One Ayala', schedule:'Daily, 7:00 AM',
+    stops:['Crossing Calamba'],
+    coords:[AYALA,[14.2122,121.1650]]
+  },
+  {
+    id:'p2p-2', type:'p2p', name:'Fairview',
+    gate:'—', origin:'One Ayala', schedule:'Mon–Fri',
+    stops:['Litex','North Fairview','Fairview Terraces','Robinson Novastop'],
+    coords:[AYALA,[14.7000,121.0500],[14.7100,121.0500],[14.7188,121.0546],[14.7200,121.0600]]
+  },
+  {
+    id:'p2p-3', type:'p2p', name:'Sta. Rosa / Nuvali',
+    gate:'—', origin:'One Ayala', schedule:'Mon–Fri',
+    stops:['Sta. Rosa Exit','Bel-Air','San Isidro','Paseo','Crown Asia','Solenad 3'],
+    coords:[AYALA,[14.2866,121.0555],[14.2900,121.0550],[14.2950,121.0600],[14.3000,121.0650],[14.3050,121.0700],[14.3100,121.0750]]
+  },
+  {
+    id:'p2p-4', type:'p2p', name:'Antipolo',
+    gate:'—', origin:'One Ayala', schedule:'Mon–Fri',
+    stops:['Santolan','Feliz','Tropical','Town & Country','Filinvest','Masinag','Robinson Antipolo'],
+    coords:[AYALA,[14.6020,121.0800],[14.6050,121.0900],[14.6100,121.1000],[14.6150,121.1100],[14.6200,121.1150],[14.6230,121.1200],[14.6265,121.1224]]
+  },
+  {
+    id:'p2p-5', type:'p2p', name:'Katipunan',
+    gate:'—', origin:'One Ayala', schedule:'Mon–Fri, 7:30 PM',
+    stops:['Eastwood','Miriam College','UP Town Center'],
+    coords:[AYALA,[14.6080,121.0790],[14.6140,121.0800],[14.6530,121.0323]]
+  },
+  {
+    id:'p2p-6', type:'p2p', name:'Imus',
+    gate:'—', origin:'One Ayala', schedule:'Mon–Fri, 7:00 AM',
+    stops:['The District Imus','Robinson Palapala'],
+    coords:[AYALA,[14.4295,120.9368],[14.4200,120.9300]]
+  },
+  {
+    id:'p2p-7', type:'p2p', name:'Dasma Noveleta',
+    gate:'—', origin:'One Ayala', schedule:'Mon–Fri',
+    stops:['Puregold Noveleta','All Home','Cavite Terminal'],
+    coords:[AYALA,[14.4252,120.8785],[14.4300,120.8900],[14.4400,120.9000]]
+  },
+  {
+    id:'p2p-8', type:'p2p', name:'Las Piñas',
+    gate:'—', origin:'One Ayala', schedule:'Mon–Fri',
+    stops:['Pilar Las Piñas'],
+    coords:[AYALA,[14.4476,121.0007]]
+  },
+  {
+    id:'p2p-9', type:'p2p', name:'Bacoor',
+    gate:'—', origin:'One Ayala', schedule:'Mon–Fri',
+    stops:['Bacoor Terminal'],
+    coords:[AYALA,[14.4130,120.9640]]
+  },
+  {
+    id:'p2p-10', type:'p2p', name:'Cainta',
+    gate:'—', origin:'One Ayala', schedule:'Mon–Fri',
+    stops:['Sierra Valley','Tikling','Taytay','Angono','Binangonan'],
+    coords:[AYALA,[14.5779,121.1197],[14.5820,121.1200],[14.5560,121.1310],[14.5230,121.1540],[14.4683,121.1981]]
+  }
+];
+
+const TYPE_COLORS = { fx:'#f59e0b', puv:'#22d3ee', bus:'#4ade80', p2p:'#c084fc' };
+const TYPE_LABELS = { fx:'FX / UV Express', puv:'PUV / PUJ', bus:'City Bus', p2p:'P2P Bus' };
+
+// ─── MAP INIT ─────────────────────────────────────────────────────────────────
+const map = L.map('map', { center:[14.55, 121.03], zoom:12, zoomControl:false });
+L.control.zoom({ position:'bottomright' }).addTo(map);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution:'© OpenStreetMap contributors © CARTO', maxZoom:19
+}).addTo(map);
+
+// Origin markers
+function makeOriginIcon(label) {
+  return L.divIcon({
+    className:'', iconSize:[60,22], iconAnchor:[30,11],
+    html:`<div style="background:#1e3a5f;border:1.5px solid #3b82f6;border-radius:4px;padding:2px 6px;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;color:#60a5fa;white-space:nowrap;text-align:center;">${label}</div>`
+  });
+}
+L.marker(ORTIGAS, { icon: makeOriginIcon('ORTIGAS') }).addTo(map)
+  .bindTooltip('<b>Ortigas Terminal</b><br>P. Casal St., Pasig', {permanent:false});
+L.marker(AYALA, { icon: makeOriginIcon('ONE AYALA') }).addTo(map)
+  .bindTooltip('<b>One Ayala Terminal</b><br>Ayala Ave., Makati', {permanent:false});
+
+// ─── POLYLINES & STOP MARKERS ────────────────────────────────────────────────
+const polylines = {};
+const stopMarkersByRoute = {};
+
+function makeStopIcon(color) {
+  return L.divIcon({
+    className:'', iconSize:[8,8], iconAnchor:[4,4],
+    html:`<div style="width:8px;height:8px;border-radius:50%;background:${color};border:1.5px solid rgba(255,255,255,0.6);"></div>`
+  });
+}
+
+ROUTES.forEach(r => {
+  const color = TYPE_COLORS[r.type];
+  const pl = L.polyline(r.coords, {
+    color, weight:3, opacity:0.6, smoothFactor:1,
+    dashArray: r.type==='p2p' ? '6,4' : (r.type==='bus' ? '10,4' : null)
+  }).addTo(map);
+  pl.on('click', () => selectRoute(r.id));
+  polylines[r.id] = pl;
+
+  // Stop markers
+  const markers = [];
+  r.coords.slice(1).forEach((c, i) => {
+    const m = L.marker(c, { icon: makeStopIcon(color) }).addTo(map);
+    m.bindTooltip(`<b>${r.stops[i] || ''}</b><br><small>${r.name}</small>`);
+    m.on('click', () => selectRoute(r.id));
+    markers.push(m);
+  });
+  stopMarkersByRoute[r.id] = markers;
+});
+
+// ─── ROUTE LIST ───────────────────────────────────────────────────────────────
+let activeTab = 'all';
+let selectedId = null;
+
+function renderList(filter='') {
+  const list = document.getElementById('routeList');
+  list.innerHTML = '';
+  const fl = filter.toLowerCase();
+
+  const cats = [
+    { key:'fx',  label:'FX / UV Express – Ortigas' },
+    { key:'puv', label:'PUV / PUJ – One Ayala' },
+    { key:'bus', label:'City Bus – One Ayala' },
+    { key:'p2p', label:'P2P Bus – One Ayala' }
+  ];
+
+  cats.forEach(cat => {
+    if (activeTab !== 'all' && activeTab !== cat.key) return;
+    const routes = ROUTES.filter(r => r.type === cat.key &&
+      (!fl || r.name.toLowerCase().includes(fl) || r.stops.some(s => s.toLowerCase().includes(fl))));
+    if (!routes.length) return;
+
+    const h = document.createElement('div');
+    h.className = 'cat-header'; h.textContent = cat.label;
+    list.appendChild(h);
+
+    routes.forEach(r => {
+      const card = document.createElement('div');
+      card.className = `route-card ${r.type}${r.id===selectedId?' selected':''}`;
+      card.dataset.id = r.id;
+      card.innerHTML = `
+        <div class="rc-header">
+          <div class="rc-name">${r.name}</div>
+          ${r.gate && r.gate!=='—' ? `<span class="rc-gate">${r.gate}</span>` : ''}
+        </div>
+        <div class="rc-sched">🕐 ${r.schedule}</div>
+        <div class="rc-stops">${r.stops.slice(0,5).map(s=>`<span class="stop-tag">${s}</span>`).join('')}${r.stops.length>5?`<span class="stop-tag">+${r.stops.length-5}</span>`:''}</div>
+      `;
+      card.addEventListener('click', () => selectRoute(r.id));
+      list.appendChild(card);
+    });
+  });
+}
+
+function selectRoute(id) {
+  // Deselect old
+  if (selectedId) {
+    const r0 = ROUTES.find(r=>r.id===selectedId);
+    if(r0) polylines[r0.id].setStyle({weight:3, opacity:0.6});
+  }
+  selectedId = id;
+  const route = ROUTES.find(r=>r.id===id);
+  if (!route) return;
+
+  // Highlight polyline
+  polylines[id].setStyle({weight:5, opacity:1});
+  map.fitBounds(polylines[id].getBounds(), {padding:[40,40]});
+
+  // Show info box
+  document.getElementById('miTitle').textContent = route.name;
+  document.getElementById('miType').innerHTML = `<span class="badge ${route.type}">${TYPE_LABELS[route.type]}</span>`;
+  document.getElementById('miSched').textContent = route.schedule;
+  document.getElementById('miGate').textContent = route.gate;
+  document.getElementById('miGateRow').style.display = route.gate && route.gate!=='—' ? 'flex' : 'none';
+  document.getElementById('miStops').innerHTML = route.stops.map(s=>`<span class="stop-tag">${s}</span>`).join('');
+  document.getElementById('mapInfo').classList.add('active');
+
+  renderList();
+}
+
+function closeInfo() {
+  if (selectedId) {
+    const r0 = ROUTES.find(r=>r.id===selectedId);
+    if(r0) polylines[r0.id].setStyle({weight:3, opacity:0.6});
+  }
+  selectedId = null;
+  document.getElementById('mapInfo').classList.remove('active');
+  renderList();
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    activeTab = t.dataset.tab;
+    renderList();
+    // Filter polylines visibility
+    ROUTES.forEach(r => {
+      if (activeTab==='all' || activeTab===r.type) {
+        polylines[r.id].addTo(map);
+        stopMarkersByRoute[r.id].forEach(m=>m.addTo(map));
+      } else {
+        polylines[r.id].removeFrom(map);
+        stopMarkersByRoute[r.id].forEach(m=>m.removeFrom(map));
+      }
+    });
+  });
+});
+
+// ─── SEARCH ───────────────────────────────────────────────────────────────────
+const LANDMARKS = [
+  {name:'SM Bicutan',lat:14.4835,lng:121.0397},
+  {name:'SM BF Parañaque',lat:14.4790,lng:121.0205},
+  {name:'SM Center Las Piñas',lat:14.4476,lng:121.0007},
+  {name:'SM Bacoor',lat:14.4300,lng:120.9600},
+  {name:'Southwoods Mall',lat:14.3500,lng:121.0700},
+  {name:'Fairview Terraces',lat:14.7188,lng:121.0546},
+  {name:'Robinson Antipolo',lat:14.6265,lng:121.1224},
+  {name:'Starmall Alabang',lat:14.4230,lng:121.0400},
+  {name:'One Ayala Terminal',lat:14.5547,lng:121.0244},
+  {name:'Ortigas Terminal',lat:14.5878,lng:121.0613},
+  {name:'FTI Terminal',lat:14.5014,lng:121.0545},
+  {name:'Antipolo Terminal',lat:14.6265,lng:121.1224},
+  {name:'Eastwood City',lat:14.6080,lng:121.0790},
+  {name:'UP Town Center',lat:14.6530,lng:121.0323},
+  {name:'Greenbelt Makati',lat:14.5510,lng:121.0200},
+  {name:'MOA Mall of Asia',lat:14.5310,lng:120.9790},
+  {name:'Baclaran',lat:14.5220,lng:121.0000},
+  {name:'TESDA Taguig',lat:14.5143,lng:121.0300},
+  {name:'Villamor Pasay',lat:14.5109,lng:121.0163},
+  {name:'Moonwalk Las Piñas',lat:14.4600,lng:121.0100},
+];
+
+const searchInput = document.getElementById('searchInput');
+const searchResults = document.getElementById('searchResults');
+
+searchInput.addEventListener('input', function() {
+  const q = this.value.toLowerCase().trim();
+  if (!q) { searchResults.classList.remove('active'); return; }
+
+  // Match stops across all routes
+  const matches = [];
+  const seen = new Set();
+  ROUTES.forEach(r => {
+    r.stops.forEach((s,i) => {
+      if (s.toLowerCase().includes(q)) {
+        const key = s+'|'+r.id;
+        if (!seen.has(key)) {
+          seen.add(key);
+          matches.push({ stop:s, route:r, coordIdx:i+1 });
+        }
+      }
+    });
+  });
+  // Match landmarks
+  LANDMARKS.forEach(lm => {
+    if (lm.name.toLowerCase().includes(q)) {
+      // Find routes serving this area
+      const nearby = ROUTES.filter(r =>
+        r.coords.some(c => Math.abs(c[0]-lm.lat)<0.015 && Math.abs(c[1]-lm.lng)<0.015)
+      );
+      if (nearby.length) {
+        matches.unshift({ landmark:lm, routes:nearby });
+      }
+    }
+  });
+
+  if (!matches.length) {
+    searchResults.innerHTML = '<div class="search-result-item"><span class="stop-name">No results found</span></div>';
+    searchResults.classList.add('active');
+    return;
+  }
+
+  searchResults.innerHTML = matches.slice(0,10).map(m => {
+    if (m.landmark) {
+      return `<div class="search-result-item" data-type="landmark" data-lat="${m.landmark.lat}" data-lng="${m.landmark.lng}" data-routes="${m.routes.map(r=>r.id).join(',')}">
+        <div class="stop-name">📍 ${m.landmark.name}</div>
+        <div class="route-name">${m.routes.length} route(s): ${m.routes.map(r=>r.name).slice(0,3).join(', ')}${m.routes.length>3?'…':''}</div>
+      </div>`;
+    } else {
+      return `<div class="search-result-item" data-type="stop" data-route="${m.route.id}" data-lat="${m.route.coords[m.coordIdx]?.[0]}" data-lng="${m.route.coords[m.coordIdx]?.[1]}">
+        <div class="stop-name">🚏 ${m.stop}</div>
+        <div class="route-name" style="color:${TYPE_COLORS[m.route.type]}">${m.route.name} · ${TYPE_LABELS[m.route.type]}</div>
+      </div>`;
+    }
+  }).join('');
+  searchResults.classList.add('active');
+});
+
+searchResults.addEventListener('click', function(e) {
+  const item = e.target.closest('.search-result-item');
+  if (!item) return;
+  searchResults.classList.remove('active');
+  searchInput.value = '';
+
+  if (item.dataset.type === 'stop') {
+    selectRoute(item.dataset.route);
+    const lat = parseFloat(item.dataset.lat), lng = parseFloat(item.dataset.lng);
+    if (!isNaN(lat)) map.setView([lat,lng], 15);
+  } else if (item.dataset.type === 'landmark') {
+    const lat = parseFloat(item.dataset.lat), lng = parseFloat(item.dataset.lng);
+    map.setView([lat,lng], 15);
+    // Highlight all nearby routes
+    const rids = item.dataset.routes.split(',');
+    const first = rids[0];
+    selectRoute(first);
+    // Flash others
+    rids.slice(1).forEach(rid => {
+      if (polylines[rid]) polylines[rid].setStyle({weight:4, opacity:0.9});
+      setTimeout(() => {
+        if (polylines[rid] && rid !== selectedId) polylines[rid].setStyle({weight:3, opacity:0.6});
+      }, 3000);
+    });
+    // Show toast with all routes
+    const routeNames = rids.map(rid=>ROUTES.find(r=>r.id===rid)?.name).filter(Boolean);
+    showToast(`Found ${rids.length} route(s) near this area`);
+  }
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) searchResults.classList.remove('active');
+});
+
+// ─── ADD ROUTE MODAL ─────────────────────────────────────────────────────────
+function openModal() { document.getElementById('modalOverlay').classList.add('active'); }
+function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+
+function saveRoute() {
+  const name = document.getElementById('fName').value.trim();
+  const type = document.getElementById('fType').value;
+  const origin = document.getElementById('fOrigin').value;
+  const gate = document.getElementById('fGate').value.trim() || '—';
+  const sched = document.getElementById('fSched').value.trim();
+  const stopsRaw = document.getElementById('fStops').value.trim();
+  if (!name || !sched || !stopsRaw) { showToast('Please fill in all required fields', true); return; }
+
+  const stops = stopsRaw.split(',').map(s=>s.trim()).filter(Boolean);
+  const originCoord = origin==='ortigas' ? ORTIGAS : AYALA;
+  const newRoute = {
+    id: `custom-${Date.now()}`, type, name, gate,
+    origin: origin==='ortigas' ? 'Ortigas' : 'One Ayala',
+    schedule: sched, stops,
+    coords: [originCoord]
+  };
+  ROUTES.push(newRoute);
+
+  // Draw on map
+  const color = TYPE_COLORS[type];
+  const pl = L.polyline(newRoute.coords, { color, weight:3, opacity:0.6, dashArray:'4,4' }).addTo(map);
+  pl.on('click', () => selectRoute(newRoute.id));
+  polylines[newRoute.id] = pl;
+  stopMarkersByRoute[newRoute.id] = [];
+
+  renderList();
+  closeModal();
+  showToast(`Route "${name}" added successfully`);
+  ['fName','fGate','fSched','fStops'].forEach(id=>{ document.getElementById(id).value=''; });
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? '' : ' success');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderList();
+</script>
+</body>
+</html>

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OT Command &mdash; Supabase Edition</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#10141B; --panel:#161C25; --panel-2:#1D2530; --border:#2A3242;
+  --text:#E9ECF2; --muted:#8792A3; --dim:#5B6577;
+  --amber:#F2A93B; --red:#E0524D; --green:#4FAE8E; --blue:#5B8DEF;
+  --display:'Space Grotesk','Segoe UI',sans-serif; --body:'Inter','Segoe UI',sans-serif; --mono:'JetBrains Mono','Consolas',monospace;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--body);}
+body{display:flex;min-height:100vh;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:#2A3242;border-radius:6px;}
+.rail{width:220px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 0;}
+.rail-brand{padding:0 20px 20px 20px;border-bottom:1px solid var(--border);margin-bottom:14px;}
+.rail-brand .mark{font-family:var(--display);font-weight:700;font-size:19px;}
+.rail-brand .mark span{color:var(--amber);}
+.rail-brand .sub{font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-top:4px;text-transform:uppercase;letter-spacing:.5px;}
+.tab{display:flex;align-items:center;gap:11px;padding:11px 20px;color:var(--muted);cursor:pointer;border-left:3px solid transparent;font-size:13.5px;font-weight:500;}
+.tab .n{font-family:var(--mono);font-size:11px;color:var(--dim);width:16px;}
+.tab:hover{color:var(--text);background:rgba(255,255,255,.02);}
+.tab.active{color:var(--text);border-left-color:var(--amber);background:var(--panel-2);}
+.tab.active .n{color:var(--amber);}
+.rail-foot{margin-top:auto;padding:16px 20px 4px 20px;border-top:1px solid var(--border);}
+.rail-foot .stat{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--dim);margin-bottom:5px;}
+.rail-foot .stat b{color:var(--muted);font-weight:600;}
+.conn-status{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;padding:8px 20px;color:var(--dim);}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:var(--dim);}
+.conn-dot.ok{background:var(--green);}
+.conn-dot.bad{background:var(--red);}
+
+.main{flex:1;display:flex;flex-direction:column;min-width:0;}
+.topbar{height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid var(--border);}
+.topbar h1{font-family:var(--display);font-size:16px;font-weight:600;margin:0;}
+.topbar .desc{font-size:12px;color:var(--dim);margin-top:1px;}
+.acting-as{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);}
+.acting-as input{width:150px;margin:0;padding:6px 9px;font-size:12px;}
+.content{flex:1;overflow-y:auto;padding:26px 28px 60px 28px;}
+.view{display:none;} .view.active{display:block;}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:20px 22px;margin-bottom:18px;}
+.panel h2{font-family:var(--display);font-size:14.5px;margin:0 0 4px 0;font-weight:600;}
+.panel .hint{font-size:12px;color:var(--dim);margin:0 0 16px 0;line-height:1.5;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+@media(max-width:900px){.grid2{grid-template-columns:1fr;}}
+label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;font-weight:600;}
+input,select,textarea{width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:9px 10px;border-radius:7px;font-family:var(--body);font-size:13px;margin-bottom:13px;}
+textarea{min-height:64px;resize:vertical;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);}
+.btn{background:var(--amber);color:#161200;border:none;padding:10px 18px;border-radius:7px;font-weight:700;font-size:13px;cursor:pointer;}
+.btn:hover{filter:brightness(1.08);}
+.btn:disabled{opacity:.35;cursor:not-allowed;filter:none;}
+.btn.secondary{background:transparent;color:var(--text);border:1px solid var(--border);font-weight:600;}
+.btn.danger{background:var(--red);color:#fff;}
+.btn.small{padding:6px 12px;font-size:12px;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+th{text-align:left;color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:1px solid var(--border);}
+td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.04);font-family:var(--mono);}
+tr:hover td{background:rgba(255,255,255,.02);}
+.tag{padding:3px 9px;border-radius:20px;font-size:10.5px;font-weight:700;font-family:var(--body);display:inline-block;}
+.tag.Normal{background:rgba(79,174,142,.15);color:var(--green);}
+.tag.Elevated{background:rgba(242,169,59,.15);color:var(--amber);}
+.tag.Critical{background:rgba(224,82,77,.18);color:var(--red);}
+.tag.pending{background:rgba(135,146,163,.15);color:var(--muted);}
+.tag.approved{background:rgba(79,174,142,.15);color:var(--green);}
+.tag.rejected{background:rgba(224,82,77,.18);color:var(--red);}
+.tag.skipped{background:rgba(135,146,163,.08);color:var(--dim);}
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px 18px;}
+.kpi .v{font-family:var(--mono);font-size:26px;font-weight:700;}
+.kpi .l{font-size:11px;color:var(--dim);margin-top:3px;text-transform:uppercase;}
+.kpi.red .v{color:var(--red);} .kpi.amber .v{color:var(--amber);} .kpi.green .v{color:var(--green);}
+.approval-card{background:var(--panel-2);border:1px solid var(--border);border-radius:9px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+.approval-card.gated{opacity:.45;}
+.approval-card .lvl{font-family:var(--mono);font-size:10px;color:var(--dim);text-transform:uppercase;}
+.approval-card .who{font-size:13px;font-weight:600;margin-top:2px;}
+.approval-card .meta{font-size:11px;color:var(--dim);margin-top:3px;}
+.approval-actions{display:flex;gap:8px;align-items:center;}
+.small-note{font-size:11px;color:var(--dim);margin-top:8px;line-height:1.5;}
+.empty{padding:26px;text-align:center;color:var(--dim);font-size:12.5px;}
+.config-box{background:var(--panel-2);border:1px dashed var(--border);border-radius:9px;padding:16px;margin-bottom:16px;}
+code.inline{background:var(--panel-2);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:11.5px;color:var(--blue);}
+.banner{padding:12px 16px;border-radius:8px;font-size:12.5px;margin-bottom:16px;}
+.banner.warn{background:rgba(242,169,59,.1);border:1px solid rgba(242,169,59,.3);color:var(--amber);}
+.banner.err{background:rgba(224,82,77,.1);border:1px solid rgba(224,82,77,.3);color:var(--red);}
+</style>
+</head>
+<body>
+
+<div class="rail">
+  <div class="rail-brand">
+    <div class="mark">OT<span>/</span>Command</div>
+    <div class="sub">Supabase Edition</div>
+  </div>
+  <div class="tab active" data-view="connect"><span class="n">00</span> Connect</div>
+  <div class="tab" data-view="intake"><span class="n">01</span> Intake Hub</div>
+  <div class="tab" data-view="rules"><span class="n">02</span> Rule Engine</div>
+  <div class="tab" data-view="approval"><span class="n">03</span> Approval Matrix</div>
+  <div class="tab" data-view="dashboard"><span class="n">04</span> Wellness Dashboard</div>
+  <div class="tab" data-view="bulk"><span class="n">05</span> Bulk / Roster</div>
+  <div class="rail-foot">
+    <div class="stat"><span>Entries</span><b id="statEntries">0</b></div>
+    <div class="stat"><span>Pending approvals</span><b id="statPending" style="color:var(--amber)">0</b></div>
+  </div>
+  <div class="conn-status"><span class="conn-dot" id="connDot"></span><span id="connText">Not connected</span></div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <div>
+      <h1 id="viewTitle">Connect</h1>
+      <div class="desc" id="viewDesc">Point this tool at your Supabase project.</div>
+    </div>
+    <div class="acting-as">
+      Acting as: <input type="text" id="actingAs" value="R. Cruz" placeholder="Your name">
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== VIEW 0: CONNECT ===== -->
+    <div class="view active" id="view-connect">
+      <div class="panel">
+        <h2>Supabase connection</h2>
+        <p class="hint">Run <code class="inline">supabase_schema.sql</code> in your project's SQL Editor once, then paste your Project URL and anon public key below (Project Settings &rarr; API). The anon key is safe to embed client-side &mdash; Row Level Security in the schema controls what it can actually do. To skip pasting these every session, hardcode them into the <code class="inline">SUPABASE_URL</code> / <code class="inline">SUPABASE_ANON_KEY</code> constants near the top of the &lt;script&gt; tag before you host this file on SharePoint.</p>
+        <div class="config-box">
+          <label>Project URL</label>
+          <input type="text" id="cfgUrl" placeholder="https://xxxxxxxx.supabase.co" value="https://qvqgolyuvyqsbqzlblqf.supabase.co">
+          <label>Anon public key</label>
+          <input type="text" id="cfgKey" placeholder="eyJhbGciOi..." value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2cWdvbHl1dnlxc2JxemxibHFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNjY3NzYsImV4cCI6MjA5Nzc0Mjc3Nn0.4w83XpsHKUimPho_kYjN_8bGHNEJjqq623MIIHdC0xQ">
+          <div class="btn-row"><button class="btn" onclick="connect()">Connect</button></div>
+          <div class="small-note" id="connectMsg"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>What's persisted vs. computed</h2>
+        <p class="hint" style="margin-bottom:0;">
+          <b>Persisted in Supabase:</b> roster, department rules, OT entries, and every approval action (who, level, timestamp, comment).<br>
+          <b>Computed:</b> weekly cumulative hours and risk level, via a Postgres view + function, so every client sees the same number.<br>
+          <b>Automated:</b> a database trigger builds the 4-level approval chain the moment an entry is inserted, and a second trigger blocks approving a level before the levels below it clear &mdash; enforced in the database, not just the UI.
+        </p>
+      </div>
+    </div>
+
+    <!-- ===== VIEW 1: INTAKE ===== -->
+    <div class="view" id="view-intake">
+      <div class="grid2">
+        <div class="panel">
+          <h2>New OT Entry</h2>
+          <p class="hint">Submitting an entry writes to <code class="inline">ot_entries</code> and the database trigger auto-creates its approval chain.</p>
+          <label>Employee</label>
+          <select id="inEmp"></select>
+          <label>OT Date</label>
+          <input type="date" id="inDate">
+          <label>OT Hours</label>
+          <input type="number" id="inHours" step="0.5" min="0.5" max="16" value="2">
+          <label>OT Reason</label>
+          <select id="inReason"><option>UAT</option><option>Production Fix</option><option>Monthly Close</option><option>Ad-hoc</option><option>Project</option></select>
+          <div id="handoverWrap" style="display:none;">
+            <label>Handover / Continuation Plan <span style="color:var(--amber);font-weight:400;">&mdash; required, hours &gt; 4</span></label>
+            <textarea id="inHandover" placeholder="What happens if this isn't finished tonight?"></textarea>
+          </div>
+          <div class="btn-row"><button class="btn" onclick="submitEntry()">Submit entry</button></div>
+          <div class="small-note" id="submitMsg"></div>
+        </div>
+        <div class="panel">
+          <h2>Recent submissions</h2>
+          <div id="recentTableWrap"><div class="empty">Connect and load data to see entries.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW 2: RULES ===== -->
+    <div class="view" id="view-rules">
+      <div class="panel">
+        <h2>Department Parameter Table</h2>
+        <p class="hint">Edits write directly to <code class="inline">department_rules</code>. Every open risk calculation re-reads this table, so changes take effect on the next entry or refresh.</p>
+        <table id="rulesTable"></table>
+      </div>
+    </div>
+
+    <!-- ===== VIEW 3: APPROVAL MATRIX ===== -->
+    <div class="view" id="view-approval">
+      <div class="panel">
+        <h2>Pending across all entries</h2>
+        <p class="hint">Every approval row currently waiting on someone, database-wide. Approve/Reject writes to <code class="inline">approvals</code> as the person set in "Acting as" above. A level can't be approved until the levels below it are cleared &mdash; enforced by a Postgres trigger, not just this UI.</p>
+        <div id="approvalListWrap"><div class="empty">Connect and load data to see pending approvals.</div></div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW 4: DASHBOARD ===== -->
+    <div class="view" id="view-dashboard">
+      <div class="kpi-row">
+        <div class="kpi"><div class="v" id="kpiTotalHours">0</div><div class="l">Total OT hours logged</div></div>
+        <div class="kpi amber"><div class="v" id="kpiElevatedCount">0</div><div class="l">Employees elevated (latest wk)</div></div>
+        <div class="kpi red"><div class="v" id="kpiCriticalCount">0</div><div class="l">Employees critical (latest wk)</div></div>
+        <div class="kpi green"><div class="v" id="kpiFullyApproved">0</div><div class="l">Entries fully approved</div></div>
+      </div>
+      <div class="panel">
+        <h2>Flagged list &mdash; latest week</h2>
+        <div id="flaggedTableWrap"><div class="empty">Connect and load data to populate.</div></div>
+      </div>
+    </div>
+
+    <!-- ===== VIEW 5: BULK / ROSTER ===== -->
+    <div class="view" id="view-bulk">
+      <div class="grid2">
+        <div class="panel">
+          <h2>Bulk roster upload</h2>
+          <p class="hint">Upload a CSV/XLSX to add or update many employees in one call. Columns: <code class="inline">EmployeeID, Name, Dept, Grade, TL, SM, OM, BUH</code>. New departments get a default rule row (Max 10h/wk, High-Risk 15h) &mdash; adjust it on the Rule Engine tab after.</p>
+          <input type="file" id="rosterFile" accept=".csv,.xlsx,.xls">
+          <div class="btn-row"><button class="btn" onclick="uploadRoster()">Upload roster</button></div>
+          <div class="small-note" id="rosterMsg"></div>
+        </div>
+        <div class="panel">
+          <h2>Bulk OT entries upload</h2>
+          <p class="hint">Upload many entries in a single batched insert &mdash; one round trip instead of one per row, so a whole week for a whole team lands in seconds. Columns: <code class="inline">EmployeeID, Date, Hours, Reason, Handover</code> (Handover optional; auto-filled when Hours &gt; 4 and left blank). Rows with an unrecognized Employee ID, a future date, or zero/blank hours are skipped and listed below &mdash; nothing else in the batch is affected.</p>
+          <input type="file" id="entriesFile" accept=".csv,.xlsx,.xls">
+          <div class="btn-row"><button class="btn" onclick="uploadEntries()">Upload entries</button></div>
+          <div class="small-note" id="entriesMsg"></div>
+          <div id="entriesSkipped"></div>
+        </div>
+      </div>
+    </div>
+
+
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — optionally hardcode these two before hosting on SharePoint
+   ============================================================ */
+const SUPABASE_URL = "https://qvqgolyuvyqsbqzlblqf.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2cWdvbHl1dnlxc2JxemxibHFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNjY3NzYsImV4cCI6MjA5Nzc0Mjc3Nn0.4w83XpsHKUimPho_kYjN_8bGHNEJjqq623MIIHdC0xQ";
+
+let sb = null;
+let roster = [];
+let rules = {};
+
+/* ============================================================
+   CONNECT
+   ============================================================ */
+async function connect(){
+  const url = document.getElementById("cfgUrl").value.trim() || SUPABASE_URL;
+  const key = document.getElementById("cfgKey").value.trim() || SUPABASE_ANON_KEY;
+  const msg = document.getElementById("connectMsg");
+  if(!url || !key){ msg.style.color="var(--red)"; msg.textContent="Both Project URL and anon key are required."; return; }
+
+  // Reuse the existing client instead of creating a new one each time connect() runs
+  // (auto-connect on load + a manual click otherwise creates two GoTrueClient instances
+  // sharing the same storage key, which is what triggers that console warning).
+  if(sb){
+    msg.style.color="var(--green)"; msg.textContent="Already connected.";
+    return;
+  }
+
+  try{
+    sb = window.supabase.createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false } // no Supabase Auth in use yet — nothing to persist
+    });
+    const {data, error} = await sb.from("employees").select("id").limit(1);
+    if(error) throw error;
+    msg.style.color="var(--green)"; msg.textContent="Connected.";
+    document.getElementById("connDot").className="conn-dot ok";
+    document.getElementById("connText").textContent="Connected";
+    await loadRoster();
+    await loadRules();
+    await refreshAll();
+    subscribeRealtime();
+  }catch(err){
+    sb = null;
+    msg.style.color="var(--red)"; msg.textContent="Connection failed: "+err.message;
+    document.getElementById("connDot").className="conn-dot bad";
+    document.getElementById("connText").textContent="Connection failed";
+  }
+}
+
+function subscribeRealtime(){
+  sb.channel("ot-live")
+    .on("postgres_changes", {event:"*", schema:"public", table:"ot_entries"}, refreshAll)
+    .on("postgres_changes", {event:"*", schema:"public", table:"approvals"}, refreshAll)
+    .subscribe();
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+const titles = {
+  connect:["Connect","Point this tool at your Supabase project."],
+  intake:["Intake Hub","Log an OT request — writes to ot_entries."],
+  rules:["Rule Engine","Department tolerances, live from department_rules."],
+  approval:["Approval Matrix","Multi-level approvals, persisted and gated in Postgres."],
+  dashboard:["Wellness Dashboard","Flags and totals computed from live data."],
+  bulk:["Bulk / Roster","Upload a roster or many OT entries at once."]
+};
+document.querySelectorAll(".tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+    tab.classList.add("active");
+    const v = tab.dataset.view;
+    document.querySelectorAll(".view").forEach(vw=>vw.classList.remove("active"));
+    document.getElementById("view-"+v).classList.add("active");
+    document.getElementById("viewTitle").textContent = titles[v][0];
+    document.getElementById("viewDesc").textContent = titles[v][1];
+    if(sb) refreshAll();
+  });
+});
+
+/* ============================================================
+   DATA LOADERS
+   ============================================================ */
+async function loadRoster(){
+  const {data, error} = await sb.from("employees").select("*").order("name");
+  if(!error) roster = data;
+  const sel = document.getElementById("inEmp");
+  sel.innerHTML = roster.map(e=>`<option value="${e.id}">${e.name} — ${e.dept}</option>`).join("");
+}
+
+async function loadRules(){
+  const {data, error} = await sb.from("department_rules").select("*").order("dept");
+  if(!error){
+    rules = {};
+    data.forEach(r=> rules[r.dept] = r);
+  }
+  renderRules();
+}
+
+function renderRules(){
+  const tbl = document.getElementById("rulesTable");
+  let rows = `<tr><th>Dept</th><th>Max Hours / Week</th><th>Max Consecutive Days</th><th>High-Risk Threshold</th></tr>`;
+  Object.keys(rules).forEach(dept=>{
+    const r = rules[dept];
+    rows += `<tr>
+      <td style="font-family:var(--body);font-weight:600;">${dept}</td>
+      <td><input type="number" value="${r.max_hours_week}" style="margin:0;padding:5px 8px;" onchange="updateRule('${dept}','max_hours_week',this.value)"></td>
+      <td><input type="number" value="${r.max_consecutive_days}" style="margin:0;padding:5px 8px;" onchange="updateRule('${dept}','max_consecutive_days',this.value)"></td>
+      <td><input type="number" value="${r.high_risk}" style="margin:0;padding:5px 8px;" onchange="updateRule('${dept}','high_risk',this.value)"></td>
+    </tr>`;
+  });
+  tbl.innerHTML = rows;
+}
+
+async function updateRule(dept, field, value){
+  const payload = {}; payload[field] = Number(value);
+  const {error} = await sb.from("department_rules").update(payload).eq("dept", dept);
+  if(error) alert("Update failed: "+error.message);
+  await loadRules();
+  await refreshAll();
+}
+
+/* ============================================================
+   INTAKE
+   ============================================================ */
+document.getElementById("inHours").addEventListener("input", ()=>{
+  const h = Number(document.getElementById("inHours").value);
+  document.getElementById("handoverWrap").style.display = h>4 ? "block" : "none";
+});
+document.getElementById("inDate").valueAsDate = new Date();
+
+async function submitEntry(){
+  const msg = document.getElementById("submitMsg");
+  if(!sb){ msg.style.color="var(--red)"; msg.textContent="Connect to Supabase first."; return; }
+  const employee_id = document.getElementById("inEmp").value;
+  const ot_date = document.getElementById("inDate").value;
+  const hours = Number(document.getElementById("inHours").value);
+  const reason = document.getElementById("inReason").value;
+  const handover = document.getElementById("inHandover").value.trim();
+
+  if(!ot_date || !hours || hours<=0){ msg.style.color="var(--red)"; msg.textContent="Date and Hours are required."; return; }
+  if(hours>4 && !handover){ msg.style.color="var(--red)"; msg.textContent="Handover Plan is required when Hours exceed 4."; return; }
+
+  const {error} = await sb.from("ot_entries").insert({employee_id, ot_date, hours, reason, handover: handover || null});
+  if(error){ msg.style.color="var(--red)"; msg.textContent="Insert failed: "+error.message; return; }
+  msg.style.color="var(--green)"; msg.textContent="Entry logged — approval chain created.";
+  document.getElementById("inHandover").value="";
+  await refreshAll();
+}
+
+async function renderRecentTable(){
+  const wrap = document.getElementById("recentTableWrap");
+  const {data, error} = await sb.from("ot_entries")
+    .select("id, ot_date, hours, reason, week_ending, employee_id, employees(name)")
+    .order("ot_date", {ascending:false}).limit(8);
+  if(error || !data || data.length===0){ wrap.innerHTML='<div class="empty">No entries yet.</div>'; return; }
+  const rows = await Promise.all(data.map(async e=>{
+    const {data: risk} = await sb.rpc("risk_level", {p_employee_id:e.employee_id, p_week_ending:e.week_ending});
+    return `<tr><td>${e.employees?.name || e.employee_id}</td><td>${e.ot_date}</td><td>${e.hours}h</td><td>${e.reason}</td><td><span class="tag ${risk}">${risk}</span></td></tr>`;
+  }));
+  wrap.innerHTML = `<table><tr><th>Employee</th><th>Date</th><th>Hours</th><th>Reason</th><th>Wk Risk</th></tr>${rows.join("")}</table>`;
+}
+
+/* ============================================================
+   APPROVAL MATRIX
+   ============================================================ */
+async function renderApprovalList(){
+  const wrap = document.getElementById("approvalListWrap");
+  const {data, error} = await sb.from("approvals")
+    .select("id, level, role, approver_name, status, entry_id, comment, ot_entries(ot_date, hours, reason, employee_id, employees(name, dept))")
+    .neq("status","skipped")
+    .order("entry_id").order("level");
+  if(error || !data || data.length===0){ wrap.innerHTML='<div class="empty">No approvals to show.</div>'; return; }
+
+  // group by entry
+  const byEntry = {};
+  data.forEach(a=>{ (byEntry[a.entry_id] = byEntry[a.entry_id] || []).push(a); });
+
+  let html = "";
+  Object.values(byEntry).forEach(chain=>{
+    chain.sort((a,b)=>a.level-b.level);
+    const entry = chain[0].ot_entries;
+    if(!entry) return;
+    html += `<div style="margin-bottom:16px;">
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:8px;">
+        <b style="color:var(--text)">${entry.employees?.name}</b> · ${entry.employees?.dept} · ${entry.ot_date} · ${entry.hours}h · ${entry.reason}
+      </div>`;
+    chain.forEach((a, idx)=>{
+      const gated = a.status==="pending" && chain.slice(0,idx).some(prior=>prior.status==="pending");
+      html += `<div class="approval-card ${gated?'gated':''}">
+        <div>
+          <div class="lvl">Level ${a.level} · ${a.role}</div>
+          <div class="who">${a.approver_name}</div>
+          <div class="meta">${a.comment ? 'Note: '+a.comment : ''}</div>
+        </div>
+        <div class="approval-actions">
+          <span class="tag ${a.status}">${a.status}</span>
+          ${a.status==="pending" ? `
+            <button class="btn small" ${gated?'disabled':''} onclick="actOnApproval('${a.id}','approved')">Approve</button>
+            <button class="btn small danger" ${gated?'disabled':''} onclick="actOnApproval('${a.id}','rejected')">Reject</button>
+          ` : ''}
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  wrap.innerHTML = html || '<div class="empty">Nothing pending.</div>';
+}
+
+async function actOnApproval(id, status){
+  const acted_by = document.getElementById("actingAs").value.trim() || "Unknown";
+  const {error} = await sb.from("approvals").update({status, acted_by}).eq("id", id);
+  if(error){ alert("Action failed: "+error.message); return; }
+  await refreshAll();
+}
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+async function renderDashboard(){
+  const {data: entries} = await sb.from("ot_entries").select("hours");
+  const totalHours = (entries||[]).reduce((s,e)=>s+Number(e.hours),0);
+  document.getElementById("kpiTotalHours").textContent = Math.round(totalHours*10)/10;
+
+  const {data: latest} = await sb.from("ot_entries").select("week_ending").order("week_ending",{ascending:false}).limit(1);
+  const we = latest && latest[0] ? latest[0].week_ending : null;
+
+  let elevated=0, critical=0;
+  let flaggedRows = "";
+  if(we){
+    for(const emp of roster){
+      const {data: risk} = await sb.rpc("risk_level", {p_employee_id:emp.id, p_week_ending:we});
+      if(risk==="Elevated") elevated++;
+      if(risk==="Critical") critical++;
+      if(risk!=="Normal"){
+        const {data: cumRows} = await sb.from("weekly_cumulative").select("cumulative_hours").eq("employee_id",emp.id).eq("week_ending",we);
+        const cum = cumRows && cumRows[0] ? cumRows[0].cumulative_hours : 0;
+        flaggedRows += `<tr><td style="font-family:var(--body)">${emp.name}</td><td>${emp.dept}</td><td>${cum}h</td><td><span class="tag ${risk}">${risk}</span></td><td style="font-family:var(--body)">${emp.buh}</td></tr>`;
+      }
+    }
+  }
+  document.getElementById("kpiElevatedCount").textContent = elevated;
+  document.getElementById("kpiCriticalCount").textContent = critical;
+
+  const flagWrap = document.getElementById("flaggedTableWrap");
+  flagWrap.innerHTML = flaggedRows
+    ? `<table><tr><th>Employee</th><th>Dept</th><th>Cumulative</th><th>Risk</th><th>Escalates to</th></tr>${flaggedRows}</table><div class="small-note">Week ending ${we}</div>`
+    : '<div class="empty">No flags for the latest week.</div>';
+
+  const {data: allApprovals} = await sb.from("approvals").select("entry_id, status");
+  const byEntry = {};
+  (allApprovals||[]).forEach(a=>{ (byEntry[a.entry_id]=byEntry[a.entry_id]||[]).push(a.status); });
+  const fully = Object.values(byEntry).filter(statuses => statuses.every(s=>s==="approved"||s==="skipped")).length;
+  document.getElementById("kpiFullyApproved").textContent = fully;
+}
+
+/* ============================================================
+   GLOBAL REFRESH
+   ============================================================ */
+async function refreshAll(){
+  if(!sb) return;
+  const {count: entryCount} = await sb.from("ot_entries").select("*",{count:"exact",head:true});
+  const {count: pendingCount} = await sb.from("approvals").select("*",{count:"exact",head:true}).eq("status","pending");
+  document.getElementById("statEntries").textContent = entryCount || 0;
+  document.getElementById("statPending").textContent = pendingCount || 0;
+
+  const activeView = document.querySelector(".tab.active").dataset.view;
+  if(activeView==="intake") await renderRecentTable();
+  if(activeView==="approval") await renderApprovalList();
+  if(activeView==="dashboard") await renderDashboard();
+}
+
+/* ============================================================
+   BULK ROSTER UPLOAD
+   ============================================================ */
+function readWorkbook(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = evt=>{
+      try{
+        const wb = XLSX.read(evt.target.result, {type:"binary"});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        resolve(XLSX.utils.sheet_to_json(sheet, {defval:""}));
+      }catch(err){ reject(err); }
+    };
+    reader.onerror = reject;
+    reader.readAsBinaryString(file);
+  });
+}
+
+async function uploadRoster(){
+  const msg = document.getElementById("rosterMsg");
+  const file = document.getElementById("rosterFile").files[0];
+  if(!sb){ msg.style.color="var(--red)"; msg.textContent="Connect to Supabase first."; return; }
+  if(!file){ msg.style.color="var(--red)"; msg.textContent="Choose a file first."; return; }
+  msg.style.color="var(--muted)"; msg.textContent="Reading file...";
+
+  try{
+    const rows = await readWorkbook(file);
+    const employeesToUpsert = [];
+    const deptsSeen = new Set();
+    let skipped = 0;
+
+    rows.forEach(r=>{
+      const id = String(r.EmployeeID || r.employeeId || r["Employee ID"] || "").trim();
+      const name = String(r.Name || r.name || "").trim();
+      const dept = String(r.Dept || r.dept || r.Department || "").trim();
+      if(!id || !name || !dept){ skipped++; return; }
+      employeesToUpsert.push({
+        id, name, dept,
+        grade: String(r.Grade || r.grade || "").trim() || null,
+        tl: String(r.TL || r.tl || "").trim() || null,
+        sm: String(r.SM || r.sm || "").trim() || null,
+        om: String(r.OM || r.om || "").trim() || null,
+        buh: String(r.BUH || r.buh || "").trim() || null,
+      });
+      deptsSeen.add(dept);
+    });
+
+    if(employeesToUpsert.length===0){ msg.style.color="var(--red)"; msg.textContent="No valid rows found (need EmployeeID, Name, Dept)."; return; }
+
+    // Ensure every department referenced has a rules row before employees reference it (FK constraint)
+    const { data: existingRules } = await sb.from("department_rules").select("dept");
+    const known = new Set((existingRules||[]).map(r=>r.dept));
+    const newDeptRows = [...deptsSeen].filter(d=>!known.has(d)).map(d=>({dept:d, max_hours_week:10, max_consecutive_days:5, high_risk:15}));
+    if(newDeptRows.length){
+      const {error: deptErr} = await sb.from("department_rules").upsert(newDeptRows, {onConflict:"dept"});
+      if(deptErr){ msg.style.color="var(--red)"; msg.textContent="Department setup failed: "+deptErr.message; return; }
+    }
+
+    // Single batched upsert for all employees
+    const {error} = await sb.from("employees").upsert(employeesToUpsert, {onConflict:"id"});
+    if(error){ msg.style.color="var(--red)"; msg.textContent="Upload failed: "+error.message; return; }
+
+    msg.style.color="var(--green)";
+    msg.textContent = `Upserted ${employeesToUpsert.length} employee(s) across ${deptsSeen.size} department(s)${newDeptRows.length? ` (${newDeptRows.length} new dept default rule(s) created)`:""}. Skipped ${skipped} row(s) missing required fields.`;
+    document.getElementById("rosterFile").value = "";
+    await loadRoster();
+    await loadRules();
+  }catch(err){
+    msg.style.color="var(--red)"; msg.textContent="Could not read file: "+err.message;
+  }
+}
+
+/* ============================================================
+   BULK OT ENTRIES UPLOAD (single batched insert)
+   ============================================================ */
+async function uploadEntries(){
+  const msg = document.getElementById("entriesMsg");
+  const skippedWrap = document.getElementById("entriesSkipped");
+  const file = document.getElementById("entriesFile").files[0];
+  if(!sb){ msg.style.color="var(--red)"; msg.textContent="Connect to Supabase first."; return; }
+  if(!file){ msg.style.color="var(--red)"; msg.textContent="Choose a file first."; return; }
+  msg.style.color="var(--muted)"; msg.textContent="Reading file...";
+  skippedWrap.innerHTML = "";
+
+  try{
+    const rows = await readWorkbook(file);
+    const rosterIds = new Set(roster.map(e=>e.id));
+    const today = new Date().toISOString().slice(0,10);
+    const valid = [];
+    const skipped = [];
+
+    rows.forEach((r, i)=>{
+      const employee_id = String(r.EmployeeID || r.employeeId || r["Employee ID"] || "").trim();
+      let ot_date = r.Date || r.date || r["OT Date"] || "";
+      if(ot_date instanceof Date) ot_date = ot_date.toISOString().slice(0,10);
+      ot_date = String(ot_date).slice(0,10);
+      const hours = Number(r.Hours || r.hours || r["OT Hours"]);
+      const reason = String(r.Reason || r.reason || r["OT Reason"] || "Ad-hoc").trim() || "Ad-hoc";
+      let handover = String(r.Handover || r.handover || "").trim();
+
+      if(!rosterIds.has(employee_id)){ skipped.push(`Row ${i+2}: unrecognized Employee ID "${employee_id}"`); return; }
+      if(!ot_date || isNaN(Date.parse(ot_date))){ skipped.push(`Row ${i+2}: invalid date`); return; }
+      if(ot_date > today){ skipped.push(`Row ${i+2}: future date (${ot_date})`); return; }
+      if(!hours || hours<=0){ skipped.push(`Row ${i+2}: missing/zero hours`); return; }
+      if(hours>4 && !handover){ handover = "Bulk import — handover not specified in source file."; }
+
+      valid.push({employee_id, ot_date, hours, reason, handover: handover || null});
+    });
+
+    if(valid.length===0){
+      msg.style.color="var(--red)"; msg.textContent="No valid rows to import.";
+      skippedWrap.innerHTML = skipped.length ? `<div class="small-note">${skipped.slice(0,30).join("<br>")}</div>` : "";
+      return;
+    }
+
+    msg.style.color="var(--muted)"; msg.textContent=`Inserting ${valid.length} entries...`;
+
+    // Batch in chunks of 200 to stay well under request size limits, still far fewer round trips than one-by-one
+    const chunkSize = 200;
+    let inserted = 0;
+    for(let i=0;i<valid.length;i+=chunkSize){
+      const chunk = valid.slice(i, i+chunkSize);
+      const {error} = await sb.from("ot_entries").insert(chunk);
+      if(error){ skipped.push(`Batch starting row ${i+2}: ${error.message}`); continue; }
+      inserted += chunk.length;
+    }
+
+    msg.style.color="var(--green)";
+    msg.textContent = `Inserted ${inserted} of ${rows.length} row(s). Approval chains were auto-created for each. ${skipped.length} skipped.`;
+    skippedWrap.innerHTML = skipped.length ? `<div class="small-note">${skipped.slice(0,30).join("<br>")}${skipped.length>30? "<br>...and "+(skipped.length-30)+" more":""}</div>` : "";
+    document.getElementById("entriesFile").value = "";
+    await refreshAll();
+  }catch(err){
+    msg.style.color="var(--red)"; msg.textContent="Could not read file: "+err.message;
+  }
+}
+
+/* ============================================================
+   AUTO-CONNECT ON LOAD
+   ============================================================ */
+window.addEventListener("DOMContentLoaded", ()=>{
+  if(SUPABASE_URL && SUPABASE_ANON_KEY) connect();
+});
+</script>
+</body>
+</html>
