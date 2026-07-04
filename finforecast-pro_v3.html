@@ -1789,11 +1789,19 @@ let state = { wallets:[], futurePlans:[], payments:[], expenses:[], investments:
 // ══════════════════════════════════════════════════════════════
 const SB_URL  = 'https://qvqgolyuvyqsbqzlblqf.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2cWdvbHl1dnlxc2JxemxibHFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNjY3NzYsImV4cCI6MjA5Nzc0Mjc3Nn0.4w83XpsHKUimPho_kYjN_8bGHNEJjqq623MIIHdC0xQ';
+let _accessToken = ''; // user JWT — set after sign-in, used for all authenticated requests
 
 async function sbFetch(path, opts={}) {
+  // Use the user's JWT for authenticated requests, fall back to anon for auth endpoints
+  const token = _accessToken || SB_ANON;
   const res = await fetch(SB_URL + path, {
     ...opts,
-    headers: { 'Content-Type':'application/json', 'apikey':SB_ANON, 'Authorization':'Bearer '+SB_ANON, ...(opts.headers||{}) }
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SB_ANON,
+      'Authorization': 'Bearer ' + token,
+      ...(opts.headers||{})
+    }
   });
   return res;
 }
@@ -1877,21 +1885,28 @@ async function saveData() {
 }
 
 async function loadData() {
-  if (!_currentUser) return;
+  if (!_currentUser) return false;
   try {
     const res = await sbFetch('/rest/v1/user_data?user_id=eq.' + _currentUser.id + '&select=encrypted_blob&limit=1');
-    if (!res.ok) return;
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('loadData HTTP error:', res.status, errText);
+      showToast('⚠ Could not load data (HTTP ' + res.status + ')');
+      return false;
+    }
     const rows = await res.json();
-    if (!rows.length || !rows[0].encrypted_blob) return;
+    if (!rows.length || !rows[0].encrypted_blob) return false; // new account, no data yet
     const plain = await decryptData(rows[0].encrypted_blob, getMasterPass());
     const parsed = JSON.parse(plain);
     // Merge-safe: keep all known keys
     Object.keys(state).forEach(k => { if (parsed[k] !== undefined) state[k] = parsed[k]; });
+    return true; // data successfully loaded
   } catch(e) {
     console.error('loadData error:', e);
     if (e.name === 'OperationError') {
       showAuthError('Wrong master password — data could not be decrypted.');
     }
+    return false;
   }
 }
 
@@ -1917,6 +1932,7 @@ async function signUp(email, password, masterPass) {
 
   // Email confirmation is OFF (ideal) — we have a full session
   _currentUser = { id: data.user.id, email: data.user.email };
+  _accessToken  = data.access_token;
   _masterPass  = masterPass;
   return data;
 }
@@ -1939,6 +1955,7 @@ async function signIn(email, password, masterPass) {
 
   if (!data.user) throw new Error('Sign-in failed — no user returned.');
   _currentUser = { id: data.user.id, email: data.user.email };
+  _accessToken  = data.access_token;
   _masterPass  = masterPass;
   return data;
 }
@@ -1946,6 +1963,7 @@ async function signIn(email, password, masterPass) {
 async function signOut() {
   _currentUser = null;
   _masterPass  = '';
+  _accessToken = '';
   state = { wallets:[], futurePlans:[], payments:[], expenses:[], investments:[], budgetHistory:[], transfers:[], paymentHistory:[] };
   showLoginScreen();
 }
@@ -4085,8 +4103,9 @@ function confirmSignOut() {
 // ═══════════════════════════════════════════════════════════
 async function bootApp() {
   showAppScreen();
-  await loadData();
-  seedDefaultData();
+  const hasData = await loadData();
+  // Only seed defaults for brand-new accounts with no saved data
+  if (!hasData) seedDefaultData();
   renderWallets();
   updateTopPill();
   document.querySelectorAll('.modal-bg').forEach(function(bg){
