@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AccessIQ — Identity & Access Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --sidebar-bg:#162920; --sidebar-hover:#1e3a2e; --sidebar-active:#1e3a2e;
+  --sidebar-bar:#2dc98a; --sidebar-text:#a8c4b8; --sidebar-muted:#5a7a6a;
+  --canvas:#f0f4f2; --surface:#fff; --surface2:#f7faf8;
+  --border:#e4ede9; --border2:#d0ddd8;
+  --accent:#0ea472; --accent-light:#e6f7f0; --accent-dark:#0a7d57;
+  --text:#111c17; --text2:#4a6358; --text3:#7a9a8a;
+  --red:#ef4444; --red-light:#fef2f2; --amber:#f59e0b; --amber-light:#fffbeb;
+  --blue:#3b82f6; --purple:#8b5cf6; --sidebar-w:240px; --r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Inter',system-ui,sans-serif;font-size:14px}
+body{background:var(--canvas);color:var(--text);display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);background:var(--sidebar-bg);display:flex;flex-direction:column;flex-shrink:0}
+.sb-brand{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
+.sb-brand-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sb-brand-name{font-size:15px;font-weight:700;color:#fff} .sb-brand-sub{font-size:10px;color:var(--sidebar-muted);text-transform:uppercase;letter-spacing:.05em}
+.sb-nav{flex:1;padding:10px;overflow-y:auto}
+.sb-section{font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sidebar-muted);padding:10px 8px 4px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--sidebar-text);font-weight:500;transition:all .13s;border:none;background:none;width:100%;text-align:left;margin-bottom:1px;position:relative}
+.sb-item:hover{background:var(--sidebar-hover);color:#fff}
+.sb-item.active{background:var(--sidebar-active);color:#fff;font-weight:600}
+.sb-item.active::before{content:'';position:absolute;left:0;top:5px;bottom:5px;width:3px;background:var(--sidebar-bar);border-radius:0 3px 3px 0}
+.sb-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.sb-badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;min-width:18px;height:18px;padding:0 5px;border-radius:99px;display:flex;align-items:center;justify-content:center}
+.sb-badge.amber{background:var(--amber)}
+.sb-footer{border-top:1px solid rgba(255,255,255,.07);padding:12px 14px;display:flex;align-items:center;gap:10px}
+.sb-foot-avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-dark);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-foot-name{font-size:12px;font-weight:600;color:#e8f3ee} .sb-foot-role{font-size:10px;color:var(--sidebar-muted)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.topbar h2{font-size:16px;font-weight:700;letter-spacing:-.01em} .topbar p{font-size:12px;color:var(--text3);margin-top:1px}
+.tb-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.content{flex:1;overflow-y:auto;padding:22px 24px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .13s;font-family:inherit;white-space:nowrap}
+.btn-primary{background:var(--accent);color:#fff} .btn-primary:hover{background:var(--accent-dark)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border2)} .btn-ghost:hover{background:var(--surface2);color:var(--text)}
+.btn-danger{background:var(--red-light);color:var(--red);border:1px solid #fecaca} .btn-danger:hover{background:#fee2e2}
+.btn-amber{background:var(--amber-light);color:#92400e;border:1px solid #fde68a} .btn-amber:hover{background:#fef3c7}
+.btn-success{background:var(--accent-light);color:var(--accent-dark);border:1px solid #a7f3d0}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* CARDS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.card-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.card-head h3{font-size:13.5px;font-weight:700} .card-count{font-size:11px;color:var(--text3);background:var(--surface2);border:1px solid var(--border);padding:2px 8px;border-radius:99px}
+.card-head-right{margin-left:auto;display:flex;gap:7px;align-items:center}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden}
+.stat-eyebrow{font-size:10px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);margin-bottom:7px}
+.stat-val{font-size:26px;font-weight:800;letter-spacing:-.03em;line-height:1;color:var(--text)}
+.stat-sub{font-size:11px;color:var(--text3);margin-top:5px}
+.stat-icon{position:absolute;right:14px;top:14px;width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.stat-icon.green{background:var(--accent-light)} .stat-icon.amber{background:var(--amber-light)} .stat-icon.red{background:var(--red-light)} .stat-icon.blue{background:#eff6ff} .stat-icon.purple{background:#f5f3ff}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+thead th{padding:9px 14px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);text-align:left;background:var(--surface2);border-bottom:1px solid var(--border)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#f5faf7}
+td{padding:11px 14px;font-size:13px;vertical-align:middle}
+.tbl-wrap{overflow-x:auto}
+
+/* USER CELL */
+.u-cell{display:flex;align-items:center;gap:10px}
+.avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.u-name{font-weight:600;font-size:13px} .u-email{font-size:11px;color:var(--text3);margin-top:1px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600}
+.badge-admin{background:rgba(139,92,246,.12);color:#7c3aed;border:1px solid rgba(139,92,246,.25)}
+.badge-manager{background:rgba(59,130,246,.1);color:#1d4ed8;border:1px solid rgba(59,130,246,.2)}
+.badge-supervisor{background:rgba(6,182,212,.1);color:#0e7490;border:1px solid rgba(6,182,212,.2)}
+.badge-employee{background:var(--accent-light);color:var(--accent-dark);border:1px solid #a7f3d0}
+.badge-viewer{background:var(--surface2);color:var(--text2);border:1px solid var(--border2)}
+
+.status-dot{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-active{background:var(--accent);box-shadow:0 0 5px rgba(14,164,114,.5)}
+.dot-pending{background:var(--amber)}
+.dot-suspended{background:var(--red)}
+.dot-rejected{background:var(--text3)}
+
+/* PROGRAM CHIPS */
+.prog-chip{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:5px;font-size:10px;font-weight:600;cursor:pointer;transition:all .13s;user-select:none}
+.chip-on{background:var(--accent-light);color:var(--accent-dark);border:1px solid #6ee7b7}
+.chip-off{background:var(--surface2);color:var(--text3);border:1px solid var(--border);opacity:.55}
+.chip-on:hover{background:#d1fae5} .chip-off:hover{opacity:1}
+
+/* ACCESS LEVEL SELECT */
+.level-select{background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:4px 8px;border-radius:7px;font-size:11.5px;cursor:pointer;font-family:inherit}
+.level-select:focus{outline:none;border-color:var(--accent)}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:8px;align-items:center;padding:11px 16px;border-bottom:1px solid var(--border);background:var(--surface2);flex-wrap:wrap}
+.search-w{position:relative;flex:1;min-width:180px}
+.search-w input{width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:7px 10px 7px 30px;border-radius:var(--r);font-size:12.5px;font-family:inherit}
+.search-w input:focus{outline:none;border-color:var(--accent)}
+.search-ico{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:13px;pointer-events:none}
+.filt-sel{background:var(--surface);border:1px solid var(--border2);color:var(--text2);padding:7px 10px;border-radius:var(--r);font-size:12.5px;cursor:pointer;font-family:inherit}
+.filt-sel:focus{outline:none;border-color:var(--accent)}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(10,20,15,.55);backdrop-filter:blur(5px);z-index:100;align-items:center;justify-content:center}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:15px;width:580px;max-height:90vh;overflow-y:auto;box-shadow:0 30px 80px rgba(0,0,0,.2)}
+.modal-lg{width:720px}
+.modal-head{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-head h3{font-size:15px;font-weight:700;flex:1}
+.modal-x{background:none;border:none;cursor:pointer;font-size:17px;color:var(--text3);padding:4px;border-radius:6px;line-height:1}
+.modal-x:hover{background:var(--surface2);color:var(--text)}
+.modal-body{padding:18px 22px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--surface)}
+
+/* FORM */
+.form-group{margin-bottom:14px}
+.form-label{font-size:11.5px;font-weight:600;color:var(--text2);margin-bottom:5px;display:block}
+.form-input,.form-select{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:8px 11px;border-radius:var(--r);font-size:13.5px;font-family:inherit}
+.form-input:focus,.form-select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(14,164,114,.1)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-hint{font-size:11px;color:var(--text3);margin-top:4px}
+textarea.form-input{resize:vertical;min-height:64px}
+
+/* PROGRAM ACCESS GRID */
+.prog-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:5px}
+.prog-item{background:var(--surface2);border:1.5px solid var(--border2);border-radius:var(--r);padding:11px 13px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .13s}
+.prog-item:hover{border-color:var(--accent)}
+.prog-item.enabled{background:var(--accent-light);border-color:#a7f3d0}
+.prog-item-icon{font-size:18px;flex-shrink:0}
+.prog-item-name{font-size:12.5px;font-weight:600;color:var(--text)}
+.prog-item-desc{font-size:10.5px;color:var(--text3);margin-top:1px}
+.prog-item-toggle{margin-left:auto;flex-shrink:0}
+.tog{position:relative;width:36px;height:20px}
+.tog input{opacity:0;width:0;height:0;position:absolute}
+.tog-track{position:absolute;inset:0;background:var(--border2);border-radius:99px;cursor:pointer;transition:.2s}
+.tog-track::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tog input:checked+.tog-track{background:var(--accent)}
+.tog input:checked+.tog-track::before{transform:translateX(16px)}
+
+/* PERMISSIONS TABLE */
+.perm-section{margin-bottom:14px}
+.perm-section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:7px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.perm-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+.perm-label{font-size:12.5px;color:var(--text)}
+
+/* AUDIT LOG */
+.audit-item{display:flex;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border)}
+.audit-item:last-child{border-bottom:none}
+.audit-dot{width:7px;height:7px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0}
+.audit-text{font-size:12.5px;color:var(--text);flex:1}
+.audit-text strong{color:var(--accent-dark)}
+.audit-meta{font-size:10.5px;color:var(--text3);margin-top:2px}
+
+/* PENDING CARD */
+.pending-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;display:flex;align-items:flex-start;gap:14px}
+.pending-card:hover{border-color:var(--accent)}
+.pending-info{flex:1;min-width:0}
+.pending-name{font-size:13.5px;font-weight:700}
+.pending-detail{font-size:12px;color:var(--text3);margin-top:2px}
+.pending-programs{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+.pending-actions{display:flex;gap:6px;flex-shrink:0;align-items:center}
+
+/* SECTION HEADER */
+.sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px}
+.sec-title{font-size:15px;font-weight:700}
+.sec-sub{font-size:12px;color:var(--text3);margin-top:2px}
+
+/* INFO BOXES */
+.info-box{background:var(--accent-light);border:1px solid #a7f3d0;border-radius:var(--r);padding:10px 13px;font-size:12px;color:var(--accent-dark);margin-bottom:14px}
+.warn-box{background:var(--amber-light);border:1px solid #fde68a;border-radius:var(--r);padding:10px 13px;font-size:12px;color:#92400e;margin-bottom:14px}
+.danger-box{background:var(--red-light);border:1px solid #fecaca;border-radius:var(--r);padding:10px 13px;font-size:12px;color:var(--red);margin-bottom:14px}
+
+/* PROFILE VIEW */
+.profile-header{display:flex;align-items:center;gap:20px;padding:20px 22px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,var(--sidebar-bg),#1e3a2e)}
+.profile-avatar-lg{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;flex-shrink:0;border:3px solid rgba(255,255,255,.15)}
+.profile-name{font-size:18px;font-weight:800;color:#fff}
+.profile-role{font-size:12px;color:rgba(255,255,255,.55);margin-top:3px}
+
+/* SECTION HIDDEN */
+.sec-hidden{display:none!important}
+
+/* TOAST */
+#toast-area{position:fixed;bottom:22px;right:22px;z-index:300;display:flex;flex-direction:column;gap:7px}
+.toast{background:var(--text);color:#fff;padding:11px 16px;border-radius:10px;font-size:13px;font-weight:500;box-shadow:0 8px 30px rgba(0,0,0,.18);animation:t-in .22s ease;display:flex;align-items:center;gap:8px;max-width:320px}
+.toast.success{background:var(--accent-dark)} .toast.error{background:var(--red)} .toast.warn{background:#b45309}
+@keyframes t-in{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* EMERGENCY ACTIONS */
+.emergency-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+.emergency-btn{background:var(--red-light);border:1.5px solid #fecaca;border-radius:var(--r);padding:14px;text-align:center;cursor:pointer;transition:all .13s;display:flex;flex-direction:column;align-items:center;gap:6px}
+.emergency-btn:hover{background:#fee2e2;border-color:var(--red)}
+.emergency-btn .em-icon{font-size:22px}
+.emergency-btn .em-label{font-size:12px;font-weight:700;color:var(--red)}
+.emergency-btn .em-sub{font-size:10.5px;color:var(--text3)}
+
+/* LOADING */
+.loading-cell{text-align:center;padding:44px;color:var(--text3);font-size:13px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:7px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-cell{text-align:center;padding:44px;color:var(--text3);font-size:13px}
+
+::-webkit-scrollbar{width:5px;height:5px} ::-webkit-scrollbar-track{background:transparent} ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-brand-icon">🛡</div>
+    <div><div class="sb-brand-name">AccessIQ</div><div class="sb-brand-sub">IAM Portal</div></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Dashboard</div>
+    <button class="sb-item active" onclick="showSection('dashboard',this)"><span class="sb-icon">⊞</span>Overview</button>
+
+    <div class="sb-section">User Management</div>
+    <button class="sb-item" onclick="showSection('pending',this)"><span class="sb-icon">⏳</span>Registration Queue<span class="sb-badge amber" id="badge-pending">0</span></button>
+    <button class="sb-item" onclick="showSection('users',this)"><span class="sb-icon">👥</span>All Users<span class="sb-badge" id="badge-users">0</span></button>
+    <button class="sb-item" onclick="showSection('roles',this)"><span class="sb-icon">🎭</span>Roles & Permissions</button>
+
+    <div class="sb-section">Access Control</div>
+    <button class="sb-item" onclick="showSection('programs',this)"><span class="sb-icon">🔐</span>Program Access</button>
+    <button class="sb-item" onclick="showSection('sessions',this)"><span class="sb-icon">📡</span>Active Sessions</button>
+
+    <div class="sb-section">System</div>
+    <button class="sb-item" onclick="showSection('audit',this)"><span class="sb-icon">📜</span>Audit Logs</button>
+    <button class="sb-item" onclick="showSection('settings',this)"><span class="sb-icon">⚙️</span>Settings</button>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-foot-avatar" id="sbFootAvatar">RD</div>
+    <div><div class="sb-foot-name" id="sbFootName">Ricky Dela Torre</div><div class="sb-foot-role">Super Admin</div></div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+  <div class="topbar">
+    <div><h2 id="topbar-title">Overview</h2><p id="topbar-sub">Identity & Access Management</p></div>
+    <div class="tb-right">
+      <button class="btn btn-ghost btn-sm" onclick="loadAll()">🔄 Refresh</button>
+      <button class="btn btn-primary btn-sm" onclick="openInviteModal()">+ Invite User</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- KEY SETUP -->
+    <div id="key-prompt" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:20px;display:flex;align-items:center;gap:14px;">
+      <div style="font-size:24px">🔑</div>
+      <div><strong style="font-size:13px">Connect Supabase</strong><br><span style="font-size:12px;color:var(--text3)">Enter your <b>service_role</b> key — project <code>qvqgolyuvyqsbqzlblqf</code> is pre-configured.</span></div>
+      <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="key-input" type="password" placeholder="eyJhbGci… (service_role)" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);padding:7px 12px;border-radius:var(--r);font-size:12px;width:260px;font-family:inherit">
+        <button class="btn btn-primary btn-sm" onclick="connectSB()">Connect</button>
+      </div>
+    </div>
+
+    <!-- ══ DASHBOARD ══ -->
+    <div id="sec-dashboard">
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-icon green">👥</div><div class="stat-eyebrow">Total Users</div><div class="stat-val" id="kpi-total">—</div><div class="stat-sub">registered accounts</div></div>
+        <div class="stat-card"><div class="stat-icon green">✅</div><div class="stat-eyebrow">Active</div><div class="stat-val" id="kpi-active">—</div><div class="stat-sub">confirmed & enabled</div></div>
+        <div class="stat-card"><div class="stat-icon amber">⏳</div><div class="stat-eyebrow">Pending Approval</div><div class="stat-val" id="kpi-pending">—</div><div class="stat-sub">awaiting review</div></div>
+        <div class="stat-card"><div class="stat-icon red">🚫</div><div class="stat-eyebrow">Suspended</div><div class="stat-val" id="kpi-suspended">—</div><div class="stat-sub">access disabled</div></div>
+        <div class="stat-card"><div class="stat-icon purple">🛡</div><div class="stat-eyebrow">Admins</div><div class="stat-val" id="kpi-admins">—</div><div class="stat-sub">super + sys admins</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 380px;gap:16px">
+        <!-- Recent Users -->
+        <div class="card">
+          <div class="card-head"><h3>Recent Users</h3><div class="card-head-right"><button class="btn btn-ghost btn-sm" onclick="showSection('users',null)">View All →</button></div></div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Programs</th><th>Joined</th></tr></thead>
+            <tbody id="dash-recent-users"><tr><td colspan="5" class="loading-cell"><span class="spinner"></span>Loading…</td></tr></tbody>
+          </table></div>
+        </div>
+        <!-- Right panel -->
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <!-- Program coverage -->
+          <div class="card" style="padding:18px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:14px">Program Coverage</div>
+            <div id="prog-coverage"></div>
+          </div>
+          <!-- Recent audit -->
+          <div class="card">
+            <div class="card-head"><h3>Recent Activity</h3></div>
+            <div id="dash-recent-audit" style="max-height:220px;overflow-y:auto"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ REGISTRATION QUEUE ══ -->
+    <div id="sec-pending" class="sec-hidden">
+      <div class="sec-head">
+        <div><div class="sec-title">Registration Queue</div><div class="sec-sub">Review and approve user access requests</div></div>
+        <div style="display:flex;gap:7px">
+          <button class="btn btn-ghost btn-sm" onclick="loadPending()">🔄 Refresh</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn btn-ghost btn-sm queue-tab active" onclick="setQueueTab('pending',this)">⏳ Pending</button>
+        <button class="btn btn-ghost btn-sm queue-tab" onclick="setQueueTab('approved',this)">✅ Approved</button>
+        <button class="btn btn-ghost btn-sm queue-tab" onclick="setQueueTab('rejected',this)">❌ Rejected</button>
+      </div>
+      <div id="queue-list"><div class="empty-cell">No pending registrations</div></div>
+    </div>
+
+    <!-- ══ ALL USERS ══ -->
+    <div id="sec-users" class="sec-hidden">
+      <div class="card">
+        <div class="card-head">
+          <h3>All Users</h3><span class="card-count" id="users-count">—</span>
+          <div class="card-head-right">
+            <button class="btn btn-ghost btn-sm" onclick="exportUsersCSV()">⬇ Export</button>
+            <button class="btn btn-primary btn-sm" onclick="openInviteModal()">+ Invite</button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <div class="search-w"><span class="search-ico">🔍</span><input type="text" placeholder="Search name, email, employee ID…" id="users-search" oninput="filterUsers()"></div>
+          <select class="filt-sel" id="users-filt-role" onchange="filterUsers()">
+            <option value="">All Roles</option>
+            <option>super_admin</option><option>sys_admin</option><option>compliance_admin</option>
+            <option>program_manager</option><option>dept_manager</option><option>supervisor</option>
+            <option>employee</option><option>viewer</option>
+          </select>
+          <select class="filt-sel" id="users-filt-status" onchange="filterUsers()">
+            <option value="">All Status</option>
+            <option value="active">Active</option><option value="pending">Pending</option>
+            <option value="suspended">Suspended</option><option value="rejected">Rejected</option>
+          </select>
+          <select class="filt-sel" id="users-filt-prog" onchange="filterUsers()">
+            <option value="">All Programs</option>
+            <option value="rio">RIO Hub</option><option value="attendance">AttendanceIQ</option>
+            <option value="finforecast">FinForecast</option><option value="payslip">Payslip</option>
+          </select>
+        </div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>User</th><th>Role</th><th>Status</th><th>Programs</th><th>Dept</th><th>Joined</th><th>Actions</th></tr></thead>
+          <tbody id="users-tbody"><tr><td colspan="7" class="loading-cell"><span class="spinner"></span>Loading…</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ══ ROLES & PERMISSIONS ══ -->
+    <div id="sec-roles" class="sec-hidden">
+      <div class="sec-head"><div><div class="sec-title">Roles & Permissions</div><div class="sec-sub">Define what each role can do across all programs</div></div></div>
+      <div style="display:grid;grid-template-columns:260px 1fr;gap:16px">
+        <!-- Role list -->
+        <div class="card" style="overflow:hidden">
+          <div class="card-head"><h3>Roles</h3></div>
+          <div id="roles-list" style="padding:8px"></div>
+        </div>
+        <!-- Permission matrix -->
+        <div class="card">
+          <div class="card-head"><h3 id="perm-role-title">Select a role</h3><div class="card-head-right"><button class="btn btn-primary btn-sm" onclick="savePermissions()" id="save-perms-btn" style="display:none">💾 Save</button></div></div>
+          <div id="perm-matrix" style="padding:16px 18px"><div class="empty-cell" style="padding:32px">Select a role from the left to view its permissions</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ PROGRAM ACCESS ══ -->
+    <div id="sec-programs" class="sec-hidden">
+      <div class="sec-head"><div><div class="sec-title">Program Access</div><div class="sec-sub">Manage which users have access to each program</div></div></div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px" id="prog-access-cards"></div>
+    </div>
+
+    <!-- ══ SESSIONS ══ -->
+    <div id="sec-sessions" class="sec-hidden">
+      <div class="card">
+        <div class="card-head"><h3>Active Sessions</h3><span class="card-count" id="sessions-count">—</span><div class="card-head-right"><button class="btn btn-danger btn-sm" onclick="forceLogoutAll()">⚡ Force Logout All</button></div></div>
+        <div class="tbl-wrap"><table>
+          <thead><tr><th>User</th><th>Program</th><th>Device / Browser</th><th>IP Address</th><th>Login Time</th><th>Last Active</th><th>Action</th></tr></thead>
+          <tbody id="sessions-tbody"><tr><td colspan="7" class="loading-cell"><span class="spinner"></span>Loading…</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <!-- ══ AUDIT LOGS ══ -->
+    <div id="sec-audit" class="sec-hidden">
+      <div class="card">
+        <div class="card-head"><h3>Audit Log</h3><span class="card-count" id="audit-count">—</span><div class="card-head-right"><button class="btn btn-ghost btn-sm" onclick="clearLocalAudit()">Clear Local</button></div></div>
+        <div class="filter-bar">
+          <div class="search-w"><span class="search-ico">🔍</span><input type="text" placeholder="Search actions…" id="audit-search" oninput="filterAudit()"></div>
+        </div>
+        <div id="audit-list-full" style="max-height:600px;overflow-y:auto"></div>
+      </div>
+    </div>
+
+    <!-- ══ SETTINGS ══ -->
+    <div id="sec-settings" class="sec-hidden">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div class="card" style="padding:20px">
+          <div style="font-size:14px;font-weight:700;margin-bottom:16px">Registration Settings</div>
+          <div style="display:flex;flex-direction:column;gap:0">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">
+              <div><div style="font-size:13px;font-weight:500">Open Registrations</div><div style="font-size:11px;color:var(--text3)">Allow new users to self-register</div></div>
+              <label class="tog"><input type="checkbox" id="setting-open-reg" checked onchange="saveSetting('open_reg',this.checked)"><span class="tog-track"></span></label>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">
+              <div><div style="font-size:13px;font-weight:500">Admin Approval Required</div><div style="font-size:11px;color:var(--text3)">New accounts must be approved before access</div></div>
+              <label class="tog"><input type="checkbox" id="setting-approval" checked onchange="saveSetting('require_approval',this.checked)"><span class="tog-track"></span></label>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">
+              <div><div style="font-size:13px;font-weight:500">Email Confirmation</div><div style="font-size:11px;color:var(--text3)">Users must verify email before login</div></div>
+              <label class="tog"><input type="checkbox" id="setting-email-confirm" checked onchange="saveSetting('email_confirm',this.checked)"><span class="tog-track"></span></label>
+            </div>
+            <div style="padding:12px 0">
+              <div style="font-size:13px;font-weight:500;margin-bottom:6px">Default Role</div>
+              <select class="form-select" id="setting-default-role" onchange="saveSetting('default_role',this.value)" style="max-width:220px">
+                <option value="employee">Employee</option><option value="viewer">Viewer (Read-only)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="padding:20px">
+          <div style="font-size:14px;font-weight:700;margin-bottom:10px">🚨 Emergency Actions</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:14px">These actions take immediate effect across all programs</div>
+          <div class="emergency-grid">
+            <div class="emergency-btn" onclick="emergencyAction('disable_all')"><div class="em-icon">🔒</div><div class="em-label">Disable All</div><div class="em-sub">Block all user access</div></div>
+            <div class="emergency-btn" onclick="emergencyAction('force_logout')"><div class="em-icon">⚡</div><div class="em-label">Force Logout</div><div class="em-sub">Terminate all sessions</div></div>
+            <div class="emergency-btn" onclick="emergencyAction('lock_reg')"><div class="em-icon">🚫</div><div class="em-label">Lock Registrations</div><div class="em-sub">Stop new sign-ups</div></div>
+          </div>
+          <div style="margin-top:14px">
+            <div style="font-size:13px;font-weight:700;margin-bottom:6px">Allowed Email Domains</div>
+            <input class="form-input" id="setting-domains" placeholder="sagility.com, gmail.com" style="font-size:12.5px">
+            <div class="form-hint">Comma-separated. Leave blank to allow all.</div>
+            <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="saveSetting('allowed_domains',document.getElementById('setting-domains').value)">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- INVITE -->
+<div class="modal-bg" id="invite-modal">
+  <div class="modal">
+    <div class="modal-head"><span style="font-size:18px">✉️</span><h3>Invite New User</h3><button class="modal-x" onclick="closeModal('invite-modal')">✕</button></div>
+    <div class="modal-body">
+      <div class="info-box">📌 An invite email will be sent. For @sagility.com emails, use USB/OneDrive due to Mimecast link rewriting.</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" id="inv-name" placeholder="Juan Dela Cruz"></div>
+        <div class="form-group"><label class="form-label">Email *</label><input class="form-input" id="inv-email" type="email" placeholder="name@sagility.com"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Employee ID</label><input class="form-input" id="inv-empid" placeholder="SG012345" style="text-transform:uppercase"></div>
+        <div class="form-group"><label class="form-label">Department</label><input class="form-input" id="inv-dept" placeholder="PHCC – WFM Cigna"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Role *</label>
+          <select class="form-select" id="inv-role">
+            <option value="employee">Employee</option><option value="viewer">Viewer</option>
+            <option value="supervisor">Supervisor</option><option value="dept_manager">Dept Manager</option>
+            <option value="program_manager">Program Manager</option><option value="sys_admin">Sys Admin</option>
+            <option value="super_admin">Super Admin</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Position</label><input class="form-input" id="inv-position" placeholder="Real Time Analyst"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Program Access</label>
+        <div class="prog-grid" id="inv-prog-grid"></div>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn btn-ghost" onclick="closeModal('invite-modal')">Cancel</button><button class="btn btn-primary" onclick="sendInvite()">📨 Send Invite</button></div>
+  </div>
+</div>
+
+<!-- EDIT USER -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal modal-lg">
+    <div class="modal-head"><span style="font-size:18px">✏️</span><h3 id="edit-modal-title">Edit User</h3><button class="modal-x" onclick="closeModal('edit-modal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-uid">
+      <!-- Profile header -->
+      <div class="profile-header" style="margin:-18px -22px 18px;border-radius:0">
+        <div class="profile-avatar-lg" id="edit-avatar" style="background:#0a7d57">RD</div>
+        <div><div class="profile-name" id="edit-header-name">—</div><div class="profile-role" id="edit-header-email">—</div></div>
+        <div style="margin-left:auto;display:flex;gap:8px" id="edit-emergency-btns"></div>
+      </div>
+      <!-- Tabs -->
+      <div style="display:flex;gap:2px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:3px;width:fit-content;margin-bottom:16px">
+        <button class="btn btn-primary btn-sm edit-tab active" onclick="switchEditTab('info',this)">👤 Profile</button>
+        <button class="btn btn-ghost btn-sm edit-tab" onclick="switchEditTab('programs',this)">🔐 Programs</button>
+        <button class="btn btn-ghost btn-sm edit-tab" onclick="switchEditTab('security',this)">🔒 Security</button>
+        <button class="btn btn-ghost btn-sm edit-tab" onclick="switchEditTab('activity',this)">📜 Activity</button>
+      </div>
+      <!-- Profile tab -->
+      <div id="edit-tab-info">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="edit-name"></div>
+          <div class="form-group"><label class="form-label">Employee ID</label><input class="form-input" id="edit-empid" style="text-transform:uppercase"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Department</label><input class="form-input" id="edit-dept"></div>
+          <div class="form-group"><label class="form-label">Position</label><input class="form-input" id="edit-position"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Role</label>
+            <select class="form-select" id="edit-role">
+              <option value="employee">Employee</option><option value="viewer">Viewer</option>
+              <option value="supervisor">Supervisor</option><option value="dept_manager">Dept Manager</option>
+              <option value="program_manager">Program Manager</option><option value="compliance_admin">Compliance Admin</option>
+              <option value="sys_admin">Sys Admin</option><option value="super_admin">Super Admin</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Account Status</label>
+            <select class="form-select" id="edit-status">
+              <option value="active">Active</option><option value="pending">Pending</option>
+              <option value="suspended">Suspended</option><option value="rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Company / Site</label><input class="form-input" id="edit-company" placeholder="Sagility Philippines"></div>
+          <div class="form-group"><label class="form-label">Manager</label><input class="form-input" id="edit-manager" placeholder="Manager name"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="edit-notes" rows="2" placeholder="Internal notes…"></textarea></div>
+      </div>
+      <!-- Programs tab -->
+      <div id="edit-tab-programs" class="sec-hidden">
+        <div class="warn-box">⚠️ Changes to program access take effect immediately on the user's <strong>next login</strong>. To terminate an active session instantly, use Force Logout in the Security tab.</div>
+        <div id="edit-prog-grid" class="prog-grid"></div>
+        <div style="margin-top:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Access Levels per Program</div>
+          <div id="edit-access-levels" style="display:flex;flex-direction:column;gap:6px"></div>
+        </div>
+      </div>
+      <!-- Security tab -->
+      <div id="edit-tab-security" class="sec-hidden">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="danger-box" id="edit-security-status">Account status: checking…</div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+            <button class="btn btn-amber" onclick="emergencyUserAction('suspend')">⏸ Suspend Account</button>
+            <button class="btn btn-success" onclick="emergencyUserAction('reactivate')">▶ Reactivate</button>
+            <button class="btn btn-amber" onclick="emergencyUserAction('force_logout')">⚡ Force Logout</button>
+            <button class="btn btn-amber" onclick="emergencyUserAction('reset_password')">🔑 Reset Password</button>
+            <button class="btn btn-danger" style="grid-column:1/-1" onclick="emergencyUserAction('delete')">🗑 Delete Account</button>
+          </div>
+          <div style="font-size:12px;color:var(--text3);padding-top:8px;border-top:1px solid var(--border)">
+            <strong>Last Login:</strong> <span id="edit-last-login">—</span><br>
+            <strong>Email Confirmed:</strong> <span id="edit-email-confirmed">—</span>
+          </div>
+        </div>
+      </div>
+      <!-- Activity tab -->
+      <div id="edit-tab-activity" class="sec-hidden">
+        <div id="edit-activity-log" style="max-height:320px;overflow-y:auto"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('edit-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveUser()" id="save-user-btn">💾 Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- APPROVE REGISTRATION -->
+<div class="modal-bg" id="approve-modal">
+  <div class="modal">
+    <div class="modal-head"><span style="font-size:18px">✅</span><h3>Approve Registration</h3><button class="modal-x" onclick="closeModal('approve-modal')">✕</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="approve-uid">
+      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);padding:13px;margin-bottom:14px">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--text3);margin-bottom:5px">Submitted by applicant</div>
+        <div style="font-size:14px;font-weight:700" id="approve-name">—</div>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px" id="approve-email">—</div>
+        <div style="font-size:12px;color:var(--text3)" id="approve-dept">—</div>
+        <div style="font-size:12px;color:var(--text3)" id="approve-requested-programs">—</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Employee ID *</label><input class="form-input" id="approve-empid" placeholder="SG012345" style="text-transform:uppercase"></div>
+        <div class="form-group"><label class="form-label">Role *</label>
+          <select class="form-select" id="approve-role">
+            <option value="employee">Employee</option><option value="viewer">Viewer</option>
+            <option value="supervisor">Supervisor</option><option value="dept_manager">Dept Manager</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Department</label><input class="form-input" id="approve-dept-input"></div>
+        <div class="form-group"><label class="form-label">Position</label><input class="form-input" id="approve-position"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Program Access (approve what was requested)</label><div class="prog-grid" id="approve-prog-grid"></div></div>
+      <div style="color:var(--red);font-size:12px;margin-top:6px;display:none" id="approve-err"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" onclick="rejectRegistration()">❌ Reject</button>
+      <button class="btn btn-ghost" onclick="closeModal('approve-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="approveRegistration()">✅ Approve & Activate</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-area"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════
+const SB_URL  = 'https://qvqgolyuvyqsbqzlblqf.supabase.co';
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2cWdvbHl1dnlxc2JxemxibHFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNjY3NzYsImV4cCI6MjA5Nzc0Mjc3Nn0.4w83XpsHKUimPho_kYjN_8bGHNEJjqq623MIIHdC0xQ';
+const ADMIN_EMAILS = ['rio.decz317@gmail.com','ricky.delatorre@sagility.com'];
+let SB_KEY = '';
+
+// ── PROGRAMS ──────────────────────────────────────────────
+const PROGRAMS = [
+  { id:'rio',          label:'RIO Hub',       icon:'⚡', desc:'PMO Kanban & reporting' },
+  { id:'attendance',   label:'AttendanceIQ',  icon:'🕐', desc:'Time tracking & presence' },
+  { id:'finforecast',  label:'FinForecast',   icon:'💰', desc:'Personal finance OS' },
+  { id:'payslip',      label:'Payslip Tool',  icon:'📄', desc:'Payslip extraction' },
+  { id:'weekly_report',label:'Weekly Report', icon:'📊', desc:'PPTX report export' },
+  { id:'portfolio',    label:'Portfolio',     icon:'🗂',  desc:'Project analytics' },
+];
+
+// ── ROLES ─────────────────────────────────────────────────
+const ROLES = {
+  super_admin:       { label:'Super Admin',         color:'#7c3aed', bg:'rgba(139,92,246,.12)', border:'rgba(139,92,246,.25)' },
+  sys_admin:         { label:'Sys Admin',           color:'#1d4ed8', bg:'rgba(59,130,246,.1)',  border:'rgba(59,130,246,.2)' },
+  compliance_admin:  { label:'Compliance Admin',    color:'#0e7490', bg:'rgba(6,182,212,.1)',   border:'rgba(6,182,212,.2)' },
+  program_manager:   { label:'Program Manager',     color:'#0a7d57', bg:'rgba(14,164,114,.12)', border:'rgba(14,164,114,.25)' },
+  dept_manager:      { label:'Dept Manager',        color:'#065f46', bg:'rgba(6,78,59,.1)',      border:'rgba(6,78,59,.2)' },
+  supervisor:        { label:'Supervisor',          color:'#4a6358', bg:'rgba(74,99,88,.1)',     border:'rgba(74,99,88,.2)' },
+  employee:          { label:'Employee',            color:'#374151', bg:'rgba(55,65,81,.08)',    border:'rgba(55,65,81,.15)' },
+  viewer:            { label:'Viewer',              color:'#6b7280', bg:'rgba(107,114,128,.08)', border:'rgba(107,114,128,.15)' },
+};
+
+// ── PERMISSIONS MATRIX ────────────────────────────────────
+const PERMISSION_GROUPS = {
+  users:      ['view','create','edit','delete'],
+  programs:   ['view','grant_access','remove_access'],
+  projects:   ['view','create','edit','delete'],
+  attendance: ['view','override','approve','export'],
+  reports:    ['view','generate','export'],
+  settings:   ['read','modify'],
+  system:     ['manage_roles','manage_permissions'],
+};
+
+const DEFAULT_ROLE_PERMS = {
+  super_admin:      { users:['view','create','edit','delete'], programs:['view','grant_access','remove_access'], projects:['view','create','edit','delete'], attendance:['view','override','approve','export'], reports:['view','generate','export'], settings:['read','modify'], system:['manage_roles','manage_permissions'] },
+  sys_admin:        { users:['view','create','edit','delete'], programs:['view','grant_access','remove_access'], projects:['view','create','edit','delete'], attendance:['view','override','approve','export'], reports:['view','generate','export'], settings:['read','modify'], system:[] },
+  compliance_admin: { users:['view'], programs:['view'], projects:['view'], attendance:['view','export'], reports:['view','generate','export'], settings:['read'], system:[] },
+  program_manager:  { users:['view'], programs:['view'], projects:['view','create','edit'], attendance:['view','export'], reports:['view','generate','export'], settings:['read'], system:[] },
+  dept_manager:     { users:['view'], programs:['view'], projects:['view','create','edit'], attendance:['view','approve','export'], reports:['view','generate'], settings:['read'], system:[] },
+  supervisor:       { users:['view'], programs:['view'], projects:['view','edit'], attendance:['view','export'], reports:['view','generate'], settings:['read'], system:[] },
+  employee:         { users:[], programs:['view'], projects:['view','create'], attendance:['view'], reports:['view'], settings:[], system:[] },
+  viewer:           { users:[], programs:['view'], projects:['view'], attendance:['view'], reports:['view'], settings:[], system:[] },
+};
+
+// ═══════════════════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════════════════
+let allUsers = [], auditLog = [], pendingUsers = [], settings = {};
+let currentEditUid = null, currentQueueTab = 'pending', selectedRoleKey = null;
+let _sb = null;
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+function init() {
+  const savedKey = localStorage.getItem('aiq_v2_key');
+  if (savedKey) {
+    SB_KEY = savedKey;
+    document.getElementById('key-prompt').style.display = 'none';
+  }
+  const savedAudit = localStorage.getItem('aiq_v2_audit');
+  if (savedAudit) { auditLog = JSON.parse(savedAudit); renderAuditLists(); }
+  const savedSettings = localStorage.getItem('aiq_v2_settings');
+  if (savedSettings) { settings = JSON.parse(savedSettings); applySettings(); }
+  buildInviteProgramGrid();
+  renderRolesList();
+  if (SB_KEY) loadAll();
+}
+
+function connectSB() {
+  const k = document.getElementById('key-input').value.trim();
+  if (!k) { toast('Paste your service_role key','error'); return; }
+  SB_KEY = k;
+  localStorage.setItem('aiq_v2_key', k);
+  document.getElementById('key-prompt').style.display = 'none';
+  toast('Connected to Supabase','success');
+  loadAll();
+}
+
+async function loadAll() {
+  if (!SB_KEY) return;
+  await loadUsers();
+  await loadPending();
+  updateDashboard();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  API HELPERS
+// ═══════════════════════════════════════════════════════════
+async function sbAdminFetch(path, opts={}) {
+  return fetch(`${SB_URL}${path}`, {
+    ...opts,
+    headers: { 'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json',...(opts.headers||{}) }
+  });
+}
+async function sbAnonFetch(path, opts={}) {
+  return fetch(`${SB_URL}${path}`, {
+    ...opts,
+    headers: { 'apikey':SB_ANON,'Authorization':'Bearer '+SB_ANON,'Content-Type':'application/json','Prefer':'return=minimal',...(opts.headers||{}) }
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOAD USERS
+// ═══════════════════════════════════════════════════════════
+async function loadUsers() {
+  try {
+    const res = await sbAdminFetch('/auth/v1/admin/users?per_page=200');
+    if (!res.ok) { toast('Failed to load users','error'); return; }
+    const data = await res.json();
+    const authUsers = data.users || [];
+
+    // Load access control records
+    let aiqRecs = [];
+    try {
+      const r = await sbAnonFetch('/rest/v1/user_access_control?select=*');
+      if (r.ok) aiqRecs = await r.json();
+    } catch(_e){}
+
+    allUsers = authUsers.map(u => {
+      const aiq = aiqRecs.find(r => r.user_id === u.id) || {};
+      return {
+        id: u.id, email: u.email,
+        name: u.user_metadata?.full_name || u.email?.split('@')[0] || '—',
+        employee_id: aiq.employee_id || u.user_metadata?.employee_id || '',
+        dept: aiq.dept || u.user_metadata?.department || '',
+        position: aiq.position || u.user_metadata?.title || '',
+        company: aiq.company || '',
+        manager: aiq.manager || '',
+        notes: aiq.notes || '',
+        role: ADMIN_EMAILS.includes(u.email) ? 'super_admin' : (aiq.role || u.user_metadata?.role || 'employee'),
+        status: aiq.status || (u.email_confirmed_at ? 'active' : 'pending'),
+        tools: aiq.tools || {},
+        access_levels: aiq.access_levels || {},
+        confirmed: !!u.email_confirmed_at,
+        created_at: u.created_at,
+        last_sign_in: u.last_sign_in_at,
+        _raw: u
+      };
+    });
+
+    // Separate pending (unconfirmed or status=pending)
+    pendingUsers = allUsers.filter(u => u.status === 'pending' || !u.confirmed);
+    document.getElementById('badge-pending').textContent = pendingUsers.length;
+    document.getElementById('badge-users').textContent = allUsers.length;
+    document.getElementById('users-count').textContent = `${allUsers.length} users`;
+
+    renderUsersTable(allUsers);
+    renderProgramAccessCards();
+  } catch(e) { toast('Error: '+e.message,'error'); }
+}
+
+async function loadPending() {
+  // pendingUsers is set by loadUsers — just render
+  renderQueueList();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function updateDashboard() {
+  const total     = allUsers.length;
+  const active    = allUsers.filter(u=>u.status==='active').length;
+  const pending   = allUsers.filter(u=>u.status==='pending'||!u.confirmed).length;
+  const suspended = allUsers.filter(u=>u.status==='suspended').length;
+  const admins    = allUsers.filter(u=>['super_admin','sys_admin'].includes(u.role)).length;
+  set('kpi-total',total); set('kpi-active',active); set('kpi-pending',pending); set('kpi-suspended',suspended); set('kpi-admins',admins);
+
+  // Recent users table
+  const recent = [...allUsers].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,8);
+  document.getElementById('dash-recent-users').innerHTML = recent.map(u=>`
+    <tr>
+      <td><div class="u-cell">${avatar(u.name,u.id)}<div><div class="u-name">${esc(u.name)}</div><div class="u-email">${esc(u.email)}</div></div></div></td>
+      <td>${roleBadge(u.role)}</td>
+      <td>${statusDot(u)}</td>
+      <td>${progChips(u,false)}</td>
+      <td style="font-size:11.5px;color:var(--text3)">${fmtDate(u.created_at)}</td>
+    </tr>`).join('') || '<tr><td colspan="5" class="empty-cell">No users yet</td></tr>';
+
+  // Program coverage
+  const n = allUsers.length || 1;
+  document.getElementById('prog-coverage').innerHTML = PROGRAMS.map(p=>{
+    const cnt = allUsers.filter(u=>u.tools[p.id]===true).length;
+    const pct = Math.round(cnt/n*100);
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <span style="font-size:13px;width:18px;text-align:center">${p.icon}</span>
+      <span style="font-size:12.5px;font-weight:500;flex:1">${p.label}</span>
+      <span style="font-size:12px;color:var(--text3);font-weight:600">${cnt}/${n}</span>
+      <div style="width:80px;height:6px;background:var(--border);border-radius:99px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:var(--accent);border-radius:99px"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  renderAuditLists();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  USERS TABLE
+// ═══════════════════════════════════════════════════════════
+function renderUsersTable(users) {
+  const tbody = document.getElementById('users-tbody');
+  if (!users.length) { tbody.innerHTML='<tr><td colspan="7" class="empty-cell">No users found</td></tr>'; return; }
+  tbody.innerHTML = users.map(u=>`
+    <tr>
+      <td><div class="u-cell">${avatar(u.name,u.id)}<div><div class="u-name">${esc(u.name)}</div><div class="u-email">${esc(u.email)}</div>${u.employee_id?`<div style="font-size:10px;color:var(--text3)">${esc(u.employee_id)}</div>`:''}</div></div></td>
+      <td>${roleBadge(u.role)}</td>
+      <td>${statusDot(u)}</td>
+      <td><div style="display:flex;flex-wrap:wrap;gap:3px">${progChips(u,false)}</div></td>
+      <td style="font-size:12px;color:var(--text2)">${esc(u.dept)||'—'}</td>
+      <td style="font-size:11.5px;color:var(--text3)">${fmtDate(u.created_at)}</td>
+      <td>
+        <div style="display:flex;gap:5px">
+          <button class="btn btn-ghost btn-sm" onclick="openEditModal('${u.id}')">✏️ Edit</button>
+          ${u.status==='pending'?`<button class="btn btn-success btn-sm" onclick="quickApprove('${u.id}')">✅</button>`:''}
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function filterUsers() {
+  const q     = document.getElementById('users-search').value.toLowerCase();
+  const role  = document.getElementById('users-filt-role').value;
+  const status= document.getElementById('users-filt-status').value;
+  const prog  = document.getElementById('users-filt-prog').value;
+  const filtered = allUsers.filter(u=>{
+    if(q && !u.name.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q) && !(u.employee_id||'').toLowerCase().includes(q)) return false;
+    if(role && u.role!==role) return false;
+    if(status && u.status!==status) return false;
+    if(prog && u.tools[prog]!==true) return false;
+    return true;
+  });
+  renderUsersTable(filtered);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  REGISTRATION QUEUE
+// ═══════════════════════════════════════════════════════════
+function setQueueTab(tab, btn) {
+  currentQueueTab = tab;
+  document.querySelectorAll('.queue-tab').forEach(b=>b.classList.remove('active','btn-primary'));
+  document.querySelectorAll('.queue-tab').forEach(b=>b.classList.add('btn-ghost'));
+  if(btn){btn.classList.add('active','btn-primary');btn.classList.remove('btn-ghost');}
+  renderQueueList();
+}
+
+function renderQueueList() {
+  const el = document.getElementById('queue-list');
+  const list = allUsers.filter(u=>{
+    if(currentQueueTab==='pending') return u.status==='pending'||!u.confirmed;
+    if(currentQueueTab==='approved') return u.status==='active';
+    if(currentQueueTab==='rejected') return u.status==='rejected';
+    return false;
+  });
+  if(!list.length){el.innerHTML=`<div class="empty-cell">No ${currentQueueTab} registrations</div>`;return;}
+  el.innerHTML = list.map(u=>`
+    <div class="pending-card">
+      <div>${avatar(u.name,u.id)}</div>
+      <div class="pending-info">
+        <div class="pending-name">${esc(u.name)}</div>
+        <div class="pending-detail">${esc(u.email)} · ${esc(u.dept||'No dept')} · ${esc(u.position||'No position')}</div>
+        <div class="pending-programs">${PROGRAMS.filter(p=>u.tools[p.id]).map(p=>`<span class="prog-chip chip-on">${p.icon} ${p.label}</span>`).join('')||'<span style="font-size:11px;color:var(--text3)">No programs requested</span>'}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:5px">Registered ${fmtDate(u.created_at)}</div>
+      </div>
+      <div class="pending-actions">
+        ${currentQueueTab==='pending'?`
+          <button class="btn btn-success btn-sm" onclick="openApproveModal('${u.id}')">✅ Approve</button>
+          <button class="btn btn-danger btn-sm" onclick="rejectUser('${u.id}','${esc(u.name)}')">❌ Reject</button>
+        `:`<button class="btn btn-ghost btn-sm" onclick="openEditModal('${u.id}')">✏️ View</button>`}
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  APPROVE / REJECT
+// ═══════════════════════════════════════════════════════════
+function openApproveModal(uid) {
+  const u = allUsers.find(x=>x.id===uid); if(!u) return;
+  document.getElementById('approve-uid').value = uid;
+  document.getElementById('approve-name').textContent = u.name;
+  document.getElementById('approve-email').textContent = u.email;
+  document.getElementById('approve-dept').textContent = u.dept ? `Dept: ${u.dept}` : 'No department submitted';
+  document.getElementById('approve-dept-input').value = u.dept||'';
+  document.getElementById('approve-position').value = u.position||'';
+  document.getElementById('approve-requested-programs').textContent = 'Requested: '+( Object.keys(u.tools).filter(k=>u.tools[k]).join(', ')||'none');
+  buildProgGrid('approve-prog-grid', u.tools);
+  openModal('approve-modal');
+}
+
+async function approveRegistration() {
+  const uid = document.getElementById('approve-uid').value;
+  const empId = document.getElementById('approve-empid').value.trim().toUpperCase();
+  if(!empId){document.getElementById('approve-err').textContent='Employee ID required';document.getElementById('approve-err').style.display='block';return;}
+  const tools = readProgGrid('approve-prog-grid');
+  const role = document.getElementById('approve-role').value;
+  const dept = document.getElementById('approve-dept-input').value.trim();
+  const pos = document.getElementById('approve-position').value.trim();
+  await upsertAccessRecord(uid, {employee_id:empId,role,status:'active',tools,dept,position:pos,updated_at:new Date().toISOString()});
+  logAction('approved_registration','System','Approved registration for '+allUsers.find(u=>u.id===uid)?.name,'pending','active');
+  closeModal('approve-modal');
+  toast('✅ Account activated','success');
+  await loadUsers();
+}
+
+async function rejectRegistration() {
+  const uid = document.getElementById('approve-uid').value;
+  const name = allUsers.find(u=>u.id===uid)?.name||'user';
+  if(!confirm(`Reject registration for ${name}? Their profile will be marked rejected.`)) return;
+  await upsertAccessRecord(uid, {status:'rejected',updated_at:new Date().toISOString()});
+  logAction('rejected_registration','System','Rejected registration for '+name,'pending','rejected');
+  closeModal('approve-modal');
+  toast('Registration rejected','warn');
+  await loadUsers();
+}
+
+async function rejectUser(uid, name) {
+  if(!confirm(`Reject registration for ${name}?`)) return;
+  await upsertAccessRecord(uid, {status:'rejected',updated_at:new Date().toISOString()});
+  logAction('rejected_registration','System','Rejected registration for '+name,'pending','rejected');
+  toast('Rejected','warn');
+  await loadUsers();
+}
+
+async function quickApprove(uid) {
+  const u = allUsers.find(x=>x.id===uid); if(!u) return;
+  await upsertAccessRecord(uid, {role:'employee',status:'active',updated_at:new Date().toISOString()});
+  logAction('quick_approved','System','Quick-approved '+u.name,'pending','active');
+  toast('✅ Approved','success');
+  await loadUsers();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EDIT USER MODAL
+// ═══════════════════════════════════════════════════════════
+function openEditModal(uid) {
+  const u = allUsers.find(x=>x.id===uid); if(!u) return;
+  currentEditUid = uid;
+  document.getElementById('edit-uid').value = uid;
+  document.getElementById('edit-modal-title').textContent = 'Edit — '+u.name;
+  document.getElementById('edit-header-name').textContent = u.name;
+  document.getElementById('edit-header-email').textContent = u.email;
+  document.getElementById('edit-avatar').textContent = initials(u.name);
+  document.getElementById('edit-avatar').style.background = nameColor(u.name);
+  document.getElementById('edit-name').value = u.name;
+  document.getElementById('edit-empid').value = u.employee_id||'';
+  document.getElementById('edit-dept').value = u.dept||'';
+  document.getElementById('edit-position').value = u.position||'';
+  document.getElementById('edit-company').value = u.company||'';
+  document.getElementById('edit-manager').value = u.manager||'';
+  document.getElementById('edit-notes').value = u.notes||'';
+  document.getElementById('edit-role').value = u.role||'employee';
+  document.getElementById('edit-status').value = u.status||'active';
+  document.getElementById('edit-last-login').textContent = fmtDate(u.last_sign_in)||'Never';
+  document.getElementById('edit-email-confirmed').textContent = u.confirmed ? '✅ Yes' : '❌ No';
+  const secStatus = document.getElementById('edit-security-status');
+  secStatus.className = u.status==='suspended' ? 'danger-box' : 'info-box';
+  secStatus.textContent = `Account status: ${u.status.toUpperCase()}`;
+
+  // Programs
+  buildProgGrid('edit-prog-grid', u.tools);
+  // Access levels
+  buildAccessLevels(u.access_levels);
+  // Activity
+  const acts = auditLog.filter(a=>a.target===u.email||a.target===u.id).slice(0,20);
+  document.getElementById('edit-activity-log').innerHTML = acts.length
+    ? acts.map(a=>`<div class="audit-item"><div class="audit-dot"></div><div><div class="audit-text">${a.action.replace(/_/g,' ')}: <strong>${a.newVal||'—'}</strong></div><div class="audit-meta">${fmtDate(a.ts)} · by ${a.admin}</div></div></div>`).join('')
+    : '<div class="empty-cell">No activity recorded</div>';
+
+  switchEditTab('info', null);
+  openModal('edit-modal');
+}
+
+function switchEditTab(tab, btn) {
+  ['info','programs','security','activity'].forEach(t=>{
+    document.getElementById('edit-tab-'+t).classList.toggle('sec-hidden', t!==tab);
+  });
+  document.querySelectorAll('.edit-tab').forEach(b=>{b.classList.remove('btn-primary','active');b.classList.add('btn-ghost');});
+  if(btn){btn.classList.add('btn-primary','active');btn.classList.remove('btn-ghost');}
+}
+
+async function saveUser() {
+  const uid = document.getElementById('edit-uid').value;
+  const name = document.getElementById('edit-name').value.trim();
+  const empId = document.getElementById('edit-empid').value.trim().toUpperCase();
+  const dept = document.getElementById('edit-dept').value.trim();
+  const position = document.getElementById('edit-position').value.trim();
+  const company = document.getElementById('edit-company').value.trim();
+  const manager = document.getElementById('edit-manager').value.trim();
+  const notes = document.getElementById('edit-notes').value.trim();
+  const role = document.getElementById('edit-role').value;
+  const status = document.getElementById('edit-status').value;
+  const tools = readProgGrid('edit-prog-grid');
+  const access_levels = readAccessLevels();
+
+  const u = allUsers.find(x=>x.id===uid);
+  const oldRole = u?.role, oldStatus = u?.status;
+
+  // 1. Update auth user_metadata
+  try {
+    await sbAdminFetch(`/auth/v1/admin/users/${uid}`, {
+      method:'PUT',
+      body: JSON.stringify({
+        user_metadata:{full_name:name,department:dept,title:position,employee_id:empId},
+        app_metadata:{role,status,tools,access_levels}
+      })
+    });
+  } catch(_e){}
+
+  // 2. Upsert user_access_control (single source of truth)
+  await upsertAccessRecord(uid, {
+    employee_id:empId,email:u?.email||'',role,status,tools,access_levels,
+    dept,position,company,manager,notes,updated_at:new Date().toISOString()
+  });
+
+  // 3. Sync to dept_profiles for RIO
+  try {
+    await sbAnonFetch(`/rest/v1/dept_profiles?user_id=eq.${uid}`, {
+      method:'PATCH', body:JSON.stringify({full_name:name,department:dept,role,email:u?.email||'',last_seen:new Date().toISOString()})
+    });
+  } catch(_e){}
+
+  if(oldRole!==role) logAction('role_changed',name,`${u?.email}`,oldRole,role,uid);
+  if(oldStatus!==status) logAction('status_changed',name,`${u?.email}`,oldStatus,status,uid);
+  logAction('user_edited','Admin',`${u?.email}`,'—',`role:${role},status:${status}`,uid);
+
+  closeModal('edit-modal');
+  toast('✅ User saved','success');
+  await loadUsers();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EMERGENCY ACTIONS
+// ═══════════════════════════════════════════════════════════
+async function emergencyUserAction(action) {
+  const uid = currentEditUid;
+  const u = allUsers.find(x=>x.id===uid); if(!u) return;
+  if(action==='delete'){
+    if(!confirm(`Permanently delete ${u.name}?\n\nThis removes their auth account and all access records. This CANNOT be undone.`)) return;
+    try {
+      await sbAdminFetch(`/auth/v1/admin/users/${uid}`, {method:'DELETE'});
+      await sbAnonFetch(`/rest/v1/user_access_control?user_id=eq.${uid}`, {method:'DELETE'});
+    } catch(e){ toast('Delete error: '+e.message,'error'); return; }
+    logAction('user_deleted','Admin',u.email,'active','deleted',uid);
+    closeModal('edit-modal'); toast('🗑 Account deleted'); await loadUsers(); return;
+  }
+  const updates = action==='suspend' ? {status:'suspended'} : action==='reactivate' ? {status:'active'} : {};
+  if(Object.keys(updates).length) {
+    await upsertAccessRecord(uid,{...updates,updated_at:new Date().toISOString()});
+    try { await sbAdminFetch(`/auth/v1/admin/users/${uid}`,{method:'PUT',body:JSON.stringify({app_metadata:{...updates}})}); } catch(_e){}
+    logAction(action,'Admin',u.email,u.status,updates.status||action,uid);
+  }
+  if(action==='force_logout') {
+    try { await sbAdminFetch(`/auth/v1/admin/users/${uid}`,{method:'PUT',body:JSON.stringify({ban_duration:'999999h'})}); setTimeout(async()=>{await sbAdminFetch(`/auth/v1/admin/users/${uid}`,{method:'PUT',body:JSON.stringify({ban_duration:'none'})});},2000); } catch(_e){}
+    logAction('force_logout','Admin',u.email,'active','logged_out',uid);
+    toast('⚡ Session terminated');
+  }
+  if(action==='reset_password') {
+    try { await sbAdminFetch('/auth/v1/admin/generate_link',{method:'POST',body:JSON.stringify({type:'recovery',email:u.email})}); } catch(_e){}
+    logAction('password_reset','Admin',u.email,'—','reset_sent',uid);
+    toast('🔑 Password reset email sent');
+  }
+  await loadUsers();
+  openEditModal(uid);
+}
+
+async function emergencyAction(action) {
+  if(!confirm(`Emergency: ${action.replace(/_/g,' ')}?\n\nThis affects ALL users immediately.`)) return;
+  if(action==='disable_all') {
+    for(const u of allUsers.filter(u=>!ADMIN_EMAILS.includes(u.email))) {
+      await upsertAccessRecord(u.id,{status:'suspended',updated_at:new Date().toISOString()});
+    }
+    logAction('emergency_disable_all','Admin','All users','active','suspended','SYSTEM');
+    toast('🚨 All users disabled','warn');
+  }
+  if(action==='force_logout') { toast('⚡ Force logout sent to all sessions','warn'); }
+  if(action==='lock_reg') { saveSetting('open_reg',false); document.getElementById('setting-open-reg').checked=false; toast('🔒 Registrations locked','warn'); }
+  await loadUsers();
+}
+
+async function forceLogoutAll() {
+  if(!confirm('Force logout all active sessions?')) return;
+  toast('⚡ Force logout initiated for all sessions','warn');
+  logAction('force_logout_all','Admin','All users','active','logged_out','SYSTEM');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INVITE
+// ═══════════════════════════════════════════════════════════
+async function sendInvite() {
+  const email = document.getElementById('inv-email').value.trim();
+  const name = document.getElementById('inv-name').value.trim();
+  const role = document.getElementById('inv-role').value;
+  const dept = document.getElementById('inv-dept').value.trim();
+  const empId = document.getElementById('inv-empid').value.trim().toUpperCase();
+  const position = document.getElementById('inv-position').value.trim();
+  const tools = readProgGrid('inv-prog-grid');
+  if(!email){toast('Email required','error');return;}
+  try {
+    const res = await sbAdminFetch('/auth/v1/admin/users',{
+      method:'POST',
+      body:JSON.stringify({email,email_confirm:false,user_metadata:{full_name:name,department:dept,employee_id:empId,title:position},app_metadata:{role,tools,status:'active'}})
+    });
+    const data = await res.json();
+    if(!res.ok){toast(data.message||'Invite failed','error');return;}
+    await upsertAccessRecord(data.id||data.user?.id,{email,employee_id:empId,role,status:'active',tools,dept,position,updated_at:new Date().toISOString()});
+    logAction('user_invited','Admin',email,'—','invited');
+    closeModal('invite-modal');
+    toast(`✅ Invite sent to ${email}`,'success');
+    await loadUsers();
+  } catch(e){toast('Error: '+e.message,'error');}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ROLES & PERMISSIONS
+// ═══════════════════════════════════════════════════════════
+function renderRolesList() {
+  const el = document.getElementById('roles-list'); if(!el) return;
+  el.innerHTML = Object.entries(ROLES).map(([key,r])=>`
+    <button onclick="selectRole('${key}')" id="role-btn-${key}"
+      style="width:100%;text-align:left;padding:9px 12px;border-radius:8px;border:none;cursor:pointer;
+        background:none;font-family:inherit;font-size:13px;font-weight:500;color:var(--text2);
+        display:flex;align-items:center;gap:8px;margin-bottom:2px;transition:all .13s"
+      onmouseover="this.style.background='var(--surface2)'" onmouseout="if(this.id!=='role-btn-${key}')this.style.background='none'">
+      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${r.color};flex-shrink:0"></span>
+      ${r.label}
+      <span style="margin-left:auto;font-size:10.5px;color:var(--text3)">${allUsers.filter(u=>u.role===key).length}</span>
+    </button>`).join('');
+}
+
+function selectRole(key) {
+  selectedRoleKey = key;
+  document.querySelectorAll('[id^="role-btn-"]').forEach(b=>b.style.background='none');
+  const btn = document.getElementById('role-btn-'+key);
+  if(btn) btn.style.background='var(--accent-light)';
+  document.getElementById('perm-role-title').textContent = ROLES[key]?.label || key;
+  document.getElementById('save-perms-btn').style.display='';
+  const perms = DEFAULT_ROLE_PERMS[key] || {};
+  const el = document.getElementById('perm-matrix');
+  el.innerHTML = Object.entries(PERMISSION_GROUPS).map(([group,actions])=>`
+    <div class="perm-section">
+      <div class="perm-section-title">${group.replace(/_/g,' ').toUpperCase()}</div>
+      ${actions.map(act=>`
+        <div class="perm-row">
+          <span class="perm-label">${act.replace(/_/g,' ')}</span>
+          <label class="tog"><input type="checkbox" data-group="${group}" data-action="${act}" ${(perms[group]||[]).includes(act)?'checked':''}><span class="tog-track"></span></label>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function savePermissions() {
+  if(!selectedRoleKey){toast('Select a role first','error');return;}
+  const newPerms = {};
+  document.querySelectorAll('#perm-matrix input[type=checkbox]').forEach(cb=>{
+    const g = cb.dataset.group, a = cb.dataset.action;
+    if(!newPerms[g]) newPerms[g]=[];
+    if(cb.checked) newPerms[g].push(a);
+  });
+  DEFAULT_ROLE_PERMS[selectedRoleKey] = newPerms;
+  logAction('permissions_updated','Admin',selectedRoleKey,'—',JSON.stringify(newPerms));
+  toast('✅ Permissions saved (session only)','success');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PROGRAM ACCESS CARDS
+// ═══════════════════════════════════════════════════════════
+function renderProgramAccessCards() {
+  const el = document.getElementById('prog-access-cards'); if(!el) return;
+  el.innerHTML = PROGRAMS.map(p=>{
+    const granted = allUsers.filter(u=>u.tools[p.id]===true);
+    const denied  = allUsers.filter(u=>u.tools[p.id]!==true);
+    return `<div class="card">
+      <div class="card-head">
+        <span style="font-size:18px">${p.icon}</span>
+        <h3>${p.label}</h3>
+        <span class="card-count">${granted.length}/${allUsers.length} users</span>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:10px">${p.desc}</div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          ${granted.slice(0,5).map(u=>`
+            <div style="display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--border)">
+              ${avatar(u.name,u.id,'24px','10px')}
+              <span style="font-size:12.5px;flex:1">${esc(u.name)}</span>
+              <span style="font-size:10px;font-weight:600;color:var(--accent)">✓ Access</span>
+              <button class="btn btn-danger btn-sm" style="font-size:10px;padding:3px 8px"
+                onclick="quickToggleTool('${u.id}','${p.id}',false)">Revoke</button>
+            </div>`).join('')}
+          ${granted.length>5?`<div style="font-size:11.5px;color:var(--text3);padding-top:5px">+${granted.length-5} more</div>`:''}
+          ${!granted.length?'<div style="font-size:12px;color:var(--text3);padding:8px 0">No users have access</div>':''}
+        </div>
+        <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:10px"
+          onclick="showSection('users',null)">Manage All Users →</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function quickToggleTool(uid, tool, val) {
+  const u = allUsers.find(x=>x.id===uid); if(!u) return;
+  const oldTools = {...u.tools};
+  const newTools = {...oldTools, [tool]:val};
+  await upsertAccessRecord(uid, {tools:newTools,updated_at:new Date().toISOString()});
+  try { await sbAdminFetch(`/auth/v1/admin/users/${uid}`,{method:'PUT',body:JSON.stringify({app_metadata:{tools:newTools}})}); } catch(_e){}
+  const prog = PROGRAMS.find(p=>p.id===tool);
+  logAction(val?'access_granted':'access_revoked','Admin',u.email,String(!val),String(val),uid,prog?.label);
+  toast(`${val?'✅ Granted':'🚫 Revoked'} ${prog?.label||tool} for ${u.name}`,'success');
+  await loadUsers();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  SESSIONS
+// ═══════════════════════════════════════════════════════════
+async function loadSessions() {
+  // sessions are inferred from last_sign_in / last_seen
+  const sessions = allUsers.filter(u=>u.last_sign_in).map(u=>({
+    ...u, program:'Multiple', device:'Browser', ip:'—',
+    login_time:u.last_sign_in
+  }));
+  document.getElementById('sessions-count').textContent = `${sessions.length} sessions`;
+  document.getElementById('sessions-tbody').innerHTML = sessions.map(s=>`
+    <tr>
+      <td><div class="u-cell">${avatar(s.name,s.id)}<div><div class="u-name">${esc(s.name)}</div><div class="u-email">${esc(s.email)}</div></div></div></td>
+      <td style="font-size:12px">${s.program}</td>
+      <td style="font-size:12px;color:var(--text3)">${s.device}</td>
+      <td style="font-size:12px;color:var(--text3)">${s.ip}</td>
+      <td style="font-size:11.5px;color:var(--text3)">${fmtDate(s.login_time)}</td>
+      <td style="font-size:11.5px;color:var(--text3)">${fmtDate(s.login_time)}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="forceLogoutUser('${s.id}','${esc(s.name)}')">⚡ Logout</button></td>
+    </tr>`).join('') || '<tr><td colspan="7" class="empty-cell">No active sessions</td></tr>';
+}
+
+async function forceLogoutUser(uid, name) {
+  if(!confirm(`Force logout ${name}?`)) return;
+  try {
+    await sbAdminFetch(`/auth/v1/admin/users/${uid}`,{method:'PUT',body:JSON.stringify({ban_duration:'999999h'})});
+    setTimeout(()=>sbAdminFetch(`/auth/v1/admin/users/${uid}`,{method:'PUT',body:JSON.stringify({ban_duration:'none'})}),3000);
+  } catch(_e){}
+  logAction('force_logout','Admin',allUsers.find(u=>u.id===uid)?.email,'active','logged_out',uid);
+  toast(`⚡ ${name} logged out`,'warn');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  AUDIT LOG
+// ═══════════════════════════════════════════════════════════
+function logAction(action, admin='Admin', target='', oldVal='', newVal='', uid='', extra='') {
+  const entry = { action, admin, target, oldVal, newVal, uid, extra, ts:new Date().toISOString(), ip:'local' };
+  auditLog.unshift(entry);
+  if(auditLog.length>500) auditLog.pop();
+  localStorage.setItem('aiq_v2_audit', JSON.stringify(auditLog));
+  renderAuditLists();
+}
+
+function renderAuditLists() {
+  const html = auditLog.slice(0,50).map(e=>`
+    <div class="audit-item">
+      <div class="audit-dot"></div>
+      <div>
+        <div class="audit-text"><strong>${e.action.replace(/_/g,' ')}</strong> · ${esc(e.target||'—')} ${e.oldVal&&e.newVal?`<span style="color:var(--text3)">${e.oldVal} → <strong>${e.newVal}</strong></span>`:''}</div>
+        <div class="audit-meta">${fmtDate(e.ts)} · by ${e.admin}</div>
+      </div>
+    </div>`).join('') || '<div class="empty-cell">No audit events</div>';
+
+  const dash = document.getElementById('dash-recent-audit');
+  const full = document.getElementById('audit-list-full');
+  if(dash) dash.innerHTML = auditLog.slice(0,8).map(e=>`
+    <div class="audit-item">
+      <div class="audit-dot"></div>
+      <div><div class="audit-text" style="font-size:12px"><strong>${e.action.replace(/_/g,' ')}</strong> · ${esc(e.target||'—')}</div><div class="audit-meta">${fmtDate(e.ts)}</div></div>
+    </div>`).join('') || '<div style="padding:16px;text-align:center;font-size:12px;color:var(--text3)">No events</div>';
+  if(full) { full.innerHTML = html; document.getElementById('audit-count').textContent = `${auditLog.length} events`; }
+}
+
+function filterAudit() {
+  const q = document.getElementById('audit-search').value.toLowerCase();
+  const filtered = auditLog.filter(e=>e.action.includes(q)||e.target.toLowerCase().includes(q));
+  document.getElementById('audit-list-full').innerHTML = filtered.slice(0,100).map(e=>`
+    <div class="audit-item">
+      <div class="audit-dot"></div>
+      <div>
+        <div class="audit-text"><strong>${e.action.replace(/_/g,' ')}</strong> · ${esc(e.target||'—')} ${e.oldVal&&e.newVal?`<span style="color:var(--text3)">${e.oldVal} → <strong>${e.newVal}</strong></span>`:''}</div>
+        <div class="audit-meta">${fmtDate(e.ts)} · by ${e.admin}</div>
+      </div>
+    </div>`).join('') || '<div class="empty-cell">No matching events</div>';
+}
+
+function clearLocalAudit(){if(!confirm('Clear local audit log?'))return;auditLog=[];localStorage.removeItem('aiq_v2_audit');renderAuditLists();toast('Cleared');}
+
+// ═══════════════════════════════════════════════════════════
+//  SETTINGS
+// ═══════════════════════════════════════════════════════════
+function saveSetting(key, val) {
+  settings[key] = val;
+  localStorage.setItem('aiq_v2_settings', JSON.stringify(settings));
+  logAction('setting_changed','Admin',key,'—',String(val));
+  toast('✅ Setting saved','success');
+}
+function applySettings() {
+  if(settings.open_reg!==undefined) document.getElementById('setting-open-reg').checked=settings.open_reg;
+  if(settings.require_approval!==undefined) document.getElementById('setting-approval').checked=settings.require_approval;
+  if(settings.email_confirm!==undefined) document.getElementById('setting-email-confirm').checked=settings.email_confirm;
+  if(settings.default_role) document.getElementById('setting-default-role').value=settings.default_role;
+  if(settings.allowed_domains) document.getElementById('setting-domains').value=settings.allowed_domains;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  UPSERT ACCESS RECORD (source of truth)
+// ═══════════════════════════════════════════════════════════
+async function upsertAccessRecord(uid, data) {
+  if(!uid) return;
+  try {
+    await sbAnonFetch('/rest/v1/user_access_control', {
+      method:'POST',
+      headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+      body:JSON.stringify({user_id:uid,...data})
+    });
+  } catch(e){ console.warn('upsert error',e); }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  EXPORT
+// ═══════════════════════════════════════════════════════════
+function exportUsersCSV() {
+  const rows=[['Name','Email','Employee ID','Role','Status','Department','Position','Programs','Joined']];
+  allUsers.forEach(u=>rows.push([u.name,u.email,u.employee_id,u.role,u.status,u.dept,u.position,
+    PROGRAMS.filter(p=>u.tools[p.id]).map(p=>p.label).join('; '),fmtDate(u.created_at)]));
+  const csv=rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`users_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  toast('⬇ CSV exported');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  PROG GRID HELPERS
+// ═══════════════════════════════════════════════════════════
+function buildInviteProgramGrid(){buildProgGrid('inv-prog-grid',{});}
+function buildProgGrid(containerId, currentTools) {
+  const el=document.getElementById(containerId); if(!el) return;
+  el.innerHTML=PROGRAMS.map(p=>{
+    const on = currentTools[p.id]===true;
+    return `<label class="prog-item ${on?'enabled':''}" id="pi-${containerId}-${p.id}">
+      <div class="prog-item-icon">${p.icon}</div>
+      <div><div class="prog-item-name">${p.label}</div><div class="prog-item-desc">${p.desc}</div></div>
+      <div class="prog-item-toggle">
+        <label class="tog"><input type="checkbox" ${on?'checked':''} onchange="toggleProgItem('${containerId}','${p.id}',this)"><span class="tog-track"></span></label>
+      </div>
+    </label>`;
+  }).join('');
+}
+function toggleProgItem(cid, pid, cb){document.getElementById(`pi-${cid}-${pid}`)?.classList.toggle('enabled',cb.checked);}
+function readProgGrid(containerId){
+  const tools={};
+  PROGRAMS.forEach(p=>{
+    const cb=document.querySelector(`#pi-${containerId}-${p.id} input[type=checkbox]`);
+    tools[p.id]=cb?cb.checked:false;
+  });
+  return tools;
+}
+function buildAccessLevels(levels={}) {
+  const el=document.getElementById('edit-access-levels'); if(!el) return;
+  el.innerHTML=PROGRAMS.map(p=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px;width:18px;text-align:center">${p.icon}</span>
+      <span style="font-size:12.5px;font-weight:500;flex:1">${p.label}</span>
+      <select class="level-select" data-prog="${p.id}">
+        <option value="none">No Access</option><option value="read_only" ${levels[p.id]==='read_only'?'selected':''}>Read Only</option>
+        <option value="contributor" ${levels[p.id]==='contributor'?'selected':''}>Contributor</option>
+        <option value="manager" ${levels[p.id]==='manager'?'selected':''}>Manager</option>
+        <option value="administrator" ${levels[p.id]==='administrator'?'selected':''}>Administrator</option>
+        <option value="owner" ${levels[p.id]==='owner'?'selected':''}>Owner</option>
+      </select>
+    </div>`).join('');
+}
+function readAccessLevels(){const l={};document.querySelectorAll('#edit-access-levels [data-prog]').forEach(s=>{l[s.dataset.prog]=s.value;});return l;}
+
+// ═══════════════════════════════════════════════════════════
+//  SECTIONS
+// ═══════════════════════════════════════════════════════════
+const SECTION_TITLES={dashboard:'Overview',pending:'Registration Queue',users:'All Users',roles:'Roles & Permissions',programs:'Program Access',sessions:'Active Sessions',audit:'Audit Logs',settings:'Settings'};
+const SECTION_SUBS={dashboard:'Identity & Access Management',pending:'Review and approve access requests',users:'Manage all user accounts',roles:'Define role-based permissions',programs:'Control application access',sessions:'Monitor active user sessions',audit:'Complete action history',settings:'System configuration'};
+
+function showSection(sec, btn) {
+  Object.keys(SECTION_TITLES).forEach(s=>{
+    document.getElementById('sec-'+s)?.classList.toggle('sec-hidden', s!==sec);
+  });
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  document.getElementById('topbar-title').textContent = SECTION_TITLES[sec]||sec;
+  document.getElementById('topbar-sub').textContent = SECTION_SUBS[sec]||'';
+  if(sec==='sessions') loadSessions();
+  if(sec==='audit') renderAuditLists();
+  if(sec==='roles') renderRolesList();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MODAL UTILS
+// ═══════════════════════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-bg').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
+
+// ═══════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════
+function toast(msg,type=''){
+  const el=document.createElement('div');el.className='toast'+(type?' '+type:'');el.textContent=msg;
+  document.getElementById('toast-area').appendChild(el);
+  setTimeout(()=>el.remove(),3500);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  RENDER HELPERS
+// ═══════════════════════════════════════════════════════════
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function set(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function fmtDate(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});}
+const AVATAR_COLORS=['#0ea472','#6366f1','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#ec4899','#0d9488'];
+function nameColor(name){const h=(name||'').split('').reduce((a,c)=>a+c.charCodeAt(0),0);return AVATAR_COLORS[h%AVATAR_COLORS.length];}
+function initials(name){return(name||'?').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();}
+function avatar(name,uid,size='32px',fs='12px'){const c=nameColor(name||uid);return `<div class="avatar" style="width:${size};height:${size};background:${c}18;color:${c};border:1.5px solid ${c}35;font-size:${fs}">${initials(name)}</div>`;}
+function roleBadge(role){const r=ROLES[role]||{label:role,color:'#6b7280',bg:'rgba(107,114,128,.08)',border:'rgba(107,114,128,.15)'};return `<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;background:${r.bg};color:${r.color};border:1px solid ${r.border}">${r.label}</span>`;}
+function statusDot(u){
+  if(u.status==='suspended') return`<span class="status-dot"><span class="dot dot-suspended"></span>Suspended</span>`;
+  if(u.status==='pending'||!u.confirmed) return`<span class="status-dot"><span class="dot dot-pending"></span>Pending</span>`;
+  if(u.status==='rejected') return`<span class="status-dot"><span class="dot dot-rejected"></span>Rejected</span>`;
+  return`<span class="status-dot"><span class="dot dot-active"></span>Active</span>`;
+}
+function progChips(u, clickable=false){
+  return PROGRAMS.filter(p=>u.tools[p.id]===true).map(p=>`<span class="prog-chip chip-on">${p.icon} ${p.label}</span>`).join('') || `<span style="font-size:11px;color:var(--text3)">No access</span>`;
+}
+
+/* ══════════════════════════════════════════════════════════
+   SUPABASE SQL — Run once in your SQL editor:
+
+   CREATE TABLE IF NOT EXISTS public.user_access_control (
+     user_id        uuid PRIMARY KEY,
+     email          text,
+     employee_id    text,
+     role           text DEFAULT 'employee',
+     status         text DEFAULT 'pending',
+     tools          jsonb DEFAULT '{}'::jsonb,
+     access_levels  jsonb DEFAULT '{}'::jsonb,
+     dept           text,
+     position       text,
+     company        text,
+     manager        text,
+     notes          text,
+     updated_at     timestamptz DEFAULT now()
+   );
+   ALTER TABLE public.user_access_control ENABLE ROW LEVEL SECURITY;
+   CREATE POLICY "read_own"    ON public.user_access_control FOR SELECT TO authenticated USING (auth.uid() = user_id);
+   CREATE POLICY "admin_write" ON public.user_access_control FOR ALL USING (true);
+   ══════════════════════════════════════════════════════════ */
+
+init();
+</script>
+</body>
+</html>

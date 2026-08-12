@@ -1,0 +1,2592 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CPL Allocation Platform · Enterprise</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ╔══════════════════════════════════════════════════════════════╗
+   ║  CPL ALLOCATION PLATFORM — ENTERPRISE DESIGN SYSTEM         ║
+   ║  Fluent × Power BI × Linear aesthetic                       ║
+   ╚══════════════════════════════════════════════════════════════╝ */
+
+:root {
+  /* Dark theme tokens */
+  --bg:          #0b0d14;
+  --bg2:         #0f1320;
+  --surface:     #13182a;
+  --surface2:    #192035;
+  --surface3:    #1f2840;
+  --border:      #252e4a;
+  --border2:     #2e3a5c;
+
+  /* Brand palette — CPL deep blue + electric cyan signature */
+  --accent:      #3b7fff;
+  --accent-h:    #5c9aff;
+  --accent2:     #0ecfcf;
+  --accent-soft: rgba(59,127,255,.1);
+  --accent-glow: rgba(59,127,255,.18);
+
+  /* Semantic */
+  --success:     #10d98a;
+  --success-bg:  rgba(16,217,138,.1);
+  --warn:        #f5a623;
+  --warn-bg:     rgba(245,166,35,.1);
+  --danger:      #ff4d6d;
+  --danger-bg:   rgba(255,77,109,.1);
+  --info:        #3b7fff;
+  --info-bg:     rgba(59,127,255,.1);
+
+  /* Typography */
+  --text:        #dde4f4;
+  --text2:       #7d8fba;
+  --text3:       #424e72;
+  --text4:       #2a3454;
+
+  /* Spacing */
+  --r-sm:  6px;
+  --r:     10px;
+  --r-lg:  14px;
+  --r-xl:  20px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.4), 0 1px 2px rgba(0,0,0,.3);
+  --shadow:    0 4px 16px rgba(0,0,0,.4), 0 2px 6px rgba(0,0,0,.3);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.5), 0 4px 12px rgba(0,0,0,.4);
+
+  /* Account colors — deterministic per account */
+  --acc-cigna:   #3b7fff;
+  --acc-humana:  #10d98a;
+  --acc-cohere:  #0ecfcf;
+  --acc-enlyte:  #f5a623;
+  --acc-flat:    #c77dff;
+  --acc-bci:     #ff4d6d;
+
+  /* Transitions */
+  --trans: 150ms cubic-bezier(.2,.8,.2,1);
+}
+[data-theme="light"] {
+  --bg:       #f0f2f8;
+  --bg2:      #e8eaf4;
+  --surface:  #ffffff;
+  --surface2: #f5f6fc;
+  --surface3: #ebedf8;
+  --border:   #dde0f0;
+  --border2:  #c8cce0;
+  --text:     #1a2040;
+  --text2:    #4a5580;
+  --text3:    #8090b8;
+  --text4:    #b0bcd8;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,.08);
+  --shadow:    0 4px 16px rgba(0,0,0,.08);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,.12);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+::selection { background: var(--accent-soft); color: var(--accent-h); }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ── APP SHELL ── */
+.app-shell { display: grid; grid-template-rows: 52px auto; grid-template-columns: 220px 1fr; height: 100vh; overflow: hidden; }
+.app-topbar { grid-column: 1/-1; display: flex; align-items: center; gap: 16px; padding: 0 20px; background: var(--surface); border-bottom: 1px solid var(--border); z-index: 200; }
+.app-sidebar { background: var(--surface); border-right: 1px solid var(--border); overflow-y: auto; padding: 12px 0; z-index: 100; }
+.app-content { overflow-y: auto; background: var(--bg); }
+
+/* ── TOPBAR ── */
+.topbar-brand { display: flex; align-items: center; gap: 10px; }
+.brand-logo {
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+  display: grid; place-items: center; font-size: 12px; font-weight: 800; color: #fff;
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+.brand-name { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
+.brand-env { font-size: 10px; font-weight: 600; color: var(--accent2); text-transform: uppercase; letter-spacing: .08em; }
+.topbar-divider { width: 1px; height: 24px; background: var(--border); }
+.topbar-search {
+  flex: 1; max-width: 380px; position: relative;
+}
+.topbar-search input {
+  width: 100%; padding: 6px 12px 6px 34px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: var(--r); color: var(--text); font-size: 12px;
+  outline: none; transition: border-color var(--trans);
+}
+.topbar-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.topbar-search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 13px; pointer-events: none; }
+.search-dropdown {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg); z-index: 999; display: none; overflow: hidden;
+}
+.search-dropdown.open { display: block; }
+.search-result { padding: 9px 14px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background var(--trans); }
+.search-result:hover { background: var(--accent-soft); }
+.search-result-icon { width: 24px; height: 24px; border-radius: 6px; background: var(--accent-soft); display: grid; place-items: center; font-size: 11px; flex-shrink: 0; }
+.search-result-label { font-size: 12px; font-weight: 500; }
+.search-result-sub { font-size: 11px; color: var(--text2); }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.topbar-kpi { padding: 4px 10px; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r-sm); text-align: center; }
+.topbar-kpi-val { font-size: 13px; font-weight: 700; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+.topbar-kpi-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+.icon-btn { width: 30px; height: 30px; border: none; border-radius: var(--r-sm); background: var(--surface2); color: var(--text2); cursor: pointer; display: grid; place-items: center; font-size: 14px; transition: background var(--trans), color var(--trans); }
+.icon-btn:hover { background: var(--accent-soft); color: var(--accent); }
+.notif-dot { position: relative; }
+.notif-dot::after { content:''; position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; background: var(--danger); border-radius: 50%; border: 1px solid var(--surface); }
+
+/* ── SIDEBAR NAV ── */
+.sidebar-section { padding: 4px 10px 2px; margin-top: 8px; }
+.sidebar-section-label { font-size: 10px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .08em; padding: 0 6px 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 9px; padding: 7px 10px; margin: 1px 6px;
+  border-radius: var(--r-sm); cursor: pointer; color: var(--text2); font-size: 13px; font-weight: 500;
+  border: none; background: none; width: calc(100% - 12px); text-align: left;
+  transition: background var(--trans), color var(--trans);
+  position: relative;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: var(--accent-soft); color: var(--accent); }
+.nav-item.active::before { content:''; position: absolute; left: 0; top: 20%; bottom: 20%; width: 3px; border-radius: 0 2px 2px 0; background: var(--accent); margin-left: -4px; }
+.nav-icon { width: 18px; height: 18px; display: grid; place-items: center; font-size: 14px; flex-shrink: 0; }
+.nav-badge { margin-left: auto; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; display: grid; place-items: center; }
+.nav-badge.info { background: var(--accent); }
+.sidebar-divider { height: 1px; background: var(--border); margin: 8px 12px; }
+.sidebar-mini-stats { padding: 10px 12px; }
+.sidebar-stat { display: flex; align-items: center; justify-content: space-between; padding: 4px 6px; border-radius: var(--r-sm); }
+.sidebar-stat-label { font-size: 11px; color: var(--text2); }
+.sidebar-stat-val { font-size: 11px; font-weight: 700; color: var(--text); font-family: 'JetBrains Mono', monospace; }
+
+/* ── PAGES ── */
+.page { display: none; padding: 24px; animation: pageIn .2s ease; }
+.page.active { display: block; }
+@keyframes pageIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── PAGE HEADER ── */
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+.page-title { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -.02em; line-height: 1.2; }
+.page-subtitle { font-size: 12px; color: var(--text2); margin-top: 3px; }
+.page-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+/* ── KPI CARDS ── */
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.kpi-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+  padding: 16px 18px; position: relative; overflow: hidden; cursor: default;
+  transition: border-color var(--trans), transform var(--trans), box-shadow var(--trans);
+}
+.kpi-card:hover { border-color: var(--border2); transform: translateY(-1px); box-shadow: var(--shadow); }
+.kpi-accent-bar { position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: var(--r-lg) var(--r-lg) 0 0; }
+.kpi-icon { font-size: 20px; margin-bottom: 10px; }
+.kpi-value { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.kpi-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; margin-top: 3px; }
+.kpi-delta { font-size: 11px; margin-top: 6px; font-weight: 600; }
+.kpi-delta.pos { color: var(--success); }
+.kpi-delta.neg { color: var(--danger); }
+.kpi-sparkline { position: absolute; bottom: 0; right: 0; opacity: .15; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.card-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.card-title { font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+.card-title-badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; background: var(--accent-soft); color: var(--accent); }
+.card-actions { display: flex; gap: 6px; }
+.card-body { padding: 16px 18px; }
+
+/* ── GRID LAYOUTS ── */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.col-span-2 { grid-column: span 2; }
+.mb-12 { margin-bottom: 12px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-24 { margin-bottom: 24px; }
+.flex { display: flex; }
+.flex-center { display: flex; align-items: center; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.flex-end { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ── TABLES ── */
+.table-container { overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table thead th {
+  background: var(--surface2); color: var(--text2); font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .07em; padding: 9px 14px;
+  border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap;
+  position: sticky; top: 0; z-index: 10; cursor: pointer; user-select: none;
+}
+.data-table thead th:hover { color: var(--text); }
+.data-table thead th.sort-asc::after { content: ' ↑'; color: var(--accent); }
+.data-table thead th.sort-desc::after { content: ' ↓'; color: var(--accent); }
+.data-table tbody tr { border-bottom: 1px solid var(--border); transition: background var(--trans); }
+.data-table tbody tr:last-child { border-bottom: none; }
+.data-table tbody tr:hover { background: var(--accent-soft); }
+.data-table tbody tr.selected { background: var(--accent-soft); }
+.data-table tbody tr.validation-error { border-left: 3px solid var(--danger); }
+.data-table tbody tr.validation-warn { border-left: 3px solid var(--warn); }
+.data-table td { padding: 9px 14px; vertical-align: middle; }
+.data-table td.mono { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text2); }
+.data-table td.num { text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+.table-scroll { max-height: 480px; overflow-y: auto; }
+
+/* ── PILLS / BADGES ── */
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; }
+.pill-blue   { background: rgba(59,127,255,.15); color: #6aa3ff; border: 1px solid rgba(59,127,255,.2); }
+.pill-green  { background: rgba(16,217,138,.15); color: #10d98a; border: 1px solid rgba(16,217,138,.2); }
+.pill-cyan   { background: rgba(14,207,207,.15); color: #0ecfcf; border: 1px solid rgba(14,207,207,.2); }
+.pill-amber  { background: rgba(245,166,35,.15);  color: #f5a623; border: 1px solid rgba(245,166,35,.2); }
+.pill-red    { background: rgba(255,77,109,.15);  color: #ff4d6d; border: 1px solid rgba(255,77,109,.2); }
+.pill-purple { background: rgba(199,125,255,.15); color: #c77dff; border: 1px solid rgba(199,125,255,.2); }
+.pill-gray   { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+
+/* ── FORM CONTROLS ── */
+.form-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field-label { font-size: 10px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; }
+.field-hint { font-size: 10px; color: var(--text3); }
+input[type=text], input[type=number], input[type=email], select, textarea {
+  background: var(--surface2); border: 1px solid var(--border); border-radius: var(--r-sm);
+  padding: 7px 10px; color: var(--text); font-size: 12px; font-family: inherit;
+  outline: none; transition: border-color var(--trans), box-shadow var(--trans);
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
+}
+input.error { border-color: var(--danger); box-shadow: 0 0 0 3px var(--danger-bg); }
+input.warn { border-color: var(--warn); box-shadow: 0 0 0 3px var(--warn-bg); }
+select option { background: var(--surface2); }
+input[type=range] { -webkit-appearance: none; height: 4px; background: var(--border); border-radius: 2px; border: none; padding: 0; outline: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); cursor: grab; }
+input[type=range]::-webkit-slider-thumb:active { cursor: grabbing; }
+input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; }
+
+/* ── BUTTONS ── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--r-sm); font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all var(--trans); white-space: nowrap; font-family: inherit; }
+.btn:active { transform: scale(.97); }
+.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 1px 8px rgba(59,127,255,.3); }
+.btn-primary:hover { background: var(--accent-h); box-shadow: 0 2px 12px rgba(59,127,255,.5); }
+.btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.btn-success { background: var(--success); color: #081f12; }
+.btn-success:hover { opacity: .9; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { opacity: .9; }
+.btn-warn { background: var(--warn); color: #1a0f00; }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+.btn-lg { padding: 10px 20px; font-size: 14px; }
+.btn-icon { width: 28px; height: 28px; padding: 0; border-radius: var(--r-sm); display: grid; place-items: center; font-size: 13px; }
+.btn[disabled] { opacity: .4; cursor: not-allowed; }
+
+/* ── ALLOCATION BAR ── */
+.alloc-bar { display: flex; align-items: center; gap: 8px; min-width: 120px; }
+.alloc-track { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.alloc-fill { height: 100%; border-radius: 3px; transition: width .4s cubic-bezier(.2,.8,.2,1); }
+.alloc-fill.full  { background: var(--success); }
+.alloc-fill.over  { background: var(--danger); }
+.alloc-fill.under { background: var(--accent); }
+.alloc-fill.warn  { background: var(--warn); }
+.alloc-pct { font-size: 11px; font-weight: 700; min-width: 42px; text-align: right; font-family: 'JetBrains Mono', monospace; }
+.alloc-pct.full  { color: var(--success); }
+.alloc-pct.over  { color: var(--danger); }
+.alloc-pct.under { color: var(--text2); }
+
+/* ── VALIDATION BADGE ── */
+.val-badge { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font-size: 9px; font-weight: 800; flex-shrink: 0; }
+.val-badge.ok     { background: var(--success-bg); color: var(--success); }
+.val-badge.warn   { background: var(--warn-bg); color: var(--warn); }
+.val-badge.error  { background: var(--danger-bg); color: var(--danger); }
+
+/* ── DONUT CHART (CSS only) ── */
+.donut-wrap { position: relative; display: inline-flex; align-items: center; justify-content: center; }
+.donut-center { position: absolute; text-align: center; }
+.donut-val { font-size: 14px; font-weight: 800; color: var(--text); letter-spacing: -.02em; }
+.donut-sub { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; }
+
+/* ── PROGRESS RING ── */
+.ring-svg { transform: rotate(-90deg); }
+.ring-track { fill: none; stroke: var(--border); }
+.ring-fill { fill: none; stroke-linecap: round; transition: stroke-dashoffset .5s cubic-bezier(.2,.8,.2,1); }
+
+/* ── UPLOAD ZONE ── */
+.upload-zone {
+  border: 2px dashed var(--border2); border-radius: var(--r-lg);
+  padding: 40px 24px; text-align: center; cursor: pointer;
+  transition: border-color var(--trans), background var(--trans);
+  background: var(--surface2);
+}
+.upload-zone:hover, .upload-zone.drag { border-color: var(--accent); background: var(--accent-soft); }
+.upload-zone-icon { font-size: 36px; margin-bottom: 12px; }
+.upload-zone-text { color: var(--text2); font-size: 13px; line-height: 1.6; }
+.upload-zone-text b { color: var(--accent); cursor: pointer; }
+.upload-zone-formats { margin-top: 10px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+
+/* ── WIZARD STEPS ── */
+.wizard-steps { display: flex; align-items: center; gap: 0; margin-bottom: 28px; }
+.wizard-step { display: flex; align-items: center; gap: 10px; flex: 1; }
+.wizard-step:last-child { flex: 0; }
+.step-circle { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 11px; font-weight: 800; flex-shrink: 0; border: 2px solid var(--border); color: var(--text3); transition: all var(--trans); }
+.step-circle.done  { background: var(--success); border-color: var(--success); color: #081f12; }
+.step-circle.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 12px var(--accent-glow); }
+.step-label { font-size: 11px; font-weight: 600; color: var(--text3); transition: color var(--trans); }
+.step-label.active { color: var(--accent); }
+.step-label.done   { color: var(--success); }
+.step-connector { flex: 1; height: 2px; background: var(--border); margin: 0 8px; border-radius: 1px; transition: background var(--trans); }
+.step-connector.done { background: var(--success); }
+
+/* ── EMPLOYEE CARDS ── */
+.emp-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+  overflow: hidden; transition: border-color var(--trans), box-shadow var(--trans);
+}
+.emp-card:hover { border-color: var(--border2); box-shadow: var(--shadow); }
+.emp-card.expanded .emp-card-body { display: block; }
+.emp-card-head { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; }
+.emp-avatar { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-size: 13px; font-weight: 800; color: #fff; flex-shrink: 0; }
+.emp-name { font-size: 13px; font-weight: 700; color: var(--text); }
+.emp-meta { font-size: 11px; color: var(--text2); margin-top: 1px; }
+.emp-card-body { display: none; border-top: 1px solid var(--border); padding: 14px 16px; }
+.emp-alloc-row { display: grid; grid-template-columns: 140px 1fr 90px 80px 80px; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.emp-alloc-row:last-child { border-bottom: none; }
+
+/* ── TOOLTIPS ── */
+[data-tip] { position: relative; }
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: var(--surface3); border: 1px solid var(--border); border-radius: var(--r-sm);
+  padding: 4px 8px; font-size: 11px; color: var(--text); white-space: nowrap; z-index: 999;
+  box-shadow: var(--shadow);
+}
+
+/* ── NOTIFICATION TOAST ── */
+#toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast-item {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+  padding: 11px 14px; box-shadow: var(--shadow-lg);
+  min-width: 280px; max-width: 380px;
+  pointer-events: all; cursor: pointer;
+  animation: toastIn .3s cubic-bezier(.2,.8,.2,1);
+}
+.toast-item.out { animation: toastOut .25s ease forwards; }
+@keyframes toastIn  { from { opacity:0; transform: translateY(10px) scale(.95); } to { opacity:1; transform: translateY(0) scale(1); } }
+@keyframes toastOut { to   { opacity:0; transform: translateY(10px) scale(.95); } }
+.toast-icon { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-size: 14px; flex-shrink: 0; }
+.toast-icon.success { background: var(--success-bg); }
+.toast-icon.warn    { background: var(--warn-bg); }
+.toast-icon.error   { background: var(--danger-bg); }
+.toast-icon.info    { background: var(--info-bg); }
+.toast-text { flex: 1; }
+.toast-title { font-size: 12px; font-weight: 700; color: var(--text); }
+.toast-msg   { font-size: 11px; color: var(--text2); }
+.toast-close { color: var(--text3); font-size: 14px; cursor: pointer; flex-shrink: 0; }
+.toast-progress { position: absolute; bottom: 0; left: 0; height: 2px; border-radius: 0 0 var(--r-lg) var(--r-lg); background: currentColor; animation: toastProg var(--duration, 4s) linear forwards; }
+@keyframes toastProg { from { width: 100%; } to { width: 0%; } }
+
+/* ── MODAL ── */
+#modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 500; display: none; place-items: center; backdrop-filter: blur(4px); }
+#modal-overlay.open { display: grid; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl); padding: 24px; min-width: 480px; max-width: 720px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); animation: modalIn .2s cubic-bezier(.2,.8,.2,1); }
+@keyframes modalIn { from { opacity:0; transform: scale(.96) translateY(-8px); } to { opacity:1; transform: scale(1) translateY(0); } }
+.modal-title { font-size: 16px; font-weight: 800; color: var(--text); margin-bottom: 16px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+/* ── CHART BARS (CSS) ── */
+.chart-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.chart-bar-label { font-size: 11px; color: var(--text2); min-width: 100px; text-align: right; }
+.chart-bar-track { flex: 1; height: 20px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+.chart-bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding: 0 8px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,.9); transition: width .5s cubic-bezier(.2,.8,.2,1); }
+.chart-bar-val { font-size: 11px; font-weight: 700; min-width: 44px; font-family: 'JetBrains Mono', monospace; }
+
+/* ── TABS (secondary) ── */
+.tab-bar { display: flex; gap: 2px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.tab-btn { padding: 8px 14px; font-size: 12px; font-weight: 600; color: var(--text2); border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all var(--trans); }
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── FILTER TOOLBAR ── */
+.filter-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 14px; background: var(--surface2); border-radius: var(--r); border: 1px solid var(--border); margin-bottom: 14px; }
+.filter-bar select { width: auto; min-width: 130px; padding: 5px 8px; font-size: 11px; }
+.filter-bar input { width: 200px; padding: 5px 8px; font-size: 11px; }
+.filter-sep { width: 1px; height: 20px; background: var(--border); }
+.filter-count { font-size: 11px; color: var(--text2); padding: 4px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-sm); }
+
+/* ── VALIDATION PANEL ── */
+.val-panel { border-radius: var(--r-lg); overflow: hidden; border: 1px solid var(--border); }
+.val-row { display: flex; align-items: center; gap: 12px; padding: 9px 14px; border-bottom: 1px solid var(--border); transition: background var(--trans); }
+.val-row:last-child { border-bottom: none; }
+.val-row:hover { background: var(--surface2); }
+.val-row-label { font-size: 12px; color: var(--text2); flex: 1; }
+.val-row-result { font-size: 11px; font-weight: 700; }
+.val-ok     { color: var(--success); }
+.val-warn2  { color: var(--warn); }
+.val-err    { color: var(--danger); }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 56px 24px; }
+.empty-state-icon { font-size: 44px; margin-bottom: 14px; filter: grayscale(.3); }
+.empty-state-title { font-size: 15px; font-weight: 700; color: var(--text2); margin-bottom: 6px; }
+.empty-state-desc { font-size: 12px; color: var(--text3); max-width: 320px; margin: 0 auto 16px; line-height: 1.6; }
+
+/* ── TOOLBAR ── */
+.toolbar { display: flex; align-items: center; gap: 8px; padding: 10px 0; margin-bottom: 10px; flex-wrap: wrap; }
+.toolbar-left { display: flex; gap: 6px; align-items: center; }
+.toolbar-right { margin-left: auto; display: flex; gap: 6px; align-items: center; }
+
+/* ── LOADING ── */
+.skeleton { background: linear-gradient(90deg, var(--surface2) 25%, var(--surface3) 50%, var(--surface2) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: var(--r-sm); }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.loader { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── HISTORY LOG ── */
+.history-item { display: flex; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border); align-items: flex-start; }
+.history-item:last-child { border-bottom: none; }
+.history-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+.history-text { font-size: 12px; color: var(--text2); flex: 1; line-height: 1.5; }
+.history-text b { color: var(--text); }
+.history-time { font-size: 10px; color: var(--text3); white-space: nowrap; margin-top: 1px; }
+
+/* ── SETTINGS ── */
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.settings-row:last-child { border-bottom: none; }
+.settings-label { font-size: 13px; font-weight: 500; color: var(--text); }
+.settings-desc  { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.toggle { position: relative; width: 36px; height: 20px; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider { position: absolute; inset: 0; background: var(--border2); border-radius: 20px; cursor: pointer; transition: background var(--trans); }
+.toggle-slider::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform var(--trans); }
+.toggle input:checked + .toggle-slider { background: var(--accent); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+/* ── ACCOUNT COLOR MAP ── */
+.acc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .app-shell { grid-template-columns: 1fr; grid-template-rows: 52px 1fr; }
+  .app-sidebar { display: none; }
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .col-span-2 { grid-column: span 1; }
+}
+</style>
+<!-- ═══════════════════════════════════════════════════════════
+     APP SHELL
+════════════════════════════════════════════════════════════ -->
+<div class="app-shell">
+
+  <!-- TOP BAR -->
+  <header class="app-topbar">
+    <div class="topbar-brand">
+      <div class="brand-logo">CO</div>
+      <div>
+        <div class="brand-name">CPL Allocation Platform</div>
+        <div class="brand-env">Enterprise · Clinical Operations</div>
+      </div>
+    </div>
+    <div class="topbar-divider"></div>
+    <div class="topbar-search">
+      <span class="topbar-search-icon">⌕</span>
+      <input type="text" id="globalSearch" placeholder="Search employees, accounts, templates…" autocomplete="off" oninput="onGlobalSearch(this.value)" onfocus="openSearchDrop()" onblur="setTimeout(closeSearchDrop,200)">
+      <div class="search-dropdown" id="searchDrop"></div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-kpi">
+        <div class="topbar-kpi-val" id="hdr-emps">—</div>
+        <div class="topbar-kpi-label">Employees</div>
+      </div>
+      <div class="topbar-kpi">
+        <div class="topbar-kpi-val" id="hdr-hc">—</div>
+        <div class="topbar-kpi-label">Total HC</div>
+      </div>
+      <div class="topbar-kpi">
+        <div class="topbar-kpi-val" id="hdr-valid">—</div>
+        <div class="topbar-kpi-label">Valid %</div>
+      </div>
+      <button class="icon-btn" onclick="toggleTheme()" data-tip="Toggle theme" id="themeBtn">☀</button>
+      <button class="icon-btn notif-dot" onclick="showPage('history')" data-tip="Audit history">🕐</button>
+      <button class="icon-btn" onclick="showPage('settings')" data-tip="Settings">⚙</button>
+      <button class="btn btn-primary btn-sm" onclick="exportReport()">↓ Export</button>
+    </div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <nav class="app-sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Overview</div>
+      <button class="nav-item active" onclick="showPage('dashboard',this)">
+        <span class="nav-icon">⬛</span> Dashboard
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Workforce</div>
+      <button class="nav-item" onclick="showPage('employees',this)">
+        <span class="nav-icon">👥</span> Employees
+        <span class="nav-badge info" id="nav-emp-count">0</span>
+      </button>
+      <button class="nav-item" onclick="showPage('allocations',this)">
+        <span class="nav-icon">📊</span> Allocations
+        <span class="nav-badge" id="nav-err-count" style="display:none">!</span>
+      </button>
+      <button class="nav-item" onclick="showPage('validation',this)">
+        <span class="nav-icon">✓</span> Validation
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Intelligence</div>
+      <button class="nav-item" onclick="showPage('engine',this)">
+        <span class="nav-icon">⚡</span> Alloc Engine
+      </button>
+      <button class="nav-item" onclick="showPage('templates',this)">
+        <span class="nav-icon">📋</span> Templates
+      </button>
+      <button class="nav-item" onclick="showPage('hcref',this)">
+        <span class="nav-icon">🏢</span> HC Reference
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Data</div>
+      <button class="nav-item" onclick="showPage('import',this)">
+        <span class="nav-icon">📤</span> Import Wizard
+      </button>
+      <button class="nav-item" onclick="showPage('reports',this)">
+        <span class="nav-icon">📄</span> Reports
+      </button>
+      <button class="nav-item" onclick="showPage('history',this)">
+        <span class="nav-icon">🕐</span> Audit History
+      </button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">System</div>
+      <button class="nav-item" onclick="showPage('settings',this)">
+        <span class="nav-icon">⚙</span> Settings
+      </button>
+    </div>
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-mini-stats" id="sidebarStats">
+      <div class="sidebar-stat"><span class="sidebar-stat-label">HC Total</span><span class="sidebar-stat-val" id="sb-hc">—</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Budget</span><span class="sidebar-stat-val" id="sb-budget">—</span></div>
+      <div class="sidebar-stat"><span class="sidebar-stat-label">Errors</span><span class="sidebar-stat-val" id="sb-errors" style="color:var(--danger)">—</span></div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="app-content" id="appContent">
+
+    <!-- ════ DASHBOARD ════ -->
+    <div id="page-dashboard" class="page active">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Executive Dashboard</div>
+          <div class="page-subtitle">Real-time workforce allocation overview · Clinical Operations &amp; PMO</div>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="loadSampleData()">Load Sample Data</button>
+          <button class="btn btn-primary btn-sm" onclick="showPage('import',null)">+ Import</button>
+        </div>
+      </div>
+
+      <!-- KPI Row -->
+      <div class="kpi-grid" id="kpiGrid">
+        <div class="kpi-card"><div class="kpi-accent-bar" style="background:var(--accent)"></div><div class="kpi-icon">👥</div><div class="kpi-value" id="kpi-emps">—</div><div class="kpi-label">Employees</div></div>
+        <div class="kpi-card"><div class="kpi-accent-bar" style="background:var(--accent2)"></div><div class="kpi-icon">🏢</div><div class="kpi-value" id="kpi-accs">—</div><div class="kpi-label">Accounts</div></div>
+        <div class="kpi-card"><div class="kpi-accent-bar" style="background:var(--success)"></div><div class="kpi-icon">🧑‍⚕️</div><div class="kpi-value" id="kpi-hc">—</div><div class="kpi-label">Total HC</div></div>
+        <div class="kpi-card"><div class="kpi-accent-bar" style="background:var(--warn)"></div><div class="kpi-icon">💰</div><div class="kpi-value" id="kpi-budget">—</div><div class="kpi-label">Budget Used</div></div>
+        <div class="kpi-card"><div class="kpi-accent-bar" style="background:var(--danger)"></div><div class="kpi-icon">⚠</div><div class="kpi-value" id="kpi-errors">—</div><div class="kpi-label">Alloc Errors</div></div>
+        <div class="kpi-card"><div class="kpi-accent-bar" style="background:var(--success)"></div><div class="kpi-icon">✓</div><div class="kpi-value" id="kpi-score">—</div><div class="kpi-label">Valid Score</div></div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="grid-2 mb-20">
+        <div class="card">
+          <div class="card-header"><span class="card-title">HC by Account</span><span class="card-title-badge" id="acc-chart-total">0 accounts</span></div>
+          <div class="card-body" id="accChartBody"><div class="empty-state"><div class="empty-state-icon">📊</div><div class="empty-state-title">No data</div><div class="empty-state-desc">Load data to see account distribution.</div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Budget Distribution</span><span class="card-title-badge">Budget 500</span></div>
+          <div class="card-body" id="budgetChartBody"><div class="empty-state"><div class="empty-state-icon">💰</div><div class="empty-state-title">No data</div></div></div>
+        </div>
+      </div>
+
+      <div class="grid-2 mb-20">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Profile Distribution</span></div>
+          <div class="card-body" id="profileChartBody"><div class="empty-state"><div class="empty-state-icon">🧑‍⚕️</div><div class="empty-state-title">No data</div></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Allocation Validation Summary</span></div>
+          <div class="card-body" id="validationSummaryBody"><div class="empty-state"><div class="empty-state-icon">✓</div><div class="empty-state-title">No data</div></div></div>
+        </div>
+      </div>
+
+      <!-- HC Reference Tables -->
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">HC by Account</span><button class="btn btn-ghost btn-sm" onclick="showPage('hcref',null)">View All</button></div>
+          <div class="table-container">
+            <table class="data-table"><thead><tr><th>Account</th><th>HC</th><th>Share</th></tr></thead>
+            <tbody id="dash-hcAcc"></tbody></table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Top Employees by Budget</span></div>
+          <div class="table-container">
+            <table class="data-table"><thead><tr><th>Employee</th><th>Accounts</th><th>Budget</th><th>Status</th></tr></thead>
+            <tbody id="dash-topEmp"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ EMPLOYEES ════ -->
+    <div id="page-employees" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Employee Workspace</div><div class="page-subtitle">Manage workforce allocation by employee</div></div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="selectAllEmployees()">Select All</button>
+          <button class="btn btn-ghost btn-sm" id="batchBtn" onclick="openBatchModal()" disabled>Batch Operations</button>
+          <button class="btn btn-primary btn-sm" onclick="addEmployee()">+ Add Employee</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <select id="emp-filter-dept" onchange="renderEmployees()"><option value="">All Departments</option><option>Compliance</option><option>PMO</option></select>
+        <select id="emp-filter-acc" onchange="renderEmployees()"><option value="">All Accounts</option></select>
+        <select id="emp-filter-profile" onchange="renderEmployees()"><option value="">All Profiles</option><option>PHRN</option><option>USRN</option><option>Non-RN</option></select>
+        <select id="emp-filter-status" onchange="renderEmployees()"><option value="">All Status</option><option value="valid">Valid</option><option value="error">Error</option><option value="warn">Warning</option></select>
+        <input type="text" id="emp-search" placeholder="Search name or ID…" oninput="renderEmployees()" style="width:200px">
+        <div class="filter-sep"></div>
+        <span class="filter-count" id="emp-filter-count">0 employees</span>
+        <button class="btn btn-ghost btn-sm" onclick="clearEmpFilters()">✕ Clear</button>
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" id="viewCard" onclick="setEmpView('card')" style="background:var(--accent-soft);color:var(--accent)">Cards</button>
+          <button class="btn btn-ghost btn-sm" id="viewTable" onclick="setEmpView('table')">Table</button>
+        </div>
+      </div>
+      <div id="emp-card-view"></div>
+      <div id="emp-table-view" style="display:none">
+        <div class="card">
+          <div class="table-container table-scroll">
+            <table class="data-table" id="empTableEl">
+              <thead><tr>
+                <th><input type="checkbox" id="empSelectAll" onchange="toggleSelectAll(this)"></th>
+                <th onclick="sortTable('fullName')">Name</th>
+                <th onclick="sortTable('globalId')">Global ID</th>
+                <th onclick="sortTable('dept')">Dept</th>
+                <th>Accounts</th>
+                <th>Profile</th>
+                <th>Site</th>
+                <th>Allocation</th>
+                <th>Budget</th>
+                <th>Status</th>
+                <th></th>
+              </tr></thead>
+              <tbody id="empTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ ALLOCATIONS ════ -->
+    <div id="page-allocations" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Allocation Details</div><div class="page-subtitle">All allocation rows with inline editing</div></div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="massNormalize()">⚡ Mass Normalize</button>
+          <button class="btn btn-ghost btn-sm" onclick="massValidate()">✓ Mass Validate</button>
+          <button class="btn btn-primary btn-sm" onclick="addAllocRow()">+ Add Row</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <select id="alloc-filter-dept" onchange="renderAllocTable()"><option value="">All Depts</option><option>Compliance</option><option>PMO</option></select>
+        <select id="alloc-filter-acc" onchange="renderAllocTable()"><option value="">All Accounts</option></select>
+        <select id="alloc-filter-profile" onchange="renderAllocTable()"><option value="">All Profiles</option><option>PHRN</option><option>USRN</option><option>Non-RN</option></select>
+        <input type="text" id="alloc-search" placeholder="Search…" oninput="renderAllocTable()" style="width:180px">
+        <div class="filter-sep"></div>
+        <span class="filter-count" id="alloc-count">0 rows</span>
+      </div>
+      <div class="card">
+        <div class="table-container table-scroll">
+          <table class="data-table" id="allocTableEl">
+            <thead><tr>
+              <th>Employee</th><th>ID</th><th>Dept</th>
+              <th>Account</th><th>Cost Center</th><th>Profile</th><th>Site</th>
+              <th>Alloc %</th><th>Budget</th><th>Remarks</th><th>Status</th><th></th>
+            </tr></thead>
+            <tbody id="allocTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ VALIDATION ════ -->
+    <div id="page-validation" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Validation Center</div><div class="page-subtitle">Full audit of allocation integrity</div></div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="runFullValidation()">↻ Re-run</button>
+          <button class="btn btn-primary btn-sm" onclick="autoFixAll()">⚡ Auto-Fix All</button>
+        </div>
+      </div>
+      <div class="grid-2 mb-16">
+        <div class="card"><div class="card-header"><span class="card-title">Validation Score</span></div>
+          <div class="card-body" style="display:flex;align-items:center;gap:20px">
+            <div id="val-ring"></div>
+            <div id="val-score-detail"></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Rule Summary</span></div>
+          <div class="card-body" id="val-rule-summary"></div>
+        </div>
+      </div>
+      <div class="card mb-16">
+        <div class="card-header"><span class="card-title">Employee Validation Status</span><span class="card-title-badge" id="val-count-badge">—</span></div>
+        <div class="table-container table-scroll">
+          <table class="data-table"><thead><tr><th>Employee</th><th>ID</th><th>Dept</th><th>Accounts</th><th>Alloc Total</th><th>Errors</th><th>Warnings</th><th>Action</th></tr></thead>
+          <tbody id="valTableBody"></tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Validation Log</span></div>
+        <div id="val-log" class="val-panel"></div>
+      </div>
+    </div>
+
+    <!-- ════ ENGINE ════ -->
+    <div id="page-engine" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Smart Allocation Engine</div><div class="page-subtitle">Intelligent allocation tools and bulk operations</div></div>
+      </div>
+      <div class="grid-2 mb-20">
+        <div class="card">
+          <div class="card-header"><span class="card-title">🎯 Auto-Normalize</span></div>
+          <div class="card-body">
+            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.7">Automatically adjusts allocation percentages so each employee's total equals exactly 100%. Uses proportional scaling.</p>
+            <div class="field mb-12">
+              <div class="field-label">Target Employees</div>
+              <select id="norm-target"><option value="all">All employees</option><option value="errors">Errors only</option><option value="under">Under-allocated</option><option value="over">Over-allocated</option></select>
+            </div>
+            <button class="btn btn-primary" style="width:100%" onclick="runAutoNormalize()">⚡ Normalize Allocations</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">💡 Allocation Suggestions</span></div>
+          <div class="card-body">
+            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.7">Recommends allocations based on HC % distribution across accounts.</p>
+            <div class="field mb-12">
+              <div class="field-label">Base on</div>
+              <select id="sug-basis"><option value="hc">HC % per Account</option><option value="budget">Budget Distribution</option><option value="template">Most Used Template</option></select>
+            </div>
+            <div class="field mb-12">
+              <div class="field-label">Apply to</div>
+              <select id="sug-emp"><option value="">— select employee —</option></select>
+            </div>
+            <div id="sug-preview" style="margin-bottom:12px"></div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost" style="flex:1" onclick="previewSuggestion()">Preview</button>
+              <button class="btn btn-success" style="flex:1" onclick="applySuggestion()">Apply</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="grid-2 mb-20">
+        <div class="card">
+          <div class="card-header"><span class="card-title">⚖ Budget Recalculator</span></div>
+          <div class="card-body">
+            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.7">Budget = Allocation% × Total Budget (per employee). Change global budget below.</p>
+            <div class="form-row mb-12">
+              <div class="field"><div class="field-label">Total Budget (per employee)</div><input type="number" id="globalBudget" value="500" step="50"></div>
+              <div class="field"><div class="field-label">Period</div><select id="budgetPeriod"><option>Annual</option><option>Quarterly</option><option>Monthly</option></select></div>
+            </div>
+            <button class="btn btn-warn" style="width:100%" onclick="recalcAllBudgets()">↻ Recalculate All Budgets</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">📦 Batch Operations</span></div>
+          <div class="card-body">
+            <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.7">Apply changes to multiple employees at once. Select employees in the Employee Workspace first.</p>
+            <div class="form-row mb-12">
+              <div class="field"><div class="field-label">Batch Action</div>
+                <select id="batchAction">
+                  <option value="dept">Set Department</option>
+                  <option value="profile">Set Profile</option>
+                  <option value="site">Set Site</option>
+                  <option value="template">Apply Template</option>
+                  <option value="normalize">Normalize</option>
+                  <option value="delete">Delete</option>
+                </select>
+              </div>
+              <div class="field"><div class="field-label">Value</div><input type="text" id="batchValue" placeholder="e.g. PMO, PHRN, BT…"></div>
+            </div>
+            <button class="btn btn-primary" style="width:100%" onclick="runBatch()">Run Batch</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">🔄 Individual Allocation Editor</span></div>
+        <div class="card-body">
+          <div class="form-row mb-12">
+            <div class="field"><div class="field-label">Select Employee</div><select id="editorEmpSel" onchange="loadEditorEmp()"><option value="">— pick employee —</option></select></div>
+          </div>
+          <div id="editorPanel"><div class="empty-state"><div class="empty-state-icon">👆</div><div class="empty-state-title">Select an employee</div><div class="empty-state-desc">Pick an employee above to open the interactive allocation editor with live sliders.</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ TEMPLATES ════ -->
+    <div id="page-templates" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Allocation Templates</div><div class="page-subtitle">Reusable allocation patterns with versioning</div></div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="importTemplate()">↑ Import</button>
+          <button class="btn btn-primary btn-sm" onclick="newTemplate()">+ New Template</button>
+        </div>
+      </div>
+      <div class="grid-2 mb-16">
+        <div id="template-list"></div>
+        <div class="card" id="template-apply-card">
+          <div class="card-header"><span class="card-title">Apply Template</span></div>
+          <div class="card-body">
+            <div class="field mb-12"><div class="field-label">Template</div><select id="applyTplSel" onchange="previewApplyTemplate()"><option value="">— select —</option></select></div>
+            <div class="field mb-12"><div class="field-label">Target Employee</div><select id="applyTplEmp"><option value="">— select —</option></select></div>
+            <div id="applyTplPreview" class="mb-12"></div>
+            <div class="flex-end"><button class="btn btn-success" onclick="applyTemplate()">Apply Template</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ HC REFERENCE ════ -->
+    <div id="page-hcref" class="page">
+      <div class="page-header">
+        <div><div class="page-title">HC Reference Data</div><div class="page-subtitle">Headcount by Account, Profile, and Site</div></div>
+        <div class="page-actions"><button class="btn btn-primary btn-sm" onclick="exportHCRef()">↓ Export HC</button></div>
+      </div>
+      <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchHCTab('account',this)">By Account</button>
+        <button class="tab-btn" onclick="switchHCTab('profile',this)">By Profile</button>
+        <button class="tab-btn" onclick="switchHCTab('site',this)">By Site</button>
+      </div>
+      <div id="hc-tab-account" class="tab-panel active">
+        <div class="card"><div class="table-container"><table class="data-table"><thead><tr><th>Account</th><th>HC</th><th>% Share</th><th>Alloc Budget</th></tr></thead><tbody id="hcAccBody"></tbody></table></div></div>
+      </div>
+      <div id="hc-tab-profile" class="tab-panel">
+        <div class="card"><div class="table-container"><table class="data-table"><thead><tr><th>Account</th><th>Cost Center</th><th>Profile</th><th>HC</th></tr></thead><tbody id="hcProfBody"></tbody></table></div></div>
+      </div>
+      <div id="hc-tab-site" class="tab-panel">
+        <div class="card"><div class="table-container"><table class="data-table"><thead><tr><th>Account</th><th>Site</th><th>HC</th><th>% Alloc</th></tr></thead><tbody id="hcSiteBody"></tbody></table></div></div>
+      </div>
+    </div>
+
+    <!-- ════ IMPORT WIZARD ════ -->
+    <div id="page-import" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Import Wizard</div><div class="page-subtitle">6-step guided data import with validation</div></div>
+      </div>
+      <div class="wizard-steps" id="wizardSteps">
+        <div class="wizard-step"><div class="step-circle active" id="ws1">1</div><div class="step-label active">Upload</div></div>
+        <div class="step-connector"></div>
+        <div class="wizard-step"><div class="step-circle" id="ws2">2</div><div class="step-label">Detect</div></div>
+        <div class="step-connector"></div>
+        <div class="wizard-step"><div class="step-circle" id="ws3">3</div><div class="step-label">Map Columns</div></div>
+        <div class="step-connector"></div>
+        <div class="wizard-step"><div class="step-circle" id="ws4">4</div><div class="step-label">Validate</div></div>
+        <div class="step-connector"></div>
+        <div class="wizard-step"><div class="step-circle" id="ws5">5</div><div class="step-label">Preview</div></div>
+        <div class="step-connector"></div>
+        <div class="wizard-step"><div class="step-circle" id="ws6">6</div><div class="step-label">Import</div></div>
+      </div>
+      <div id="wizard-body"></div>
+    </div>
+
+    <!-- ════ REPORTS ════ -->
+    <div id="page-reports" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Reporting Center</div><div class="page-subtitle">Generate, preview, and export allocation reports</div></div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV()">↓ CSV</button>
+          <button class="btn btn-primary btn-sm" onclick="exportReport()">↓ Excel</button>
+        </div>
+      </div>
+      <div class="grid-2 mb-20">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Report Configuration</span></div>
+          <div class="card-body">
+            <div class="form-row mb-12">
+              <div class="field"><div class="field-label">Report Type</div>
+                <select id="rptType">
+                  <option value="full">Full Allocation Report</option>
+                  <option value="emp">Employee Summary</option>
+                  <option value="account">Account Summary</option>
+                  <option value="dept">Department Summary</option>
+                  <option value="budget">Budget Summary</option>
+                  <option value="validation">Validation Report</option>
+                  <option value="hc">HC Reference</option>
+                </select>
+              </div>
+              <div class="field"><div class="field-label">Filter Account</div><select id="rptAccount"><option value="">All</option></select></div>
+            </div>
+            <div class="form-row mb-12">
+              <div class="field"><div class="field-label">Filter Dept</div><select id="rptDept"><option value="">All</option><option>Compliance</option><option>PMO</option></select></div>
+              <div class="field"><div class="field-label">Period Label</div><input type="text" id="rptPeriod" placeholder="e.g. Q3 2025"></div>
+            </div>
+            <div class="flex-end"><button class="btn btn-primary" onclick="generateReport()">Generate Report</button></div>
+          </div>
+        </div>
+        <div class="card"><div class="card-header"><span class="card-title">Quick Statistics</span></div><div class="card-body" id="rptQuickStats"><div class="empty-state" style="padding:20px"><div class="empty-state-icon">📄</div><div class="empty-state-title">Generate a report</div></div></div></div>
+      </div>
+      <div class="card" id="rptPreviewCard" style="display:none">
+        <div class="card-header"><span class="card-title" id="rptPreviewTitle">Report Preview</span><div class="card-actions"><button class="btn btn-ghost btn-sm" onclick="exportReport()">↓ Excel</button></div></div>
+        <div class="table-container table-scroll" id="rptPreviewBody"></div>
+      </div>
+    </div>
+
+    <!-- ════ HISTORY ════ -->
+    <div id="page-history" class="page">
+      <div class="page-header">
+        <div><div class="page-title">Audit History</div><div class="page-subtitle">Full changelog with undo/redo support</div></div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="undoHistory()" id="undoBtn" disabled>↩ Undo</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearHistory()">✕ Clear</button>
+        </div>
+      </div>
+      <div class="card"><div id="historyList"></div></div>
+    </div>
+
+    <!-- ════ SETTINGS ════ -->
+    <div id="page-settings" class="page">
+      <div class="page-header"><div><div class="page-title">Settings</div><div class="page-subtitle">Configure budget, validation rules, and preferences</div></div></div>
+      <div class="grid-2">
+        <div class="card mb-16">
+          <div class="card-header"><span class="card-title">Budget Configuration</span></div>
+          <div class="card-body">
+            <div class="settings-row"><div><div class="settings-label">Per-Employee Budget</div><div class="settings-desc">Default total budget each employee is allocated</div></div><input type="number" id="cfg-budget" value="500" style="width:100px" onchange="applySettings()"></div>
+            <div class="settings-row"><div><div class="settings-label">Budget Period</div><div class="settings-desc">How budget is calculated</div></div><select id="cfg-period" style="width:120px" onchange="applySettings()"><option>Annual</option><option>Quarterly</option><option>Monthly</option></select></div>
+            <div class="settings-row"><div><div class="settings-label">Tolerance %</div><div class="settings-desc">Acceptable deviation from 100% before warning</div></div><input type="number" id="cfg-tolerance" value="0.1" step="0.1" style="width:80px" onchange="applySettings()"></div>
+          </div>
+        </div>
+        <div class="card mb-16">
+          <div class="card-header"><span class="card-title">Validation Rules</span></div>
+          <div class="card-body">
+            <div class="settings-row"><div><div class="settings-label">Require Cost Center</div></div><label class="toggle"><input type="checkbox" id="cfg-req-cc" checked><span class="toggle-slider"></span></label></div>
+            <div class="settings-row"><div><div class="settings-label">Require Profile</div></div><label class="toggle"><input type="checkbox" id="cfg-req-profile" checked><span class="toggle-slider"></span></label></div>
+            <div class="settings-row"><div><div class="settings-label">Require Site</div></div><label class="toggle"><input type="checkbox" id="cfg-req-site"><span class="toggle-slider"></span></label></div>
+            <div class="settings-row"><div><div class="settings-label">Allow Zero Allocation</div></div><label class="toggle"><input type="checkbox" id="cfg-allow-zero"><span class="toggle-slider"></span></label></div>
+            <div class="settings-row"><div><div class="settings-label">Warn on Duplicate Account</div></div><label class="toggle"><input type="checkbox" id="cfg-dup-warn" checked><span class="toggle-slider"></span></label></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Appearance</span></div>
+          <div class="card-body">
+            <div class="settings-row"><div><div class="settings-label">Dark Mode</div></div><label class="toggle"><input type="checkbox" id="cfg-dark" checked onchange="toggleTheme()"><span class="toggle-slider"></span></label></div>
+            <div class="settings-row"><div><div class="settings-label">Reduced Motion</div></div><label class="toggle"><input type="checkbox" id="cfg-motion"><span class="toggle-slider"></span></label></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Export Defaults</span></div>
+          <div class="card-body">
+            <div class="field mb-12"><div class="field-label">Default Sheet Name</div><input type="text" id="cfg-sheet" value="rawData_Allocation"></div>
+            <div class="field"><div class="field-label">Filename Prefix</div><input type="text" id="cfg-prefix" value="CPL_Allocation"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main><!-- /app-content -->
+</div><!-- /app-shell -->
+
+<!-- MODAL OVERLAY -->
+<div id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-inner">
+    <div class="modal-title" id="modal-title"></div>
+    <div id="modal-body"></div>
+    <div class="modal-footer" id="modal-footer"></div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+<script>
+'use strict';
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  CPL ALLOCATION PLATFORM — ENTERPRISE JAVASCRIPT ENGINE     ║
+// ║  Modular architecture: Store · Services · Validators        ║
+// ║  Renderers · Calculators · Exporters · Importers            ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+// ══════════════════════════════════════
+//  §1  CENTRALIZED STORE
+// ══════════════════════════════════════
+const Store = (() => {
+  let _state = {
+    employees:   {},   // { globalId: {globalId, givenName, lastName, fullName, dept, status} }
+    allocations: [],   // [{id, globalId, account, costCenter, profile, site, alloc, remarks}]
+    hcAccount:   [],
+    hcProfile:   [],
+    hcSite:      [],
+    templates:   [],
+    history:     [],
+    undoStack:   [],
+    settings: {
+      budget: 500,
+      period: 'Annual',
+      tolerance: 0.1,
+      requireCC: true,
+      requireProfile: true,
+      requireSite: false,
+      allowZero: false,
+      dupWarn: true,
+    },
+    ui: { empView: 'card', sortCol: 'fullName', sortDir: 1, selectedEmps: new Set() },
+    cache: {}
+  };
+  const _observers = {};
+
+  return {
+    get: (key) => key ? _state[key] : _state,
+    set: (key, val, historyNote) => {
+      const old = JSON.parse(JSON.stringify(_state[key] || null));
+      _state[key] = val;
+      _state.cache = {}; // invalidate computed cache
+      if (historyNote) History.push(historyNote, key, old, val);
+      (_observers[key] || []).forEach(fn => fn(val, old));
+      (_observers['*'] || []).forEach(fn => fn(key, val));
+    },
+    update: (key, fn, note) => {
+      Store.set(key, fn(JSON.parse(JSON.stringify(_state[key]))), note);
+    },
+    subscribe: (key, fn) => {
+      _observers[key] = _observers[key] || [];
+      _observers[key].push(fn);
+    },
+    computed: (key, fn) => {
+      if (_state.cache[key] !== undefined) return _state.cache[key];
+      _state.cache[key] = fn(_state);
+      return _state.cache[key];
+    }
+  };
+})();
+
+// ══════════════════════════════════════
+//  §2  HISTORY / AUDIT
+// ══════════════════════════════════════
+const History = {
+  push(note, key, oldVal, newVal) {
+    const entry = { id: Date.now(), note, key, oldVal, newVal, ts: new Date().toISOString(), user: 'CO Admin' };
+    const h = Store.get('history');
+    h.unshift(entry);
+    if (h.length > 200) h.pop();
+    Store.set('history', h);
+    Render.history();
+  },
+  undo() {
+    const h = Store.get('history');
+    if (!h.length) return;
+    const last = h.shift();
+    Store.set(last.key, last.oldVal);
+    Store.set('history', h);
+    toast('Undo: '+last.note, 'info');
+    refreshAll();
+  }
+};
+
+// ══════════════════════════════════════
+//  §3  CALCULATORS
+// ══════════════════════════════════════
+const Calc = {
+  // Sum of allocation% for a given employee
+  empTotal(globalId) {
+    return Store.get('allocations').filter(a => a.globalId === globalId).reduce((s, a) => s + (a.alloc || 0), 0);
+  },
+  // Computed budget for one allocation row
+  rowBudget(alloc) {
+    return (alloc || 0) * Store.get('settings').budget;
+  },
+  // Employee-level budget (sum of row budgets)
+  empBudget(globalId) {
+    return Store.get('allocations').filter(a => a.globalId === globalId).reduce((s, a) => s + Calc.rowBudget(a.alloc), 0);
+  },
+  // Grand total budget (all employees × their allocations)
+  grandBudget() {
+    return Store.computed('grandBudget', s =>
+      [...Object.keys(s.employees)].reduce((sum, id) => sum + Calc.empBudget(id), 0)
+    );
+  },
+  totalHC() {
+    return Store.computed('totalHC', s => s.hcAccount.reduce((n, r) => n + (r.hc || 0), 0));
+  },
+  uniqueAccounts() {
+    return Store.computed('uniqueAccounts', s => [...new Set(s.allocations.map(a => a.account).filter(Boolean))]);
+  },
+  // HC-based suggestion for an employee
+  hcSuggestion() {
+    const total = Calc.totalHC();
+    if (!total) return [];
+    return Store.get('hcAccount').map(r => ({ account: r.account, alloc: r.hc / total, costCenter: '', profile: '', site: '' }));
+  }
+};
+
+// ══════════════════════════════════════
+//  §4  VALIDATION ENGINE
+// ══════════════════════════════════════
+const Validator = {
+  rules: [
+    { id: 'total100', label: 'Allocation totals 100%', level: 'error',
+      check: (id) => Math.abs(Calc.empTotal(id) - 1) <= Store.get('settings').tolerance / 100 },
+    { id: 'noZero', label: 'No zero allocation rows', level: 'warn',
+      check: (id) => !Store.get('allocations').some(a => a.globalId === id && a.alloc === 0) || Store.get('settings').allowZero },
+    { id: 'noNeg', label: 'No negative allocation', level: 'error',
+      check: (id) => !Store.get('allocations').some(a => a.globalId === id && a.alloc < 0) },
+    { id: 'noDupAcc', label: 'No duplicate accounts', level: 'warn',
+      check: (id) => { const accs = Store.get('allocations').filter(a=>a.globalId===id).map(a=>a.account); return new Set(accs).size===accs.length || !Store.get('settings').dupWarn; } },
+    { id: 'hasCC', label: 'Cost Center specified', level: 'warn',
+      check: (id) => !Store.get('settings').requireCC || Store.get('allocations').filter(a=>a.globalId===id).every(a=>a.costCenter) },
+    { id: 'hasProfile', label: 'Profile specified', level: 'warn',
+      check: (id) => !Store.get('settings').requireProfile || Store.get('allocations').filter(a=>a.globalId===id).every(a=>a.profile) },
+    { id: 'hasSite', label: 'Site specified', level: 'warn',
+      check: (id) => !Store.get('settings').requireSite || Store.get('allocations').filter(a=>a.globalId===id).every(a=>a.site) },
+    { id: 'hasAccount', label: 'Account specified', level: 'error',
+      check: (id) => Store.get('allocations').filter(a=>a.globalId===id).every(a=>a.account) },
+  ],
+
+  validateEmployee(id) {
+    const results = Validator.rules.map(r => ({ ...r, pass: r.check(id) }));
+    const errors  = results.filter(r => !r.pass && r.level === 'error');
+    const warns   = results.filter(r => !r.pass && r.level === 'warn');
+    return { id, results, errors, warns, ok: errors.length === 0 };
+  },
+
+  validateAll() {
+    const ids = Object.keys(Store.get('employees'));
+    const results = ids.map(id => Validator.validateEmployee(id));
+    const errCount = results.filter(r => !r.ok).length;
+    const score = ids.length ? Math.round((ids.length - errCount) / ids.length * 100) : 100;
+    return { results, errCount, score, total: ids.length };
+  }
+};
+
+// ══════════════════════════════════════
+//  §5  ACCOUNT COLOR MAP
+// ══════════════════════════════════════
+const ACC_COLORS = {
+  'Blue Cross Idaho': '#ff4d6d', 'Cigna Clinical': '#3b7fff',
+  'Cohere': '#0ecfcf', 'Enlyte Clinical': '#f5a623',
+  'Flatiron': '#c77dff', 'Humana Clinical': '#10d98a'
+};
+function accColor(acc) {
+  if (ACC_COLORS[acc]) return ACC_COLORS[acc];
+  const h = acc.split('').reduce((n,c)=>n+c.charCodeAt(0),0) % 360;
+  return `hsl(${h},70%,55%)`;
+}
+function accPill(acc) {
+  const c = accColor(acc);
+  return `<span style="background:${c}22;color:${c};border:1px solid ${c}44;border-radius:20px;padding:2px 8px;font-size:10px;font-weight:700;white-space:nowrap">${acc}</span>`;
+}
+
+// ══════════════════════════════════════
+//  §6  RENDERERS
+// ══════════════════════════════════════
+const Render = {
+  // ── TOPBAR KPIs
+  topbarKpis() {
+    const emps = Object.keys(Store.get('employees')).length;
+    const hc   = Calc.totalHC();
+    const v    = Validator.validateAll();
+    safeSet('hdr-emps',  emps || '—');
+    safeSet('hdr-hc',    hc   || '—');
+    safeSet('hdr-valid', emps ? v.score+'%' : '—');
+    safeSet('nav-emp-count', emps);
+    const errs = v.errCount;
+    const errBadge = document.getElementById('nav-err-count');
+    if (errBadge) { errBadge.style.display = errs ? '' : 'none'; errBadge.textContent = errs; }
+    safeSet('sb-hc', hc || '—');
+    safeSet('sb-budget', emps ? '$'+(Calc.grandBudget()/emps).toFixed(0) : '—');
+    safeSet('sb-errors', errs || '0');
+  },
+
+  // ── DASHBOARD KPIs
+  dashKpis() {
+    const emps = Object.keys(Store.get('employees'));
+    const v    = Validator.validateAll();
+    const hc   = Calc.totalHC();
+    const accs = Calc.uniqueAccounts();
+    const gb   = Calc.grandBudget();
+    const profs = [...new Set(Store.get('allocations').map(a=>a.profile).filter(Boolean))];
+    safeSet('kpi-emps',   emps.length || '—');
+    safeSet('kpi-accs',   accs.length || '—');
+    safeSet('kpi-hc',     hc          || '—');
+    safeSet('kpi-budget', emps.length ? '$'+gb.toFixed(0) : '—');
+    safeSet('kpi-errors', v.errCount  || '0');
+    safeSet('kpi-score',  emps.length ? v.score+'%' : '—');
+  },
+
+  // ── HC BY ACCOUNT CHART
+  accChart() {
+    const data = Store.get('hcAccount');
+    const el   = document.getElementById('accChartBody');
+    if (!el || !data.length) return;
+    const total = data.reduce((s,r)=>s+r.hc,0);
+    el.innerHTML = data.map(r=>`
+      <div class="chart-bar-row">
+        <div class="chart-bar-label">${r.account}</div>
+        <div class="chart-bar-track">
+          <div class="chart-bar-fill" style="width:${(r.hc/total*100).toFixed(1)}%;background:${accColor(r.account)}">
+            ${r.hc}
+          </div>
+        </div>
+        <div class="chart-bar-val" style="color:${accColor(r.account)}">${(r.hc/total*100).toFixed(1)}%</div>
+      </div>`).join('');
+    safeSet('acc-chart-total', data.length+' accounts');
+  },
+
+  // ── BUDGET CHART
+  budgetChart() {
+    const emps = Object.keys(Store.get('employees'));
+    const el = document.getElementById('budgetChartBody');
+    if (!el || !emps.length) return;
+    const byAcc = {};
+    Store.get('allocations').forEach(a => { byAcc[a.account] = (byAcc[a.account]||0) + Calc.rowBudget(a.alloc); });
+    const total = Object.values(byAcc).reduce((s,v)=>s+v,0);
+    el.innerHTML = Object.entries(byAcc).sort((a,b)=>b[1]-a[1]).map(([acc,val])=>`
+      <div class="chart-bar-row">
+        <div class="chart-bar-label">${acc}</div>
+        <div class="chart-bar-track">
+          <div class="chart-bar-fill" style="width:${(val/total*100).toFixed(1)}%;background:${accColor(acc)}">
+            $${val.toFixed(0)}
+          </div>
+        </div>
+        <div class="chart-bar-val" style="color:${accColor(acc)}">${(val/total*100).toFixed(0)}%</div>
+      </div>`).join('');
+  },
+
+  // ── PROFILE CHART
+  profileChart() {
+    const el = document.getElementById('profileChartBody');
+    if (!el) return;
+    const allocs = Store.get('allocations');
+    const pCounts = {};
+    allocs.forEach(a => { if (a.profile) pCounts[a.profile] = (pCounts[a.profile]||0)+1; });
+    const total = Object.values(pCounts).reduce((s,v)=>s+v,0);
+    const colors = { PHRN: '#3b7fff', USRN: '#10d98a', 'Non-RN': '#f5a623' };
+    el.innerHTML = total ? Object.entries(pCounts).map(([p,n])=>`
+      <div class="chart-bar-row">
+        <div class="chart-bar-label">${p}</div>
+        <div class="chart-bar-track">
+          <div class="chart-bar-fill" style="width:${(n/total*100).toFixed(0)}%;background:${colors[p]||'#888'}">
+            ${n}
+          </div>
+        </div>
+        <div class="chart-bar-val">${(n/total*100).toFixed(0)}%</div>
+      </div>`).join('') : '<div class="empty-state"><div class="empty-state-icon">🧑‍⚕️</div><div class="empty-state-title">No profile data</div></div>';
+  },
+
+  // ── VALIDATION SUMMARY (dashboard)
+  validationSummary() {
+    const el = document.getElementById('validationSummaryBody');
+    if (!el) return;
+    const v = Validator.validateAll();
+    if (!v.total) { el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✓</div><div class="empty-state-title">No data</div></div>'; return; }
+    const pct = v.score;
+    const color = pct===100?'var(--success)':pct>80?'var(--warn)':'var(--danger)';
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <div style="text-align:center">
+          ${makeRing(pct, color, 80)}
+        </div>
+        <div style="flex:1">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="kpi-card" style="padding:12px"><div class="kpi-accent-bar" style="background:var(--success)"></div><div class="kpi-value" style="font-size:20px">${v.total-v.errCount}</div><div class="kpi-label">Valid</div></div>
+            <div class="kpi-card" style="padding:12px"><div class="kpi-accent-bar" style="background:var(--danger)"></div><div class="kpi-value" style="font-size:20px;color:var(--danger)">${v.errCount}</div><div class="kpi-label">Errors</div></div>
+          </div>
+        </div>
+      </div>`;
+  },
+
+  // ── DASH HC TABLE
+  dashHcAcc() {
+    const el = document.getElementById('dash-hcAcc');
+    if (!el) return;
+    const data = Store.get('hcAccount');
+    const total = data.reduce((s,r)=>s+r.hc,0);
+    el.innerHTML = data.map(r=>`<tr>
+      <td>${accPill(r.account)}</td>
+      <td class="num">${r.hc.toLocaleString()}</td>
+      <td><div class="alloc-bar"><div class="alloc-track"><div class="alloc-fill ${fillClass(r.hc/total)}" style="width:${(r.hc/total*100).toFixed(1)}%;background:${accColor(r.account)}"></div></div><span class="alloc-pct">${(r.hc/total*100).toFixed(1)}%</span></div></td>
+    </tr>`).join('') || '<tr><td colspan="3" style="text-align:center;color:var(--text3);padding:20px">No data</td></tr>';
+  },
+
+  // ── DASH TOP EMPLOYEES
+  dashTopEmp() {
+    const el = document.getElementById('dash-topEmp');
+    if (!el) return;
+    const emps = Object.values(Store.get('employees'));
+    const sorted = emps.map(e => ({ ...e, budget: Calc.empBudget(e.globalId), accs: [...new Set(Store.get('allocations').filter(a=>a.globalId===e.globalId).map(a=>a.account))], val: Validator.validateEmployee(e.globalId) }))
+      .sort((a,b) => b.budget - a.budget).slice(0, 8);
+    el.innerHTML = sorted.map(e=>`<tr>
+      <td><div style="font-size:12px;font-weight:600">${e.fullName}</div><div style="font-size:10px;color:var(--text3)">${e.globalId}</div></td>
+      <td><span class="pill pill-gray">${e.accs.length}</span></td>
+      <td class="num">$${e.budget.toFixed(0)}</td>
+      <td>${statusBadge(e.val)}</td>
+    </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px">No data</td></tr>';
+  },
+
+  // ── EMPLOYEES (CARD view)
+  employeeCards() {
+    const emps = filteredEmployees();
+    const el = document.getElementById('emp-card-view');
+    if (!el) return;
+    safeSet('emp-filter-count', emps.length+' employees');
+    if (!emps.length) { el.innerHTML = emptyState('👥','No employees match your filters','Try adjusting your search or filters.'); return; }
+    el.innerHTML = '<div class="grid-auto">'+emps.map(e => {
+      const allocs = Store.get('allocations').filter(a=>a.globalId===e.globalId);
+      const total  = Calc.empTotal(e.globalId);
+      const budget = Calc.empBudget(e.globalId);
+      const val    = Validator.validateEmployee(e.globalId);
+      const fc     = total>1.001?'over':total>=.999?'full':'under';
+      const color  = accColor(e.fullName||e.globalId);
+      const accs   = [...new Set(allocs.map(a=>a.account))];
+      const profiles = [...new Set(allocs.map(a=>a.profile).filter(Boolean))];
+      return `<div class="emp-card" id="ecard-${e.globalId}">
+        <div class="emp-card-head" onclick="toggleEmpCard('${e.globalId}')">
+          <div class="emp-avatar" style="background:${color}">${(e.givenName||'?')[0]}${(e.lastName||'?')[0]}</div>
+          <div style="flex:1;min-width:0">
+            <div class="emp-name">${e.fullName}</div>
+            <div class="emp-meta">${e.globalId} · ${e.dept||'—'}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            ${statusBadge(val)}
+            <div class="alloc-pct ${fc}">${(total*100).toFixed(1)}%</div>
+          </div>
+        </div>
+        <div style="padding:0 16px 10px;display:flex;align-items:center;gap:8px">
+          <div class="alloc-track" style="flex:1"><div class="alloc-fill ${fc}" style="width:${Math.min(total*100,100)}%"></div></div>
+          <span style="font-size:10px;color:var(--text3)">$${budget.toFixed(0)}</span>
+          <span class="pill pill-gray">${accs.length} accs</span>
+          ${profiles.map(p=>`<span class="pill ${profilePillClass(p)}">${p}</span>`).join('')}
+        </div>
+        <div class="emp-card-body" id="ecb-${e.globalId}">
+          ${allocs.map(a=>`<div class="emp-alloc-row">
+            <div>${accPill(a.account)}</div>
+            <div style="font-size:11px;color:var(--text2)">${a.costCenter||'—'}</div>
+            <div class="alloc-bar" style="min-width:80px"><div class="alloc-track"><div class="alloc-fill ${a.alloc>=.99?'full':'under'}" style="width:${Math.min((a.alloc||0)*100,100)}%"></div></div><span class="alloc-pct">${((a.alloc||0)*100).toFixed(1)}%</span></div>
+            <div style="font-size:11px;color:var(--text2);text-align:right">$${Calc.rowBudget(a.alloc).toFixed(0)}</div>
+            <button class="btn btn-ghost btn-sm" onclick="openEditAlloc('${a.id}')">Edit</button>
+          </div>`).join('')}
+          <div style="margin-top:10px;display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm" onclick="addAllocForEmp('${e.globalId}')">+ Add Allocation</button>
+            <button class="btn btn-ghost btn-sm" onclick="normalizeEmployee('${e.globalId}')">⚡ Normalize</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteEmployee('${e.globalId}')">Delete</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('')+'</div>';
+  },
+
+  // ── EMPLOYEES (TABLE view)
+  employeeTable() {
+    const emps = filteredEmployees();
+    const el = document.getElementById('empTableBody');
+    if (!el) return;
+    el.innerHTML = emps.map(e => {
+      const total = Calc.empTotal(e.globalId);
+      const fc = total>1.001?'over':total>=.999?'full':'under';
+      const val = Validator.validateEmployee(e.globalId);
+      const allocs = Store.get('allocations').filter(a=>a.globalId===e.globalId);
+      const accs = [...new Set(allocs.map(a=>a.account))];
+      const profiles = [...new Set(allocs.map(a=>a.profile).filter(Boolean))];
+      const sites = [...new Set(allocs.map(a=>a.site).filter(Boolean))];
+      const sel = Store.get('ui').selectedEmps.has(e.globalId);
+      return `<tr class="${val.ok?'':'validation-error'} ${sel?'selected':''}">
+        <td><input type="checkbox" ${sel?'checked':''} onchange="toggleEmpSel('${e.globalId}',this.checked)"></td>
+        <td><div style="font-size:12px;font-weight:600">${e.fullName}</div></td>
+        <td class="mono">${e.globalId}</td>
+        <td><span class="pill pill-gray">${e.dept||'—'}</span></td>
+        <td>${accs.slice(0,3).map(a=>accPill(a)).join(' ')}${accs.length>3?`<span class="pill pill-gray">+${accs.length-3}</span>`:''}</td>
+        <td>${profiles.map(p=>`<span class="pill ${profilePillClass(p)}">${p}</span>`).join('')}</td>
+        <td>${sites.map(s=>`<span class="pill pill-gray">${s}</span>`).join('')}</td>
+        <td><div class="alloc-bar"><div class="alloc-track"><div class="alloc-fill ${fc}" style="width:${Math.min(total*100,100)}%"></div></div><span class="alloc-pct ${fc}">${(total*100).toFixed(1)}%</span></div></td>
+        <td class="num">$${Calc.empBudget(e.globalId).toFixed(0)}</td>
+        <td>${statusBadge(val)}</td>
+        <td><button class="btn btn-ghost btn-sm" onclick="toggleEmpCard('${e.globalId}');showPage('employees',null);setEmpView('card')">Open</button></td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="11">${emptyState('👥','No results')}</td></tr>`;
+  },
+
+  // ── ALLOC TABLE
+  allocTable() {
+    const allocs = filteredAllocs();
+    const el = document.getElementById('allocTableBody');
+    if (!el) return;
+    safeSet('alloc-count', allocs.length+' rows');
+    el.innerHTML = allocs.map((a,i) => {
+      const issues = allocIssues(a);
+      const rowClass = issues.some(x=>x.level==='error')?'validation-error':issues.some(x=>x.level==='warn')?'validation-warn':'';
+      return `<tr class="${rowClass}">
+        <td><div style="font-size:12px;font-weight:600">${(Store.get('employees')[a.globalId]||{}).fullName||a.globalId}</div></td>
+        <td class="mono">${a.globalId}</td>
+        <td><span class="pill pill-gray">${(Store.get('employees')[a.globalId]||{}).dept||'—'}</span></td>
+        <td>${accPill(a.account||'—')}</td>
+        <td style="font-size:11px;color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.costCenter||'—'}</td>
+        <td>${a.profile?`<span class="pill ${profilePillClass(a.profile)}">${a.profile}</span>`:'—'}</td>
+        <td>${a.site?`<span class="pill pill-gray">${a.site}</span>`:'—'}</td>
+        <td><div class="alloc-bar"><div class="alloc-track"><div class="alloc-fill" style="width:${Math.min((a.alloc||0)*100,100)}%;background:${accColor(a.account)}"></div></div><span class="alloc-pct">${((a.alloc||0)*100).toFixed(2)}%</span></div></td>
+        <td class="num">$${Calc.rowBudget(a.alloc).toFixed(2)}</td>
+        <td style="font-size:11px;color:var(--text2)">${a.remarks||''}</td>
+        <td>${issues.length?`<span class="pill ${issues[0].level==='error'?'pill-red':'pill-amber'}" data-tip="${issues.map(x=>x.msg).join('; ')}">${issues.length} issue${issues.length>1?'s':''}</span>`:'<span class="pill pill-green">OK</span>'}</td>
+        <td style="display:flex;gap:4px"><button class="btn btn-ghost btn-sm" onclick="openEditAlloc('${a.id}')">Edit</button><button class="btn btn-icon" style="color:var(--danger)" onclick="deleteAlloc('${a.id}')">✕</button></td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="12">${emptyState('📊','No allocations match')}</td></tr>`;
+  },
+
+  // ── VALIDATION PAGE
+  validationPage() {
+    const v = Validator.validateAll();
+    // Score ring
+    const el = document.getElementById('val-ring');
+    if (el) el.innerHTML = makeRing(v.score, v.score===100?'var(--success)':v.score>80?'var(--warn)':'var(--danger)', 100, v.score+'%', 'Score');
+    safeSet('val-count-badge', v.total+' employees');
+    const sd = document.getElementById('val-score-detail');
+    if (sd) sd.innerHTML = `
+      <div style="font-size:32px;font-weight:800;color:${v.score===100?'var(--success)':v.score>80?'var(--warn)':'var(--danger)'};">${v.score}%</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:4px">Validation Score</div>
+      <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+        <div><span style="font-size:18px;font-weight:800;color:var(--success)">${v.total-v.errCount}</span><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Valid</div></div>
+        <div><span style="font-size:18px;font-weight:800;color:var(--danger)">${v.errCount}</span><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Errors</div></div>
+      </div>`;
+    // Rule summary
+    const ruleEl = document.getElementById('val-rule-summary');
+    if (ruleEl) {
+      const ruleTotals = {};
+      v.results.forEach(r => r.results.forEach(rr => { if (!ruleTotals[rr.id]) ruleTotals[rr.id]={rule:rr, pass:0,fail:0}; rr.pass?ruleTotals[rr.id].pass++:ruleTotals[rr.id].fail++; }));
+      ruleEl.innerHTML = '<div class="val-panel">'+Object.values(ruleTotals).map(({rule,pass,fail})=>`
+        <div class="val-row">
+          <div class="val-badge ${fail===0?'ok':rule.level==='error'?'error':'warn'}">${fail===0?'✓':fail}</div>
+          <div class="val-row-label">${rule.label}</div>
+          <div class="val-row-result ${fail===0?'val-ok':rule.level==='error'?'val-err':'val-warn2'}">${fail===0?'All pass':fail+' fail'}</div>
+        </div>`).join('')+'</div>';
+    }
+    // Employee table
+    const tb = document.getElementById('valTableBody');
+    if (tb) tb.innerHTML = v.results.map(r=>{
+      const e = Store.get('employees')[r.id]||{};
+      const allocs = Store.get('allocations').filter(a=>a.globalId===r.id);
+      const total = Calc.empTotal(r.id);
+      return `<tr class="${r.ok?'':'validation-error'}">
+        <td><div style="font-size:12px;font-weight:600">${e.fullName||r.id}</div></td>
+        <td class="mono">${r.id}</td>
+        <td><span class="pill pill-gray">${e.dept||'—'}</span></td>
+        <td>${allocs.length}</td>
+        <td><span style="color:${Math.abs(total-1)<.001?'var(--success)':total>1?'var(--danger)':'var(--warn)'};font-weight:700">${(total*100).toFixed(2)}%</span></td>
+        <td style="color:var(--danger);font-weight:700">${r.errors.length||'—'}</td>
+        <td style="color:var(--warn);font-weight:700">${r.warns.length||'—'}</td>
+        <td>${r.ok?'<span class="pill pill-green">✓ Valid</span>':`<button class="btn btn-ghost btn-sm" onclick="autoFixEmployee('${r.id}')">Auto-Fix</button>`}</td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="8">${emptyState('✓','No employees to validate')}</td></tr>`;
+    // Log
+    const logEl = document.getElementById('val-log');
+    if (logEl) {
+      const allIssues = [];
+      v.results.forEach(r => {
+        r.results.filter(rr=>!rr.pass).forEach(rr => {
+          const e = Store.get('employees')[r.id]||{};
+          allIssues.push({level:rr.level, label:rr.label, emp:e.fullName||r.id, id:r.id});
+        });
+      });
+      logEl.innerHTML = allIssues.length ? allIssues.map(i=>`
+        <div class="val-row">
+          <div class="val-badge ${i.level==='error'?'error':'warn'}">${i.level==='error'?'E':'W'}</div>
+          <div class="val-row-label"><b>${i.emp}</b> · ${i.label}</div>
+          <div class="val-row-result ${i.level==='error'?'val-err':'val-warn2'}">${i.level}</div>
+        </div>`).join('') : '<div class="val-row"><div class="val-badge ok">✓</div><div class="val-row-label">All validation rules pass</div></div>';
+    }
+  },
+
+  // ── ALLOCATION EDITOR (Engine page)
+  allocationEditor(globalId) {
+    const el = document.getElementById('editorPanel');
+    if (!el) return;
+    const emps = Store.get('employees');
+    const allocs = Store.get('allocations').filter(a=>a.globalId===globalId);
+    const total = Calc.empTotal(globalId);
+    const fc = total>1.001?'over':total>=.999?'full':'under';
+    const e = emps[globalId]||{};
+    el.innerHTML = `
+      <div style="margin-bottom:16px;display:flex;align-items:center;gap:16px">
+        <div class="emp-avatar" style="background:${accColor(e.fullName||globalId)};width:44px;height:44px;font-size:16px">${(e.givenName||'?')[0]}${(e.lastName||'?')[0]}</div>
+        <div>
+          <div style="font-size:15px;font-weight:800">${e.fullName||globalId}</div>
+          <div style="font-size:12px;color:var(--text2)">${e.globalId} · ${e.dept||'—'}</div>
+        </div>
+        <div style="margin-left:auto;text-align:right">
+          <div style="font-size:24px;font-weight:800;color:${fc==='full'?'var(--success)':fc==='over'?'var(--danger)':'var(--accent)'}">${(total*100).toFixed(2)}%</div>
+          <div style="font-size:10px;color:var(--text3);text-transform:uppercase">Total Allocation</div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px">
+        ${makeRing(Math.min(total,1)*100, fc==='full'?'var(--success)':fc==='over'?'var(--danger)':'var(--accent)', 60, (total*100).toFixed(0)+'%', 'Alloc')}
+        <span style="font-size:11px;color:var(--text2);margin-left:12px">Remaining: <b style="color:var(--text)">${((1-total)*100).toFixed(2)}%</b> · Budget: <b>$${Calc.empBudget(globalId).toFixed(0)}</b></span>
+      </div>
+      <div id="editor-sliders">${allocs.map(a=>`
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:12px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            ${accPill(a.account)}
+            <span style="font-size:11px;color:var(--text2)">${a.costCenter||'—'} · ${a.profile||'—'}</span>
+            <span style="margin-left:auto;font-size:12px;font-weight:700" id="sl-pct-${a.id}">${((a.alloc||0)*100).toFixed(1)}%</span>
+            <span style="font-size:11px;color:var(--text2)" id="sl-bud-${a.id}">$${Calc.rowBudget(a.alloc).toFixed(0)}</span>
+          </div>
+          <input type="range" min="0" max="100" step="0.1" value="${((a.alloc||0)*100).toFixed(1)}"
+            style="width:100%"
+            oninput="updateSlider('${a.id}','${globalId}',parseFloat(this.value)/100)">
+        </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-primary" onclick="normalizeEmployee('${globalId}')">⚡ Normalize to 100%</button>
+        <button class="btn btn-ghost" onclick="addAllocForEmp('${globalId}')">+ Add Account</button>
+      </div>`;
+  },
+
+  // ── TEMPLATES
+  templates() {
+    const tpls = Store.get('templates');
+    const el = document.getElementById('template-list');
+    if (!el) return;
+    if (!tpls.length) { el.innerHTML = `<div class="card"><div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-title">No templates</div><div class="empty-state-desc">Create reusable allocation patterns.</div><button class="btn btn-primary" onclick="newTemplate()">+ New Template</button></div></div>`; return; }
+    el.innerHTML = tpls.map((t,ti)=>`
+      <div class="card mb-16">
+        <div class="card-header">
+          <span class="card-title">${t.name} <span class="card-title-badge">${t.lines.length} accounts</span>${t.category?`<span class="card-title-badge">${t.category}</span>`:''}</span>
+          <div class="card-actions">
+            <button class="btn btn-ghost btn-sm" onclick="cloneTemplate(${ti})">Clone</button>
+            <button class="btn btn-ghost btn-sm" onclick="editTemplate(${ti})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTemplate(${ti})">Delete</button>
+          </div>
+        </div>
+        <div class="card-body">
+          ${t.lines.map(l=>`<div class="chart-bar-row">
+            <div class="chart-bar-label">${l.account||'—'}</div>
+            <div class="chart-bar-track"><div class="chart-bar-fill" style="width:${(l.alloc*100).toFixed(1)}%;background:${accColor(l.account)}">${l.profile||''}</div></div>
+            <div class="chart-bar-val">${(l.alloc*100).toFixed(1)}%</div>
+          </div>`).join('')}
+          <div style="margin-top:8px;font-size:11px;color:var(--text2)">
+            Total: <b style="color:${Math.abs(t.lines.reduce((s,l)=>s+l.alloc,0)-1)<.001?'var(--success)':'var(--danger)'}">${(t.lines.reduce((s,l)=>s+l.alloc,0)*100).toFixed(2)}%</b>
+            · Used: <b>${t.usageCount||0}x</b>
+          </div>
+        </div>
+      </div>`).join('');
+
+    // Populate apply selects
+    const tSel = document.getElementById('applyTplSel');
+    if (tSel) tSel.innerHTML = tpls.map((t,i)=>`<option value="${i}">${t.name}</option>`).join('') || '<option>No templates</option>';
+    const eSel = document.getElementById('applyTplEmp');
+    if (eSel) eSel.innerHTML = '<option value="">— select —</option>'+Object.values(Store.get('employees')).map(e=>`<option value="${e.globalId}">${e.fullName} (${e.globalId})</option>`).join('');
+  },
+
+  // ── HC REFERENCE
+  hcRef() {
+    const hcA = document.getElementById('hcAccBody');
+    if (hcA) {
+      const data = Store.get('hcAccount');
+      const total = data.reduce((s,r)=>s+r.hc,0);
+      hcA.innerHTML = data.map(r=>`<tr>
+        <td>${accPill(r.account)}</td>
+        <td class="num">${r.hc.toLocaleString()}</td>
+        <td><div class="alloc-bar"><div class="alloc-track"><div class="alloc-fill" style="width:${(r.hc/total*100).toFixed(1)}%;background:${accColor(r.account)}"></div></div><span class="alloc-pct">${(r.hc/total*100).toFixed(1)}%</span></div></td>
+        <td class="num">$${(r.hc/total*Store.get('settings').budget).toFixed(2)}</td>
+      </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">No HC data</td></tr>';
+    }
+    const hcP = document.getElementById('hcProfBody');
+    if (hcP) hcP.innerHTML = Store.get('hcProfile').map(r=>`<tr>
+      <td>${accPill(r.account)}</td>
+      <td style="font-size:11px;color:var(--text2)">${r.costCenter}</td>
+      <td><span class="pill ${profilePillClass(r.profile)}">${r.profile}</span></td>
+      <td class="num">${r.hc||'—'}</td>
+    </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">No profile data</td></tr>';
+    const hcS = document.getElementById('hcSiteBody');
+    if (hcS) hcS.innerHTML = Store.get('hcSite').map(r=>`<tr>
+      <td>${accPill(r.account)}</td>
+      <td><span class="pill pill-gray">${r.site}</span></td>
+      <td class="num">${r.hc.toLocaleString()}</td>
+      <td><div class="alloc-bar"><div class="alloc-track"><div class="alloc-fill" style="width:${(r.pctAlloc*100).toFixed(1)}%;background:${accColor(r.account)}"></div></div><span class="alloc-pct">${(r.pctAlloc*100).toFixed(1)}%</span></div></td>
+    </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text3)">No site data</td></tr>';
+  },
+
+  // ── HISTORY
+  history() {
+    const el = document.getElementById('historyList');
+    if (!el) return;
+    const h = Store.get('history');
+    const undoBtn = document.getElementById('undoBtn');
+    if (undoBtn) undoBtn.disabled = !h.length;
+    el.innerHTML = h.length ? h.map(e=>`
+      <div class="history-item">
+        <div class="history-dot" style="background:var(--accent)"></div>
+        <div class="history-text"><b>${e.note}</b> · ${e.key}</div>
+        <div class="history-time">${new Date(e.ts).toLocaleTimeString()}</div>
+      </div>`).join('') : '<div class="empty-state"><div class="empty-state-icon">🕐</div><div class="empty-state-title">No history yet</div></div>';
+  }
+};
+
+// ══════════════════════════════════════
+//  §7  HELPERS
+// ══════════════════════════════════════
+function safeSet(id, val) { const el = document.getElementById(id); if (el) el.textContent = val; }
+function profilePillClass(p) { return p==='PHRN'?'pill-blue':p==='USRN'?'pill-green':'pill-amber'; }
+function fillClass(pct) { return pct>=.999?'full':pct>1?'over':'under'; }
+function emptyState(icon, title, desc='') {
+  return `<div class="empty-state"><div class="empty-state-icon">${icon}</div><div class="empty-state-title">${title}</div>${desc?`<div class="empty-state-desc">${desc}</div>`:''}</div>`;
+}
+function statusBadge(val) {
+  if (!val) return '';
+  if (val.ok && val.warns.length===0) return '<span class="val-badge ok">✓</span>';
+  if (val.ok) return '<span class="val-badge warn">!</span>';
+  return '<span class="val-badge error">✕</span>';
+}
+function makeRing(pct, color, size=80, centerVal='', centerLabel='') {
+  const r = (size/2)-6; const c = size/2;
+  const circ = 2*Math.PI*r;
+  const dash = circ*(Math.min(pct,100)/100);
+  return `<svg class="ring-svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <circle class="ring-track" cx="${c}" cy="${c}" r="${r}" stroke-width="5"/>
+    <circle class="ring-fill" cx="${c}" cy="${c}" r="${r}" stroke="${color}" stroke-width="5"
+      stroke-dasharray="${dash} ${circ}" stroke-dashoffset="0"/>
+    ${centerVal?`<text x="${c}" y="${c}" text-anchor="middle" dominant-baseline="middle" fill="var(--text)" font-size="${size<80?9:12}" font-weight="800" font-family="JetBrains Mono">${centerVal}</text>`:''}
+  </svg>`;
+}
+function allocIssues(a) {
+  const issues = [];
+  if (!a.account) issues.push({level:'error',msg:'Missing account'});
+  if ((a.alloc||0)<0) issues.push({level:'error',msg:'Negative allocation'});
+  if ((a.alloc||0)===0 && !Store.get('settings').allowZero) issues.push({level:'warn',msg:'Zero allocation'});
+  if (!a.costCenter && Store.get('settings').requireCC) issues.push({level:'warn',msg:'Missing cost center'});
+  if (!a.profile && Store.get('settings').requireProfile) issues.push({level:'warn',msg:'Missing profile'});
+  if (!a.site && Store.get('settings').requireSite) issues.push({level:'warn',msg:'Missing site'});
+  return issues;
+}
+function filteredEmployees() {
+  const s = Store.get('ui');
+  const dept    = document.getElementById('emp-filter-dept')?.value||'';
+  const acc     = document.getElementById('emp-filter-acc')?.value||'';
+  const profile = document.getElementById('emp-filter-profile')?.value||'';
+  const status  = document.getElementById('emp-filter-status')?.value||'';
+  const q       = (document.getElementById('emp-search')?.value||'').toLowerCase();
+  let emps = Object.values(Store.get('employees'));
+  if (dept) emps = emps.filter(e=>e.dept===dept);
+  if (acc)  emps = emps.filter(e=>Store.get('allocations').some(a=>a.globalId===e.globalId&&a.account===acc));
+  if (profile) emps = emps.filter(e=>Store.get('allocations').some(a=>a.globalId===e.globalId&&a.profile===profile));
+  if (status) {
+    emps = emps.filter(e=>{
+      const v = Validator.validateEmployee(e.globalId);
+      if (status==='valid') return v.ok && v.warns.length===0;
+      if (status==='error') return !v.ok;
+      if (status==='warn') return v.ok && v.warns.length>0;
+      return true;
+    });
+  }
+  if (q) emps = emps.filter(e=>(e.fullName+e.globalId+e.dept).toLowerCase().includes(q));
+  emps.sort((a,b)=>{
+    const av = (a[s.sortCol]||'').toLowerCase();
+    const bv = (b[s.sortCol]||'').toLowerCase();
+    return av<bv?-s.sortDir:av>bv?s.sortDir:0;
+  });
+  return emps;
+}
+function filteredAllocs() {
+  const dept = document.getElementById('alloc-filter-dept')?.value||'';
+  const acc  = document.getElementById('alloc-filter-acc')?.value||'';
+  const prof = document.getElementById('alloc-filter-profile')?.value||'';
+  const q    = (document.getElementById('alloc-search')?.value||'').toLowerCase();
+  const emps = Store.get('employees');
+  return Store.get('allocations').filter(a=>{
+    const e = emps[a.globalId]||{};
+    if (dept && e.dept!==dept) return false;
+    if (acc  && a.account!==acc) return false;
+    if (prof && a.profile!==prof) return false;
+    if (q && !(e.fullName+a.globalId+a.account+a.costCenter).toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+// ══════════════════════════════════════
+//  §8  REFRESH ALL
+// ══════════════════════════════════════
+function refreshAll() {
+  populateAccountFilters();
+  Render.topbarKpis();
+  Render.dashKpis();
+  Render.accChart();
+  Render.budgetChart();
+  Render.profileChart();
+  Render.validationSummary();
+  Render.dashHcAcc();
+  Render.dashTopEmp();
+  Render.employeeCards();
+  Render.employeeTable();
+  Render.allocTable();
+  Render.validationPage();
+  Render.templates();
+  Render.hcRef();
+}
+
+function populateAccountFilters() {
+  const accs = Calc.uniqueAccounts();
+  ['emp-filter-acc','alloc-filter-acc','rptAccount','reportAccount'].forEach(id=>{
+    const el = document.getElementById(id);
+    if (!el) return;
+    const cur = el.value;
+    el.innerHTML = `<option value="">All${id.includes('rpt')?'':' Accounts'}</option>`+accs.map(a=>`<option ${a===cur?'selected':''}>${a}</option>`).join('');
+  });
+  const sugEmp = document.getElementById('sug-emp');
+  const editorEmp = document.getElementById('editorEmpSel');
+  const empOpts = '<option value="">— select —</option>'+Object.values(Store.get('employees')).map(e=>`<option value="${e.globalId}">${e.fullName} (${e.globalId})</option>`).join('');
+  if (sugEmp) sugEmp.innerHTML = empOpts;
+  if (editorEmp) editorEmp.innerHTML = empOpts;
+}
+
+// ══════════════════════════════════════
+//  §9  NAVIGATION
+// ══════════════════════════════════════
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  const page = document.getElementById('page-'+id);
+  if (page) page.classList.add('active');
+  if (btn) btn.classList.add('active');
+  else {
+    const active = document.querySelector(`.nav-item[onclick*="'${id}'"]`);
+    if (active) active.classList.add('active');
+  }
+  // Lazy render per page
+  if (id==='employees') { Render.employeeCards(); Render.employeeTable(); }
+  if (id==='allocations') Render.allocTable();
+  if (id==='validation') Render.validationPage();
+  if (id==='templates') Render.templates();
+  if (id==='hcref') Render.hcRef();
+  if (id==='engine') { populateAccountFilters(); loadEditorEmp(); }
+  if (id==='history') Render.history();
+  if (id==='import') initWizard();
+}
+
+// ══════════════════════════════════════
+//  §10  EMPLOYEE OPERATIONS
+// ══════════════════════════════════════
+function toggleEmpCard(globalId) {
+  const card = document.getElementById('ecard-'+globalId);
+  const body = document.getElementById('ecb-'+globalId);
+  if (card && body) { card.classList.toggle('expanded'); body.style.display = card.classList.contains('expanded')?'block':'none'; }
+}
+function toggleEmpSel(globalId, checked) {
+  const ui = Store.get('ui');
+  checked ? ui.selectedEmps.add(globalId) : ui.selectedEmps.delete(globalId);
+  Store.set('ui', ui);
+  document.getElementById('batchBtn').disabled = ui.selectedEmps.size === 0;
+}
+function toggleSelectAll(cb) {
+  filteredEmployees().forEach(e => toggleEmpSel(e.globalId, cb.checked));
+  Render.employeeTable();
+}
+function selectAllEmployees() {
+  Object.keys(Store.get('employees')).forEach(id => Store.get('ui').selectedEmps.add(id));
+  Render.employeeTable();
+  document.getElementById('batchBtn').disabled = false;
+  toast('All employees selected', 'info');
+}
+function setEmpView(v) {
+  const ui = Store.get('ui'); ui.empView = v; Store.set('ui', ui);
+  document.getElementById('emp-card-view').style.display = v==='card'?'':'none';
+  document.getElementById('emp-table-view').style.display = v==='table'?'':'none';
+  document.getElementById('viewCard').style.background = v==='card'?'var(--accent-soft)':'';
+  document.getElementById('viewCard').style.color = v==='card'?'var(--accent)':'';
+  document.getElementById('viewTable').style.background = v==='table'?'var(--accent-soft)':'';
+  document.getElementById('viewTable').style.color = v==='table'?'var(--accent)':'';
+}
+function clearEmpFilters() {
+  ['emp-filter-dept','emp-filter-acc','emp-filter-profile','emp-filter-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const es=document.getElementById('emp-search');if(es)es.value='';
+  renderEmployees();
+}
+function renderEmployees() { Render.employeeCards(); Render.employeeTable(); }
+function sortTable(col) {
+  const ui = Store.get('ui');
+  ui.sortDir = ui.sortCol===col?-ui.sortDir:1; ui.sortCol=col;
+  Store.set('ui',ui); Render.employeeTable();
+}
+
+function addEmployee() {
+  openModal('Add Employee', `
+    <div class="form-row">
+      <div class="field"><div class="field-label">Global ID</div><input id="m-gid" placeholder="SG0XXXXX"></div>
+      <div class="field"><div class="field-label">Given Name</div><input id="m-gname"></div>
+      <div class="field"><div class="field-label">Last Name</div><input id="m-lname"></div>
+      <div class="field"><div class="field-label">Department</div>
+        <select id="m-dept"><option>Compliance</option><option>PMO</option></select>
+      </div>
+    </div>`,
+    [{label:'Cancel',cls:'btn-ghost',fn:closeModal},{label:'Add Employee',cls:'btn-primary',fn:()=>{
+      const gid=document.getElementById('m-gid').value.trim();
+      const gname=document.getElementById('m-gname').value.trim();
+      const lname=document.getElementById('m-lname').value.trim();
+      const dept=document.getElementById('m-dept').value;
+      if(!gid||!gname||!lname){toast('All fields required','warn');return;}
+      const emps=Store.get('employees');
+      if(emps[gid]){toast('Employee ID already exists','error');return;}
+      emps[gid]={globalId:gid,givenName:gname,lastName:lname,fullName:`${lname}, ${gname}`,dept,status:'active'};
+      Store.set('employees',emps,'Add employee '+gid);
+      closeModal(); refreshAll(); toast('Employee added','success');
+    }}]);
+}
+
+function deleteEmployee(globalId) {
+  const e = Store.get('employees')[globalId]||{};
+  openModal('Delete Employee',`<p style="color:var(--text2);font-size:13px">Delete <b style="color:var(--text)">${e.fullName}</b> and all their allocations? This cannot be undone.</p>`,
+    [{label:'Cancel',cls:'btn-ghost',fn:closeModal},{label:'Delete',cls:'btn-danger',fn:()=>{
+      const emps=Store.get('employees');
+      delete emps[globalId];
+      Store.set('employees',emps,'Delete employee '+globalId);
+      Store.set('allocations',Store.get('allocations').filter(a=>a.globalId!==globalId),'Delete allocations for '+globalId);
+      closeModal(); refreshAll(); toast('Employee deleted','warn');
+    }}]);
+}
+
+// ══════════════════════════════════════
+//  §11  ALLOCATION OPERATIONS
+// ══════════════════════════════════════
+function genId() { return 'a'+Date.now()+Math.random().toString(36).slice(2,7); }
+
+function addAllocForEmp(globalId) {
+  const accs = Calc.uniqueAccounts().concat(Store.get('hcAccount').map(r=>r.account));
+  const uniqueAccs = [...new Set(accs)];
+  openModal('Add Allocation', `
+    <div class="form-row">
+      <div class="field"><div class="field-label">Account</div>
+        <select id="m-acc"><option value="">— select —</option>${uniqueAccs.map(a=>`<option>${a}</option>`).join('')}</select>
+      </div>
+      <div class="field"><div class="field-label">Cost Center</div><input id="m-cc"></div>
+      <div class="field"><div class="field-label">Profile</div>
+        <select id="m-prof"><option value="">—</option><option>PHRN</option><option>USRN</option><option>Non-RN</option></select>
+      </div>
+      <div class="field"><div class="field-label">Site</div>
+        <select id="m-site"><option value="">—</option><option>BT</option><option>ALA</option><option>ILO</option><option>RMC</option><option>MNL</option></select>
+      </div>
+      <div class="field"><div class="field-label">Allocation %</div><input id="m-alloc" type="number" step="0.01" min="0" max="100" value="0"></div>
+      <div class="field"><div class="field-label">Remarks</div><input id="m-rem"></div>
+    </div>`,
+    [{label:'Cancel',cls:'btn-ghost',fn:closeModal},{label:'Add',cls:'btn-primary',fn:()=>{
+      const acc=document.getElementById('m-acc').value;
+      if(!acc){toast('Account required','warn');return;}
+      const row={id:genId(),globalId,account:acc,costCenter:document.getElementById('m-cc').value,profile:document.getElementById('m-prof').value,site:document.getElementById('m-site').value,alloc:parseFloat(document.getElementById('m-alloc').value)/100||0,remarks:document.getElementById('m-rem').value};
+      const allocs=Store.get('allocations');
+      allocs.push(row);
+      Store.set('allocations',allocs,'Add allocation '+acc+' for '+globalId);
+      closeModal(); refreshAll(); toast('Allocation added','success');
+    }}]);
+}
+
+function addAllocRow() { addAllocForEmp(Object.keys(Store.get('employees'))[0]||''); }
+
+function openEditAlloc(id) {
+  const allocs = Store.get('allocations');
+  const idx = allocs.findIndex(a=>a.id===id);
+  if (idx<0) return;
+  const a = allocs[idx];
+  const accs = [...new Set(Calc.uniqueAccounts().concat(Store.get('hcAccount').map(r=>r.account)))];
+  openModal('Edit Allocation', `
+    <div class="form-row">
+      <div class="field"><div class="field-label">Account</div>
+        <select id="m-acc">${accs.map(ac=>`<option ${ac===a.account?'selected':''}>${ac}</option>`).join('')}</select>
+      </div>
+      <div class="field"><div class="field-label">Cost Center</div><input id="m-cc" value="${a.costCenter||''}"></div>
+      <div class="field"><div class="field-label">Profile</div>
+        <select id="m-prof"><option value="">—</option>${['PHRN','USRN','Non-RN'].map(p=>`<option ${p===a.profile?'selected':''}>${p}</option>`).join('')}</select>
+      </div>
+      <div class="field"><div class="field-label">Site</div>
+        <select id="m-site"><option value="">—</option>${['BT','ALA','ILO','RMC','MNL'].map(s=>`<option ${s===a.site?'selected':''}>${s}</option>`).join('')}</select>
+      </div>
+      <div class="field"><div class="field-label">Allocation %</div><input id="m-alloc" type="number" step="0.01" value="${((a.alloc||0)*100).toFixed(2)}"></div>
+      <div class="field"><div class="field-label">Remarks</div><input id="m-rem" value="${a.remarks||''}"></div>
+    </div>`,
+    [{label:'Cancel',cls:'btn-ghost',fn:closeModal},{label:'Save',cls:'btn-primary',fn:()=>{
+      allocs[idx]={...a,account:document.getElementById('m-acc').value,costCenter:document.getElementById('m-cc').value,profile:document.getElementById('m-prof').value,site:document.getElementById('m-site').value,alloc:parseFloat(document.getElementById('m-alloc').value)/100||0,remarks:document.getElementById('m-rem').value};
+      Store.set('allocations',[...allocs],'Edit allocation '+a.account);
+      closeModal(); refreshAll(); toast('Allocation updated','success');
+    }}]);
+}
+
+function deleteAlloc(id) {
+  Store.set('allocations',Store.get('allocations').filter(a=>a.id!==id),'Delete allocation '+id);
+  refreshAll(); toast('Allocation deleted','warn');
+}
+
+function updateSlider(allocId, globalId, val) {
+  const allocs = Store.get('allocations');
+  const idx = allocs.findIndex(a=>a.id===allocId);
+  if (idx<0) return;
+  allocs[idx].alloc = val;
+  Store.set('allocations',[...allocs]);
+  safeSet('sl-pct-'+allocId, (val*100).toFixed(1)+'%');
+  safeSet('sl-bud-'+allocId, '$'+Calc.rowBudget(val).toFixed(0));
+  Render.allocationEditor(globalId);
+  Render.topbarKpis();
+}
+
+// ══════════════════════════════════════
+//  §12  ALLOCATION ENGINE
+// ══════════════════════════════════════
+function normalizeEmployee(globalId) {
+  const allocs = Store.get('allocations');
+  const empAllocs = allocs.filter(a=>a.globalId===globalId);
+  const total = empAllocs.reduce((s,a)=>s+(a.alloc||0),0);
+  if (!total) { toast('All allocations are zero — cannot normalize','warn'); return; }
+  empAllocs.forEach(a => { const idx=allocs.findIndex(x=>x.id===a.id); if(idx>-1) allocs[idx].alloc=a.alloc/total; });
+  Store.set('allocations',[...allocs],'Normalize '+globalId);
+  refreshAll(); toast('Normalized to 100%','success');
+}
+
+function runAutoNormalize() {
+  const target = document.getElementById('norm-target')?.value||'all';
+  const allocs  = Store.get('allocations');
+  const empIds  = Object.keys(Store.get('employees'));
+  let count = 0;
+  empIds.forEach(id=>{
+    const total=Calc.empTotal(id);
+    if(target==='errors'&&Math.abs(total-1)<.001) return;
+    if(target==='under'&&total>=.999) return;
+    if(target==='over'&&total<=1.001) return;
+    const ea=allocs.filter(a=>a.globalId===id);
+    const t=ea.reduce((s,a)=>s+(a.alloc||0),0);
+    if(!t) return;
+    ea.forEach(a=>{const idx=allocs.findIndex(x=>x.id===a.id);if(idx>-1)allocs[idx].alloc=a.alloc/t;});
+    count++;
+  });
+  Store.set('allocations',[...allocs],'Auto-normalize '+count+' employees');
+  refreshAll(); toast(`Normalized ${count} employees`,'success');
+}
+
+function massNormalize() { runAutoNormalize(); }
+function massValidate() { runFullValidation(); }
+
+function runFullValidation() {
+  const v = Validator.validateAll();
+  Render.validationPage();
+  toast(`Validation complete — ${v.score}% score, ${v.errCount} errors`,'info');
+}
+
+function autoFixEmployee(globalId) {
+  normalizeEmployee(globalId);
+  toast('Auto-fixed: '+globalId,'success');
+}
+
+function autoFixAll() {
+  runAutoNormalize();
+  toast('All employees normalized','success');
+}
+
+function previewSuggestion() {
+  const sug = Calc.hcSuggestion();
+  const el = document.getElementById('sug-preview');
+  if (!el||!sug.length) return;
+  el.innerHTML = sug.map(s=>`<div class="chart-bar-row"><div class="chart-bar-label">${s.account}</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:${(s.alloc*100).toFixed(1)}%;background:${accColor(s.account)}"></div></div><div class="chart-bar-val">${(s.alloc*100).toFixed(1)}%</div></div>`).join('');
+}
+
+function applySuggestion() {
+  const empId = document.getElementById('sug-emp')?.value;
+  if (!empId) { toast('Select an employee','warn'); return; }
+  const sug = Calc.hcSuggestion();
+  if (!sug.length) { toast('No HC data to base suggestions on','warn'); return; }
+  const allocs = Store.get('allocations').filter(a=>a.globalId!==empId);
+  sug.forEach(s=>allocs.push({id:genId(),globalId:empId,...s}));
+  Store.set('allocations',allocs,'Apply HC suggestion to '+empId);
+  refreshAll(); toast('Suggestion applied','success');
+}
+
+function recalcAllBudgets() {
+  const budget=parseFloat(document.getElementById('globalBudget')?.value||500);
+  const s=Store.get('settings'); s.budget=budget;
+  Store.set('settings',s,'Update budget to '+budget);
+  refreshAll(); toast('Budgets recalculated at $'+budget,'success');
+}
+
+function runBatch() {
+  const action=document.getElementById('batchAction')?.value;
+  const val=document.getElementById('batchValue')?.value||'';
+  const sel=Store.get('ui').selectedEmps;
+  if(!sel.size){toast('No employees selected. Select employees in the Employee Workspace first.','warn');return;}
+  if(action==='delete'){
+    sel.forEach(id=>deleteEmployee(id)); Store.get('ui').selectedEmps=new Set(); refreshAll(); return;
+  }
+  if(action==='normalize'){sel.forEach(id=>normalizeEmployee(id)); toast(`Normalized ${sel.size} employees`,'success'); return;}
+  const allocs=Store.get('allocations');
+  if(action==='template'){
+    const ti=parseInt(document.getElementById('batchValue')?.value);
+    const tpl=Store.get('templates')[ti];
+    if(!tpl){toast('Enter template index number in Value field','warn');return;}
+    const newAllocs=allocs.filter(a=>!sel.has(a.globalId));
+    sel.forEach(id=>{tpl.lines.forEach(l=>newAllocs.push({id:genId(),globalId:id,...l}));});
+    Store.set('allocations',newAllocs,'Batch apply template to '+sel.size+' employees');
+  } else {
+    allocs.forEach((a,i)=>{if(!sel.has(a.globalId))return;if(action==='profile')allocs[i].profile=val;else if(action==='site')allocs[i].site=val;else if(action==='dept'){const emps=Store.get('employees');if(emps[a.globalId])emps[a.globalId].dept=val;}else if(action==='cost_center')allocs[i].costCenter=val;});
+    Store.set('allocations',[...allocs],'Batch '+action+' = '+val+' for '+sel.size+' employees');
+    if(action==='dept'){const emps=Store.get('employees');sel.forEach(id=>{if(emps[id])emps[id].dept=val;});Store.set('employees',emps);}
+  }
+  refreshAll(); toast(`Batch ${action} applied to ${sel.size} employees`,'success');
+}
+
+function openBatchModal() { showPage('engine'); }
+
+function loadEditorEmp() {
+  const id=document.getElementById('editorEmpSel')?.value;
+  if(id) Render.allocationEditor(id);
+}
+
+// ══════════════════════════════════════
+//  §13  TEMPLATES
+// ══════════════════════════════════════
+function newTemplate() {
+  openModal('New Template',`
+    <div class="field mb-12"><div class="field-label">Template Name</div><input id="m-tname" placeholder="e.g. CO Standard 6-Account Split"></div>
+    <div class="field mb-12"><div class="field-label">Category</div><input id="m-tcat" placeholder="e.g. Compliance, PMO, Custom"></div>`,
+    [{label:'Cancel',cls:'btn-ghost',fn:closeModal},{label:'Create',cls:'btn-primary',fn:()=>{
+      const name=document.getElementById('m-tname').value.trim();
+      if(!name){toast('Name required','warn');return;}
+      const tpls=Store.get('templates');
+      tpls.push({id:genId(),name,category:document.getElementById('m-tcat').value,lines:[],usageCount:0,createdAt:new Date().toISOString()});
+      Store.set('templates',tpls,'Create template '+name);
+      closeModal(); Render.templates(); toast('Template created','success');
+    }}]);
+}
+
+function editTemplate(ti) {
+  const t=Store.get('templates')[ti];
+  const accs=[...new Set(Calc.uniqueAccounts().concat(Store.get('hcAccount').map(r=>r.account)))];
+  openModal('Edit: '+t.name,`
+    <div id="tpl-lines">${t.lines.map((l,li)=>`<div style="display:grid;grid-template-columns:1fr 1fr 1fr 80px auto;gap:6px;align-items:center;margin-bottom:6px">
+      <select class="tl-acc" data-li="${li}">${accs.map(a=>`<option ${a===l.account?'selected':''}>${a}</option>`).join('')}</select>
+      <input class="tl-cc" data-li="${li}" value="${l.costCenter||''}" placeholder="Cost Center">
+      <select class="tl-prof" data-li="${li}"><option value="">—</option>${['PHRN','USRN','Non-RN'].map(p=>`<option ${p===l.profile?'selected':''}>${p}</option>`).join('')}</select>
+      <input class="tl-alloc" data-li="${li}" type="number" step="0.01" value="${(l.alloc*100).toFixed(2)}" placeholder="%">
+      <button onclick="this.closest('div').remove()">✕</button>
+    </div>`).join('')}</div>
+    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('tpl-lines').insertAdjacentHTML('beforeend',\`<div style='display:grid;grid-template-columns:1fr 1fr 1fr 80px auto;gap:6px;align-items:center;margin-bottom:6px'><select class='tl-acc'>${accs.map(a=>`<option>${a}</option>`).join('')}</select><input class='tl-cc' placeholder='Cost Center'><select class='tl-prof'><option value=''>—</option><option>PHRN</option><option>USRN</option><option>Non-RN</option></select><input class='tl-alloc' type='number' step='0.01' value='0'><button onclick='this.closest(&quot;div&quot;).remove()'>✕</button></div>\`)">+ Add Line</button>`,
+    [{label:'Cancel',cls:'btn-ghost',fn:closeModal},{label:'Save',cls:'btn-primary',fn:()=>{
+      const tpls=Store.get('templates');
+      const lines=[];
+      document.querySelectorAll('#tpl-lines>div').forEach(row=>{
+        const acc=row.querySelector('.tl-acc')?.value;
+        if(!acc) return;
+        lines.push({account:acc,costCenter:row.querySelector('.tl-cc')?.value||'',profile:row.querySelector('.tl-prof')?.value||'',site:'',alloc:parseFloat(row.querySelector('.tl-alloc')?.value||0)/100});
+      });
+      tpls[ti].lines=lines;
+      Store.set('templates',[...tpls],'Edit template '+t.name);
+      closeModal(); Render.templates(); toast('Template saved','success');
+    }}]);
+}
+
+function cloneTemplate(ti) {
+  const tpls=Store.get('templates');
+  const t={...tpls[ti],id:genId(),name:tpls[ti].name+' (Copy)',usageCount:0};
+  tpls.push(t);
+  Store.set('templates',tpls,'Clone template '+t.name);
+  Render.templates(); toast('Template cloned','success');
+}
+
+function deleteTemplate(ti) {
+  const tpls=Store.get('templates');
+  tpls.splice(ti,1);
+  Store.set('templates',[...tpls],'Delete template');
+  Render.templates(); toast('Template deleted','warn');
+}
+
+function importTemplate() { toast('Import from JSON coming soon','info'); }
+
+function previewApplyTemplate() {
+  const ti=parseInt(document.getElementById('applyTplSel')?.value);
+  const t=Store.get('templates')[ti];
+  const el=document.getElementById('applyTplPreview');
+  if(!el||!t) return;
+  el.innerHTML='<div style="margin-top:8px">'+t.lines.map(l=>`<div class="chart-bar-row"><div class="chart-bar-label">${l.account}</div><div class="chart-bar-track"><div class="chart-bar-fill" style="width:${(l.alloc*100).toFixed(1)}%;background:${accColor(l.account)}">${l.profile||''}</div></div><div class="chart-bar-val">${(l.alloc*100).toFixed(1)}%</div></div>`).join('')+'</div>';
+}
+
+function applyTemplate() {
+  const ti=parseInt(document.getElementById('applyTplSel')?.value);
+  const empId=document.getElementById('applyTplEmp')?.value;
+  if(!empId){toast('Select an employee','warn');return;}
+  const t=Store.get('templates')[ti];
+  if(!t){toast('Select a template','warn');return;}
+  const allocs=Store.get('allocations').filter(a=>a.globalId!==empId);
+  t.lines.forEach(l=>allocs.push({id:genId(),globalId:empId,...l}));
+  t.usageCount=(t.usageCount||0)+1;
+  Store.set('allocations',allocs,'Apply template '+t.name+' to '+empId);
+  refreshAll(); toast('Template "'+t.name+'" applied','success');
+}
+
+// ══════════════════════════════════════
+//  §14  HC REFERENCE
+// ══════════════════════════════════════
+function switchHCTab(tab, btn) {
+  document.querySelectorAll('[id^="hc-tab-"]').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('hc-tab-'+tab)?.classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+function exportHCRef() {
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(Store.get('hcAccount')),'HC_Account');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(Store.get('hcProfile')),'HC_Profile');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(Store.get('hcSite')),'HC_Site');
+  XLSX.writeFile(wb,'CPL_HC_Reference_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  toast('HC Reference exported','success');
+}
+
+// ══════════════════════════════════════
+//  §15  IMPORT WIZARD
+// ══════════════════════════════════════
+let _wizardData = {step:1, file:null, raw:[], colMap:{}, validated:[], errors:[], warnings:[]};
+
+function initWizard() { _wizardData={step:1,file:null,raw:[],colMap:{},validated:[],errors:[],warnings:[]}; renderWizardStep(1); }
+
+function renderWizardStep(step) {
+  _wizardData.step=step;
+  for(let i=1;i<=6;i++){
+    const c=document.getElementById('ws'+i); if(!c) continue;
+    c.className='step-circle'+(i<step?' done':i===step?' active':'');
+    c.parentElement?.querySelector('.step-label')?.classList?.remove('active','done');
+    if(i<step)c.parentElement?.querySelector('.step-label')?.classList?.add('done');
+    if(i===step)c.parentElement?.querySelector('.step-label')?.classList?.add('active');
+    c.textContent=i<step?'✓':i;
+  }
+  document.querySelectorAll('.step-connector').forEach((el,i)=>{ el.className='step-connector'+(i<step-1?' done':''); });
+  const body=document.getElementById('wizard-body');
+  if(!body) return;
+  if(step===1) body.innerHTML=`
+    <div class="card"><div class="card-body">
+      <div class="upload-zone" id="wiz-zone" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="wizDrop(event)">
+        <div class="upload-zone-icon">📁</div>
+        <div class="upload-zone-text">Drag &amp; drop <b>Excel (.xlsx)</b> or <b>CSV</b><br>or <b onclick="document.getElementById('wiz-file').click()">click to browse</b></div>
+        <div class="upload-zone-formats"><span class="pill pill-blue">.xlsx</span><span class="pill pill-gray">.xls</span><span class="pill pill-gray">.csv</span></div>
+      </div>
+      <input type="file" id="wiz-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="wizFileSelected(this)">
+    </div></div>`;
+  else if(step===2) body.innerHTML=`<div class="card"><div class="card-body"><p style="font-size:12px;color:var(--text2);margin-bottom:12px">Detected <b style="color:var(--text)">${_wizardData.raw.length}</b> rows with <b>${Object.keys(_wizardData.raw[0]||{}).length}</b> columns.</p>
+    <div class="table-container" style="max-height:200px;overflow-y:auto"><table class="data-table"><thead><tr>${Object.keys(_wizardData.raw[0]||{}).map(k=>`<th>${k}</th>`).join('')}</tr></thead>
+    <tbody>${_wizardData.raw.slice(0,5).map(r=>`<tr>${Object.values(r).map(v=>`<td style="font-size:11px">${v||''}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+    <div class="flex-end" style="margin-top:14px"><button class="btn btn-primary" onclick="renderWizardStep(3)">Next: Map Columns →</button></div></div></div>`;
+  else if(step===3) {
+    const cols=['','...'].concat(Object.keys(_wizardData.raw[0]||{}));
+    const fields=[['globalId','Global ID'],['givenName','Given Name'],['lastName','Last Name'],['dept','Department'],['account','Account'],['costCenter','Cost Center'],['profile','Profile'],['site','Site'],['allocation','Allocation %'],['remarks','Remarks']];
+    body.innerHTML=`<div class="card"><div class="card-body"><p style="font-size:12px;color:var(--text2);margin-bottom:14px">Map your file columns to system fields. The system will auto-detect common headers.</p>
+      <div class="form-row">${fields.map(([f,l])=>`<div class="field"><div class="field-label">${l}</div><select id="map-${f}">${cols.map(c=>`<option ${autoDetect(f,c)?'selected':''}>${c}</option>`).join('')}</select></div>`).join('')}</div>
+      <div class="flex-end" style="margin-top:14px"><button class="btn btn-ghost" onclick="renderWizardStep(2)">← Back</button><button class="btn btn-primary" onclick="wizValidate()">Next: Validate →</button></div>
+    </div></div>`;
+  } else if(step===4) {
+    const ec=_wizardData.errors.length, wc=_wizardData.warnings.length;
+    body.innerHTML=`<div class="card"><div class="card-body">
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px">
+        <div class="kpi-card"><div class="kpi-accent-bar" style="background:var(--success)"></div><div class="kpi-value">${_wizardData.validated.length}</div><div class="kpi-label">Valid Rows</div></div>
+        <div class="kpi-card"><div class="kpi-accent-bar" style="background:var(--danger)"></div><div class="kpi-value" style="color:var(--danger)">${ec}</div><div class="kpi-label">Errors</div></div>
+        <div class="kpi-card"><div class="kpi-accent-bar" style="background:var(--warn)"></div><div class="kpi-value" style="color:var(--warn)">${wc}</div><div class="kpi-label">Warnings</div></div>
+        <div class="kpi-card"><div class="kpi-accent-bar" style="background:var(--accent)"></div><div class="kpi-value">${_wizardData.raw.length}</div><div class="kpi-label">Total Rows</div></div>
+      </div>
+      ${ec?`<div style="background:var(--danger-bg);border:1px solid var(--danger);border-radius:var(--r);padding:12px;margin-bottom:10px;font-size:12px;color:var(--danger)">${_wizardData.errors.slice(0,5).map(e=>`<div>Row ${e.row}: ${e.msg}</div>`).join('')}${ec>5?`<div>…and ${ec-5} more errors</div>`:''}</div>`:''}
+      ${wc?`<div style="background:var(--warn-bg);border:1px solid var(--warn);border-radius:var(--r);padding:12px;font-size:12px;color:var(--warn)">${_wizardData.warnings.slice(0,3).map(w=>`<div>Row ${w.row}: ${w.msg}</div>`).join('')}</div>`:''}
+      <div class="flex-end" style="margin-top:14px"><button class="btn btn-ghost" onclick="renderWizardStep(3)">← Back</button><button class="btn btn-primary" onclick="renderWizardStep(5)" ${ec?'':''}>Next: Preview →</button></div>
+    </div></div>`;
+  } else if(step===5) {
+    body.innerHTML=`<div class="card"><div class="card-header"><span class="card-title">Preview (${_wizardData.validated.slice(0,20).length} of ${_wizardData.validated.length} rows)</span></div>
+      <div class="table-container table-scroll"><table class="data-table"><thead><tr><th>Name</th><th>ID</th><th>Dept</th><th>Account</th><th>Profile</th><th>Alloc%</th></tr></thead>
+      <tbody>${_wizardData.validated.slice(0,20).map(r=>`<tr><td>${r.fullName||r.givenName||'—'}</td><td class="mono">${r.globalId||'—'}</td><td>${r.dept||'—'}</td><td>${r.account||'—'}</td><td>${r.profile?`<span class="pill ${profilePillClass(r.profile)}">${r.profile}</span>`:'—'}</td><td class="num">${((r.allocation||0)*100).toFixed(2)}%</td></tr>`).join('')}</tbody>
+      </table></div>
+      <div class="card-body flex-end"><button class="btn btn-ghost" onclick="renderWizardStep(4)">← Back</button><button class="btn btn-success" onclick="wizImport()">✓ Import ${_wizardData.validated.length} Rows</button></div>
+    </div>`;
+  } else if(step===6) {
+    body.innerHTML=`<div class="card"><div class="card-body" style="text-align:center;padding:40px">
+      <div style="font-size:48px;margin-bottom:16px">✅</div>
+      <div style="font-size:20px;font-weight:800;margin-bottom:8px">Import Complete</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:20px">Successfully imported ${_wizardData.validated.length} allocation rows</div>
+      <button class="btn btn-primary" onclick="showPage('dashboard')">View Dashboard →</button>
+    </div></div>`;
+  }
+}
+
+function wizDrop(e) {
+  e.preventDefault();
+  document.getElementById('wiz-zone')?.classList.remove('drag');
+  const f=e.dataTransfer.files[0];
+  if(f) { _wizardData.file=f; wizParseFile(f); }
+}
+function wizFileSelected(input) { if(input.files[0]) { _wizardData.file=input.files[0]; wizParseFile(input.files[0]); } }
+function wizParseFile(file) {
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try {
+      const wb=XLSX.read(e.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      _wizardData.raw=XLSX.utils.sheet_to_json(ws,{defval:''});
+      renderWizardStep(2);
+      toast('File parsed: '+_wizardData.raw.length+' rows','success');
+    } catch(err){toast('Error reading file: '+err.message,'error');}
+  };
+  reader.readAsArrayBuffer(file);
+}
+function autoDetect(field, col) {
+  const c=(col||'').toLowerCase().replace(/\s|_/g,'');
+  const map={globalid:['globalid','sgid','id','employeeid'],givenname:['givenname','firstname','given'],lastname:['lastname','surname','family'],dept:['department','dept','deparment'],account:['account'],costcenter:['costcenter','cost','center'],profile:['profile'],site:['site','office'],allocation:['allocation','alloc','percentage','pct'],remarks:['remarks','notes','comments']};
+  return (map[field]||[]).some(k=>c.includes(k));
+}
+function wizValidate() {
+  _wizardData.errors=[]; _wizardData.warnings=[]; _wizardData.validated=[];
+  const m={};
+  ['globalId','givenName','lastName','dept','account','costCenter','profile','site','allocation','remarks'].forEach(f=>{
+    const sel=document.getElementById('map-'+f)?.value;
+    m[f]=sel==='...'?null:sel;
+  });
+  _wizardData.raw.forEach((r,i)=>{
+    const row={};
+    Object.entries(m).forEach(([f,col])=>{ row[f]=col?String(r[col]||'').trim():''; });
+    row.fullName=row.lastName&&row.givenName?`${row.lastName}, ${row.givenName}`:row.givenName||row.lastName||'';
+    row.allocation=parseFloat(row.allocation)||0;
+    if(row.allocation>1) row.allocation/=100;
+    if(!row.globalId){_wizardData.errors.push({row:i+2,msg:'Missing Global ID'});return;}
+    if(!row.account){_wizardData.errors.push({row:i+2,msg:'Missing Account'});return;}
+    if(!row.profile&&Store.get('settings').requireProfile) _wizardData.warnings.push({row:i+2,msg:'Missing Profile'});
+    _wizardData.validated.push(row);
+  });
+  renderWizardStep(4);
+}
+function wizImport() {
+  const emps={...Store.get('employees')};
+  const allocs=[...Store.get('allocations')];
+  let newEmps=0,newAllocs=0;
+  _wizardData.validated.forEach(r=>{
+    if(!emps[r.globalId]){emps[r.globalId]={globalId:r.globalId,givenName:r.givenName,lastName:r.lastName,fullName:r.fullName||r.givenName,dept:r.dept,status:'active'};newEmps++;}
+    allocs.push({id:genId(),globalId:r.globalId,account:r.account,costCenter:r.costCenter,profile:r.profile,site:r.site,alloc:r.allocation,remarks:r.remarks});
+    newAllocs++;
+  });
+  Store.set('employees',emps,'Import: '+newEmps+' employees');
+  Store.set('allocations',allocs,'Import: '+newAllocs+' allocations');
+  refreshAll(); renderWizardStep(6);
+  toast(`Imported ${newEmps} employees, ${newAllocs} allocations`,'success');
+}
+
+// ══════════════════════════════════════
+//  §16  REPORTS
+// ══════════════════════════════════════
+function generateReport() {
+  const type=document.getElementById('rptType')?.value||'full';
+  const acc=document.getElementById('rptAccount')?.value||'';
+  const dept=document.getElementById('rptDept')?.value||'';
+  const period=document.getElementById('rptPeriod')?.value||'';
+  const allocs=Store.get('allocations').filter(a=>(!acc||a.account===acc)&&(!dept||(Store.get('employees')[a.globalId]||{}).dept===dept));
+  const emps=Object.values(Store.get('employees')).filter(e=>(!dept||e.dept===dept));
+  const empCount=new Set(allocs.map(a=>a.globalId)).size;
+  const totalBudget=allocs.reduce((s,a)=>s+Calc.rowBudget(a.alloc),0);
+  const accCount=[...new Set(allocs.map(a=>a.account))].length;
+  const qs=document.getElementById('rptQuickStats');
+  if(qs)qs.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    ${[['Employees',empCount],['Rows',allocs.length],['Total Budget','$'+totalBudget.toFixed(0)],['Accounts',accCount]].map(([l,v])=>`
+    <div style="background:var(--surface2);border-radius:var(--r);padding:12px"><div style="font-size:22px;font-weight:800">${v}</div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">${l}</div></div>`).join('')}</div>`;
+  const card=document.getElementById('rptPreviewCard');
+  const ptitle=document.getElementById('rptPreviewTitle');
+  const pbody=document.getElementById('rptPreviewBody');
+  if(card){card.style.display='block';}
+  if(ptitle) ptitle.textContent=(type==='full'?'Full Allocation Report':type==='emp'?'Employee Summary':type==='account'?'Account Summary':type==='budget'?'Budget Summary':'Validation Report')+(period?' — '+period:'');
+  if(pbody){
+    if(type==='full'||type==='emp'){
+      pbody.innerHTML=`<table class="data-table"><thead><tr><th>Global ID</th><th>Full Name</th><th>Dept</th><th>Account</th><th>Cost Center</th><th>Profile</th><th>Site</th><th>Alloc%</th><th>Budget</th><th>Remarks</th></tr></thead>
+      <tbody>${allocs.map(a=>{const e=Store.get('employees')[a.globalId]||{};return`<tr><td class="mono">${a.globalId}</td><td style="font-size:12px;font-weight:600">${e.fullName||''}</td><td><span class="pill pill-gray">${e.dept||'—'}</span></td><td>${accPill(a.account||'—')}</td><td style="font-size:11px;color:var(--text2)">${a.costCenter||'—'}</td><td>${a.profile?`<span class="pill ${profilePillClass(a.profile)}">${a.profile}</span>`:'—'}</td><td>${a.site?`<span class="pill pill-gray">${a.site}</span>`:'—'}</td><td class="num">${((a.alloc||0)*100).toFixed(2)}%</td><td class="num">$${Calc.rowBudget(a.alloc).toFixed(2)}</td><td style="font-size:11px;color:var(--text2)">${a.remarks||''}</td></tr>`;}).join('')}</tbody></table>`;
+    } else if(type==='account'){
+      const byAcc={};allocs.forEach(a=>{if(!byAcc[a.account])byAcc[a.account]={account:a.account,rows:0,employees:new Set(),budget:0};byAcc[a.account].rows++;byAcc[a.account].employees.add(a.globalId);byAcc[a.account].budget+=Calc.rowBudget(a.alloc);});
+      pbody.innerHTML=`<table class="data-table"><thead><tr><th>Account</th><th>Employees</th><th>Rows</th><th>Total Budget</th></tr></thead><tbody>${Object.values(byAcc).map(r=>`<tr><td>${accPill(r.account)}</td><td class="num">${r.employees.size}</td><td class="num">${r.rows}</td><td class="num">$${r.budget.toFixed(0)}</td></tr>`).join('')}</tbody></table>`;
+    }
+  }
+}
+
+function exportReport() {
+  const allocs=Store.get('allocations');
+  const emps=Store.get('employees');
+  const period=document.getElementById('rptPeriod')?.value||'';
+  const prefix=document.getElementById('cfg-prefix')?.value||'CPL_Allocation';
+  if(!allocs.length){toast('No data to export','warn');return;}
+  const ws1=XLSX.utils.json_to_sheet(allocs.map(a=>{const e=emps[a.globalId]||{};return{'Global ID':a.globalId,'Given Name':e.givenName,'Last Name':e.lastName,'Full Name':e.fullName,'Department':e.dept,'Account':a.account,'Cost Center':a.costCenter,'Profile':a.profile,'Site':a.site,'Allocation %':(a.alloc||0)*100,'Budget':Calc.rowBudget(a.alloc),'Remarks':a.remarks};}));
+  const ws2=XLSX.utils.json_to_sheet(Store.get('hcAccount').map(r=>({'Account':r.account,'#HC':r.hc,'%HC':r.pct})));
+  const ws3=XLSX.utils.json_to_sheet(Store.get('hcProfile').map(r=>({'Account':r.account,'Cost Center Name':r.costCenter,'Profile':r.profile,'#HC':r.hc})));
+  const wb=XLSX.utils.book_new();
+  const sheetName=document.getElementById('cfg-sheet')?.value||'rawData_Allocation';
+  XLSX.utils.book_append_sheet(wb,ws1,sheetName);
+  XLSX.utils.book_append_sheet(wb,ws2,'HC_by_Account');
+  XLSX.utils.book_append_sheet(wb,ws3,'HC_by_Profile');
+  const fname=`${prefix}${period?'_'+period:''}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb,fname);
+  History.push('Export Excel: '+fname,'export',null,fname);
+  toast('Exported: '+fname,'success');
+}
+
+function exportCSV() {
+  const allocs=Store.get('allocations');
+  const emps=Store.get('employees');
+  const rows=[['Global ID','Full Name','Dept','Account','Cost Center','Profile','Site','Allocation %','Budget','Remarks']];
+  allocs.forEach(a=>{const e=emps[a.globalId]||{};rows.push([a.globalId,e.fullName,e.dept,a.account,a.costCenter,a.profile,a.site,((a.alloc||0)*100).toFixed(4),Calc.rowBudget(a.alloc).toFixed(2),a.remarks]);});
+  const csv=rows.map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='CPL_Allocation_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  toast('CSV exported','success');
+}
+
+// ══════════════════════════════════════
+//  §17  GLOBAL SEARCH
+// ══════════════════════════════════════
+let _searchTimeout;
+function onGlobalSearch(q) {
+  clearTimeout(_searchTimeout);
+  _searchTimeout=setTimeout(()=>doSearch(q), 200);
+}
+function doSearch(q) {
+  const el=document.getElementById('searchDrop');
+  if(!el||!q.trim()){el.classList.remove('open');return;}
+  const results=[];
+  const ql=q.toLowerCase();
+  Object.values(Store.get('employees')).forEach(e=>{
+    if((e.fullName+e.globalId+e.dept).toLowerCase().includes(ql))
+      results.push({type:'Employee',icon:'👤',label:e.fullName,sub:e.globalId+' · '+e.dept,page:'employees'});
+  });
+  Calc.uniqueAccounts().forEach(a=>{
+    if(a.toLowerCase().includes(ql)) results.push({type:'Account',icon:'🏢',label:a,sub:'Account',page:'hcref'});
+  });
+  Store.get('templates').forEach(t=>{
+    if(t.name.toLowerCase().includes(ql)) results.push({type:'Template',icon:'📋',label:t.name,sub:t.lines.length+' lines',page:'templates'});
+  });
+  el.innerHTML=results.slice(0,8).map(r=>`
+    <div class="search-result" onclick="showPage('${r.page}');closeSearchDrop()">
+      <div class="search-result-icon">${r.icon}</div>
+      <div><div class="search-result-label">${r.label}</div><div class="search-result-sub">${r.sub}</div></div>
+      <span class="pill pill-gray" style="margin-left:auto">${r.type}</span>
+    </div>`).join('')+(!results.length?`<div class="search-result"><div class="search-result-label" style="color:var(--text3)">No results for "${q}"</div></div>`:'');
+  el.classList.add('open');
+}
+function openSearchDrop() { if(document.getElementById('globalSearch')?.value) doSearch(document.getElementById('globalSearch').value); }
+function closeSearchDrop() { document.getElementById('searchDrop')?.classList.remove('open'); }
+
+// ══════════════════════════════════════
+//  §18  TOAST SYSTEM
+// ══════════════════════════════════════
+function toast(msg, type='info', title='', duration=4000) {
+  const icons={success:'✓',warn:'⚠',error:'✕',info:'ℹ'};
+  const item=document.createElement('div');
+  item.className='toast-item';
+  item.style.setProperty('--duration',duration+'ms');
+  item.innerHTML=`
+    <div class="toast-icon ${type}">${icons[type]||'ℹ'}</div>
+    <div class="toast-text">
+      ${title?`<div class="toast-title">${title}</div>`:''}
+      <div class="toast-msg">${msg}</div>
+    </div>
+    <span class="toast-close" onclick="this.parentElement.remove()">✕</span>`;
+  item.onclick=()=>item.remove();
+  document.getElementById('toast-container')?.appendChild(item);
+  setTimeout(()=>{item.classList.add('out');setTimeout(()=>item.remove(),300);},duration);
+}
+
+// ══════════════════════════════════════
+//  §19  MODAL
+// ══════════════════════════════════════
+function openModal(title, body, actions=[]) {
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=body;
+  document.getElementById('modal-footer').innerHTML=actions.map((a,i)=>`<button class="btn ${a.cls}" id="maction-${i}">${a.label}</button>`).join('');
+  actions.forEach((a,i)=>document.getElementById('maction-'+i).onclick=a.fn);
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+// ══════════════════════════════════════
+//  §20  SETTINGS
+// ══════════════════════════════════════
+function applySettings() {
+  const s=Store.get('settings');
+  s.budget=parseFloat(document.getElementById('cfg-budget')?.value||500);
+  s.period=document.getElementById('cfg-period')?.value||'Annual';
+  s.tolerance=parseFloat(document.getElementById('cfg-tolerance')?.value||0.1);
+  s.requireCC=document.getElementById('cfg-req-cc')?.checked??true;
+  s.requireProfile=document.getElementById('cfg-req-profile')?.checked??true;
+  s.requireSite=document.getElementById('cfg-req-site')?.checked??false;
+  s.allowZero=document.getElementById('cfg-allow-zero')?.checked??false;
+  s.dupWarn=document.getElementById('cfg-dup-warn')?.checked??true;
+  Store.set('settings',{...s},'Update settings');
+  refreshAll(); toast('Settings applied','success');
+}
+
+// ══════════════════════════════════════
+//  §21  THEME
+// ══════════════════════════════════════
+function toggleTheme() {
+  const html=document.documentElement;
+  const dark=html.dataset.theme==='dark';
+  html.dataset.theme=dark?'light':'dark';
+  const btn=document.getElementById('themeBtn');
+  if(btn) btn.textContent=dark?'🌙':'☀';
+  const cb=document.getElementById('cfg-dark');
+  if(cb) cb.checked=!dark;
+}
+
+// ══════════════════════════════════════
+//  §22  HISTORY
+// ══════════════════════════════════════
+function undoHistory() { History.undo(); }
+function clearHistory() { Store.set('history',[],'Clear history'); Render.history(); toast('History cleared','info'); }
+
+// ══════════════════════════════════════
+//  §23  SETTINGS SYNC
+// ══════════════════════════════════════
+function renderAllocTable() { Render.allocTable(); }
+
+// ══════════════════════════════════════
+//  §24  SAMPLE DATA
+// ══════════════════════════════════════
+function loadSampleData() {
+  // Normalized employee records
+  const employees = {
+    'SG011897': {globalId:'SG011897',givenName:'Sheena Katrina',lastName:'Jimenez',fullName:'Jimenez, Sheena Katrina',dept:'Compliance',status:'active'},
+    'SG011325': {globalId:'SG011325',givenName:'Lorraine Anne',lastName:'Balis',fullName:'Balis, Lorraine Anne',dept:'Compliance',status:'active'},
+    'SG011297': {globalId:'SG011297',givenName:'Regeene',lastName:'Quinajon',fullName:'Quinajon, Regeene',dept:'Compliance',status:'active'},
+    'SG011978': {globalId:'SG011978',givenName:'Janine',lastName:'Buenaventura',fullName:'Buenaventura, Janine',dept:'Compliance',status:'active'},
+    'SG007619': {globalId:'SG007619',givenName:'Raymart',lastName:'De Mateo',fullName:'De Mateo, Raymart',dept:'Compliance',status:'active'},
+    'SG003710': {globalId:'SG003710',givenName:'Maricel',lastName:'Tupas',fullName:'Tupas, Maricel',dept:'Compliance',status:'active'},
+    'SG012617': {globalId:'SG012617',givenName:'Maria Isabel',lastName:'Dizon',fullName:'Dizon, Maria Isabel',dept:'PMO',status:'active'},
+    'SG009748': {globalId:'SG009748',givenName:'Ricky',lastName:'Dela Torre',fullName:'Dela Torre, Ricky',dept:'PMO',status:'active'},
+    'SG011665': {globalId:'SG011665',givenName:'Rodilyn',lastName:'Olitres',fullName:'Olitres, Rodilyn',dept:'PMO',status:'active'},
+    'SG033743': {globalId:'SG033743',givenName:'Allan',lastName:'Kubo',fullName:'Kubo, Allan',dept:'PMO',status:'active'},
+  };
+
+  // Child allocation records (no budget stored — computed)
+  const allocations = [
+    {id:'a001',globalId:'SG011897',account:'Blue Cross Idaho',costCenter:'PHL_BCI G&A Clinical Review',profile:'USRN',site:'',alloc:0.006852,remarks:''},
+    {id:'a002',globalId:'SG011897',account:'Cigna Clinical',costCenter:'Cigna THN BT',profile:'PHRN',site:'BT',alloc:0.190578,remarks:''},
+    {id:'a003',globalId:'SG011897',account:'Cohere',costCenter:'Cohere Clinical',profile:'USRN',site:'BT',alloc:0.067666,remarks:''},
+    {id:'a004',globalId:'SG011897',account:'Enlyte Clinical',costCenter:'PHL_Clinical Care 24 (USRN)',profile:'USRN',site:'',alloc:0.059529,remarks:''},
+    {id:'a005',globalId:'SG011897',account:'Flatiron',costCenter:'Flatiron Clinical Abstraction',profile:'PHRN',site:'',alloc:0.131049,remarks:''},
+    {id:'a006',globalId:'SG011897',account:'Humana Clinical',costCenter:'PHL_HUMANA CIT CLINICAL',profile:'USRN',site:'BT',alloc:0.544325,remarks:''},
+    {id:'a007',globalId:'SG011325',account:'Flatiron',costCenter:'Flatiron Clinical Abstraction',profile:'PHRN',site:'',alloc:1,remarks:''},
+    {id:'a008',globalId:'SG011297',account:'Humana Clinical',costCenter:'PHL_HUMANA CIT VOICE ILO',profile:'Non-RN',site:'ALA',alloc:1,remarks:'Humana ALA'},
+    {id:'a009',globalId:'SG011978',account:'Cigna Clinical',costCenter:'Cigna Medical Case_PHRN BT',profile:'PHRN',site:'BT',alloc:1,remarks:''},
+    {id:'a010',globalId:'SG007619',account:'Cohere',costCenter:'Cohere Clinical',profile:'USRN',site:'BT',alloc:0.847195,remarks:''},
+    {id:'a011',globalId:'SG007619',account:'Humana Clinical',costCenter:'PHL_HRA - BT',profile:'Non-RN',site:'BT',alloc:0.152805,remarks:'Humana BT'},
+    {id:'a012',globalId:'SG003710',account:'Humana Clinical',costCenter:'PHL_HUMANA CIT VOICE ILO',profile:'Non-RN',site:'ILO',alloc:0.809375,remarks:'Humana ILO'},
+    {id:'a013',globalId:'SG003710',account:'Enlyte Clinical',costCenter:'TCM ILO',profile:'Non-RN',site:'ILO',alloc:0.190625,remarks:'Enlyte ILO'},
+    {id:'a014',globalId:'SG012617',account:'Blue Cross Idaho',costCenter:'PHL_BCI G&A Clinical Review',profile:'USRN',site:'',alloc:0.006852,remarks:''},
+    {id:'a015',globalId:'SG012617',account:'Cigna Clinical',costCenter:'Cigna THN BT',profile:'PHRN',site:'BT',alloc:0.190578,remarks:''},
+    {id:'a016',globalId:'SG012617',account:'Cohere',costCenter:'Cohere Clinical',profile:'USRN',site:'BT',alloc:0.067666,remarks:''},
+    {id:'a017',globalId:'SG012617',account:'Enlyte Clinical',costCenter:'PHL_Clinical Care 24 (USRN)',profile:'USRN',site:'',alloc:0.059529,remarks:''},
+    {id:'a018',globalId:'SG012617',account:'Flatiron',costCenter:'Flatiron Clinical Abstraction',profile:'PHRN',site:'',alloc:0.131049,remarks:''},
+    {id:'a019',globalId:'SG012617',account:'Humana Clinical',costCenter:'PHL_HUMANA CIT CLINICAL',profile:'USRN',site:'BT',alloc:0.544325,remarks:''},
+    {id:'a020',globalId:'SG009748',account:'Blue Cross Idaho',costCenter:'PHL_BCI G&A Clinical Review',profile:'USRN',site:'',alloc:0.006852,remarks:''},
+    {id:'a021',globalId:'SG009748',account:'Cigna Clinical',costCenter:'Cigna THN BT',profile:'PHRN',site:'BT',alloc:0.190578,remarks:''},
+    {id:'a022',globalId:'SG009748',account:'Cohere',costCenter:'Cohere Clinical',profile:'USRN',site:'BT',alloc:0.067666,remarks:''},
+    {id:'a023',globalId:'SG009748',account:'Enlyte Clinical',costCenter:'TCM BT',profile:'Non-RN',site:'',alloc:0.059529,remarks:''},
+    {id:'a024',globalId:'SG009748',account:'Flatiron',costCenter:'Flatiron Clinical Abstraction',profile:'PHRN',site:'',alloc:0.131049,remarks:''},
+    {id:'a025',globalId:'SG009748',account:'Humana Clinical',costCenter:'PHL_Humana CIT Care Management',profile:'Non-RN',site:'BT',alloc:0.544325,remarks:''},
+    {id:'a026',globalId:'SG011665',account:'Cigna Clinical',costCenter:'Cigna THN BT',profile:'PHRN',site:'BT',alloc:0.55,remarks:''},
+    {id:'a027',globalId:'SG011665',account:'Flatiron',costCenter:'Flatiron Clinical Abstraction',profile:'PHRN',site:'',alloc:0.45,remarks:''},
+    {id:'a028',globalId:'SG033743',account:'Blue Cross Idaho',costCenter:'PHL_BCI G&A Clinical Review',profile:'USRN',site:'',alloc:0.020050,remarks:''},
+    {id:'a029',globalId:'SG033743',account:'Cigna Clinical',costCenter:'Cigna Medical Case_USRN BT',profile:'USRN',site:'BT',alloc:0.303258,remarks:''},
+    {id:'a030',globalId:'SG033743',account:'Cohere',costCenter:'Cohere Clinical',profile:'USRN',site:'BT',alloc:0.185464,remarks:''},
+    {id:'a031',globalId:'SG033743',account:'Enlyte Clinical',costCenter:'PHL_Clinical Care 24 (USRN)',profile:'USRN',site:'',alloc:0.105263,remarks:''},
+    {id:'a032',globalId:'SG033743',account:'Humana Clinical',costCenter:'PHL_HUMANA CIT CLINICAL',profile:'USRN',site:'BT',alloc:0.385965,remarks:''},
+  ];
+
+  Store.set('employees',employees,'Load sample employees');
+  Store.set('allocations',allocations,'Load sample allocations');
+  Store.set('hcAccount',[
+    {account:'Blue Cross Idaho',hc:16,pct:0.006852},
+    {account:'Cigna Clinical',hc:445,pct:0.190578},
+    {account:'Cohere',hc:158,pct:0.067666},
+    {account:'Enlyte Clinical',hc:139,pct:0.059529},
+    {account:'Flatiron',hc:306,pct:0.131049},
+    {account:'Humana Clinical',hc:1271,pct:0.544325},
+  ],'Load HC by Account');
+  Store.set('hcProfile',[
+    {account:'Flatiron',costCenter:'Flatiron Clinical Abstraction',profile:'PHRN',hc:306},
+    {account:'Cigna Clinical',costCenter:'Cigna Medical Case_PHRN BT',profile:'PHRN',hc:65},
+    {account:'Cigna Clinical',costCenter:'Cigna Medical Case_USRN BT',profile:'USRN',hc:107},
+    {account:'Cigna Clinical',costCenter:'Cigna Personal Advocate BT',profile:'PHRN',hc:37},
+    {account:'Cigna Clinical',costCenter:'Cigna THN BT',profile:'PHRN',hc:107},
+    {account:'Cigna Clinical',costCenter:'Cigna THN ALA',profile:'PHRN',hc:84},
+    {account:'Cohere',costCenter:'Cohere Intake',profile:'Non-RN',hc:84},
+    {account:'Cohere',costCenter:'Cohere Clinical',profile:'USRN',hc:74},
+    {account:'Humana Clinical',costCenter:'PHL_HRA - BT',profile:'Non-RN',hc:168},
+    {account:'Humana Clinical',costCenter:'PHL_HRA - ILO',profile:'Non-RN',hc:104},
+    {account:'Humana Clinical',costCenter:'PHL_Humana Clinical SNP Care Coach',profile:'Non-RN',hc:335},
+    {account:'Humana Clinical',costCenter:'PHL_HUMANA CIT CLINICAL',profile:'USRN',hc:154},
+    {account:'Humana Clinical',costCenter:'PHL_HUMANA CIT CLINICAL PHRN',profile:'PHRN',hc:100},
+    {account:'Enlyte Clinical',costCenter:'PHL_Qual-Lynx Clinical QL 1',profile:'PHRN',hc:14},
+    {account:'Enlyte Clinical',costCenter:'PHL_Care Coordinator - MNL (Genex)',profile:'Non-RN',hc:48},
+    {account:'Enlyte Clinical',costCenter:'PHL_Clinical Care 24 (USRN)',profile:'USRN',hc:42},
+    {account:'Blue Cross Idaho',costCenter:'PHL_BCI G&A Clinical Review',profile:'USRN',hc:8},
+    {account:'Blue Cross Idaho',costCenter:'PHL_BCI G&A Intake',profile:'Non-RN',hc:8},
+  ],'Load HC by Profile');
+  Store.set('hcSite',[
+    {account:'Humana Clinical',site:'ALA',hc:136,pctAlloc:0.107002},
+    {account:'Humana Clinical',site:'BT',hc:876,pctAlloc:0.689221},
+    {account:'Humana Clinical',site:'ILO',hc:259,pctAlloc:0.203777},
+    {account:'Cohere',site:'BT',hc:158,pctAlloc:1},
+    {account:'Enlyte Clinical',site:'ILO',hc:61,pctAlloc:0.190625},
+    {account:'Enlyte Clinical',site:'BT',hc:78,pctAlloc:0.809375},
+  ],'Load HC by Site');
+  Store.set('templates',[
+    {id:'t1',name:'CO Standard 6-Account Split',category:'Compliance',usageCount:4,createdAt:new Date().toISOString(),lines:[
+      {account:'Blue Cross Idaho',costCenter:'PHL_BCI G&A Clinical Review',profile:'USRN',site:'',alloc:0.006852},
+      {account:'Cigna Clinical',costCenter:'Cigna THN BT',profile:'PHRN',site:'BT',alloc:0.190578},
+      {account:'Cohere',costCenter:'Cohere Clinical',profile:'USRN',site:'BT',alloc:0.067666},
+      {account:'Enlyte Clinical',costCenter:'PHL_Clinical Care 24 (USRN)',profile:'USRN',site:'',alloc:0.059529},
+      {account:'Flatiron',costCenter:'Flatiron Clinical Abstraction',profile:'PHRN',site:'',alloc:0.131049},
+      {account:'Humana Clinical',costCenter:'PHL_HUMANA CIT CLINICAL',profile:'USRN',site:'BT',alloc:0.544325},
+    ]},
+    {id:'t2',name:'Olitres Split — Cigna + Flatiron',category:'PMO',usageCount:1,createdAt:new Date().toISOString(),lines:[
+      {account:'Cigna Clinical',costCenter:'Cigna THN BT',profile:'PHRN',site:'BT',alloc:0.55},
+      {account:'Flatiron',costCenter:'Flatiron Clinical Abstraction',profile:'PHRN',site:'',alloc:0.45},
+    ]},
+    {id:'t3',name:'Cohere + Humana BT Split',category:'Compliance',usageCount:2,createdAt:new Date().toISOString(),lines:[
+      {account:'Cohere',costCenter:'Cohere Clinical',profile:'USRN',site:'BT',alloc:0.847195},
+      {account:'Humana Clinical',costCenter:'PHL_HRA - BT',profile:'Non-RN',site:'BT',alloc:0.152805},
+    ]},
+  ],'Load sample templates');
+  refreshAll();
+  toast('Sample data loaded — 10 employees, 32 allocations, 6 accounts','success','Data Loaded');
+}
+
+// ══════════════════════════════════════
+//  §25  INITIALIZATION
+// ══════════════════════════════════════
+document.addEventListener('DOMContentLoaded', ()=>{
+  initWizard();
+  // keyboard shortcuts
+  document.addEventListener('keydown', e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key==='k'){e.preventDefault();document.getElementById('globalSearch')?.focus();}
+    if(e.key==='Escape'){closeModal();closeSearchDrop();}
+    if((e.ctrlKey||e.metaKey)&&e.key==='z'){e.preventDefault();undoHistory();}
+  });
+  toast('CPL Allocation Platform ready','info','Enterprise Edition',2500);
+});
+</script>
+</html>

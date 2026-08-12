@@ -1,0 +1,1367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RIO Intake — Agentic Card Generator</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --bg:            #F1F5F9;
+  --surface:       #FFFFFF;
+  --border:        #E2E8F0;
+  --divider:       #CBD5E1;
+  --heading:       #0F172A;
+  --text:          #1E293B;
+  --muted:         #64748B;
+  --disabled:      #94A3B8;
+  --primary:       #10805A;
+  --primary-h:     #0D6B4A;
+  --primary-light: #ECFDF5;
+  --secondary:     #1E3A5F;
+  --accent:        #3B82F6;
+  --success:       #22C55E;
+  --warning:       #F59E0B;
+  --danger:        #EF4444;
+  --info:          #06B6D4;
+  --purple:        #8B5CF6;
+  --sb-bg:         #0C2017;
+  --sb-text:       #9DC9B2;
+  --sb-active:     #22C55E;
+  --sb-hover:      #152D21;
+  --sb-border:     rgba(157,201,178,0.10);
+  --sb-w:          260px;
+  --shadow:        0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:     0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg:     0 10px 30px rgba(0,0,0,0.12);
+  --radius:        8px;
+  --radius-lg:     12px;
+  --radius-xl:     16px;
+}
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 13.5px;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.55;
+}
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width: var(--sb-w); min-height: 100vh; background: var(--sb-bg);
+  display: flex; flex-direction: column; flex-shrink: 0;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto; z-index: 200;
+  box-shadow: 4px 0 28px rgba(0,0,0,0.18);
+}
+.sb-logo {
+  padding: 20px 18px 16px; border-bottom: 1px solid var(--sb-border);
+  display: flex; align-items: center; gap: 10px;
+}
+.sb-logo-badge {
+  width: 36px; height: 36px; border-radius: 9px; flex-shrink: 0;
+  background: linear-gradient(135deg,#10805A 0%,#0C2017 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Plus Jakarta Sans',sans-serif; font-size: 10px; font-weight: 900;
+  color: #fff; letter-spacing: -0.5px; box-shadow: 0 3px 10px rgba(16,128,90,0.35);
+}
+.sb-app-name { font-family: 'Plus Jakarta Sans',sans-serif; font-size: 15px; font-weight: 800; color: #fff; letter-spacing: -0.3px; }
+.sb-app-sub  { font-size: 9px; color: rgba(157,201,178,0.5); letter-spacing:.5px; text-transform:uppercase; font-weight:500; margin-top:1px; }
+
+.sb-section { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(157,201,178,0.4); padding: 14px 18px 5px; }
+.sb-btn {
+  display: flex; align-items: center; gap: 10px; padding: 9px 18px;
+  border: none; background: transparent; color: var(--sb-text); cursor: pointer;
+  font-family: 'Inter',sans-serif; font-size: 12.5px; font-weight: 400;
+  transition: all .12s; text-align: left; width: 100%;
+  border-left: 3px solid transparent;
+}
+.sb-btn:hover { background: var(--sb-hover); color: #E8F5ED; }
+.sb-btn.active { background: rgba(34,197,94,0.1); color: var(--sb-active); border-left-color: var(--sb-active); font-weight: 600; }
+.sb-icon { width: 18px; height: 18px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+.sb-badge { margin-left: auto; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 99px; background: rgba(34,197,94,0.15); color: var(--sb-active); }
+
+.sb-divider { border: none; border-top: 1px solid var(--sb-border); margin: 8px 18px; }
+
+/* ── MAIN ── */
+#appMain { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ── TOPBAR ── */
+#topbar {
+  height: 56px; background: rgba(241,245,249,0.95); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border); display: flex; align-items: center;
+  padding: 0 24px; gap: 12px; position: sticky; top: 0; z-index: 100;
+}
+.tb-title { font-size: 15px; font-weight: 700; color: var(--heading); font-family: 'Plus Jakarta Sans',sans-serif; }
+.tb-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.tb-badge { font-size: 11px; padding: 3px 10px; border-radius: 99px; font-weight: 600; background: var(--primary-light); color: var(--primary); border: 1px solid rgba(16,128,90,0.15); }
+
+/* ── CONTENT ── */
+#content { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 20px; max-width: 1280px; }
+
+/* ── PAGE LAYOUT ── */
+.page { display: none; }
+.page.active { display: contents; }
+
+/* ── INPUT PANEL ── */
+.panel {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow); overflow: hidden;
+}
+.panel-header {
+  padding: 14px 20px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.panel-icon { font-size: 16px; }
+.panel-title { font-weight: 700; color: var(--heading); font-size: 13.5px; }
+.panel-sub { font-size: 11.5px; color: var(--muted); margin-left: auto; }
+.panel-body { padding: 20px; }
+
+/* ── INTAKE TABS ── */
+.intake-tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 10px; padding: 4px; margin-bottom: 20px; }
+.intake-tab {
+  flex: 1; padding: 8px 12px; border: none; border-radius: 7px;
+  background: none; cursor: pointer; font-family: 'Inter',sans-serif;
+  font-size: 12.5px; font-weight: 500; color: var(--muted); transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.intake-tab.active { background: var(--surface); color: var(--primary); font-weight: 700; box-shadow: var(--shadow); }
+.intake-tab:hover:not(.active) { color: var(--heading); }
+
+/* ── EMAIL INPUT ── */
+.email-input-area {
+  width: 100%; min-height: 180px; padding: 14px; border: 1.5px solid var(--border);
+  border-radius: var(--radius); font-family: 'Inter',sans-serif; font-size: 13px;
+  color: var(--text); resize: vertical; outline: none; transition: border-color .15s;
+  background: #FAFBFC;
+}
+.email-input-area:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16,128,90,0.08); background: #fff; }
+
+/* ── IMAGE DROP ZONE ── */
+.drop-zone {
+  border: 2px dashed var(--border); border-radius: var(--radius-lg);
+  padding: 40px 20px; text-align: center; cursor: pointer;
+  transition: all .2s; background: #FAFBFC; position: relative;
+}
+.drop-zone.over { border-color: var(--primary); background: var(--primary-light); }
+.drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.drop-icon { font-size: 32px; margin-bottom: 10px; }
+.drop-title { font-weight: 600; color: var(--heading); font-size: 14px; margin-bottom: 4px; }
+.drop-sub { font-size: 12px; color: var(--muted); }
+
+.image-preview-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.image-thumb {
+  position: relative; width: 120px; height: 90px;
+  border-radius: 8px; overflow: hidden; border: 1.5px solid var(--border);
+}
+.image-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.image-thumb-remove {
+  position: absolute; top: 4px; right: 4px; width: 20px; height: 20px;
+  border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff;
+  border: none; cursor: pointer; font-size: 11px; display: flex;
+  align-items: center; justify-content: center;
+}
+
+/* ── PROMPT INPUT ── */
+.prompt-input {
+  width: 100%; min-height: 100px; padding: 14px; border: 1.5px solid var(--border);
+  border-radius: var(--radius); font-family: 'Inter',sans-serif; font-size: 13px;
+  color: var(--text); resize: vertical; outline: none; transition: border-color .15s;
+  background: #FAFBFC;
+}
+.prompt-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16,128,90,0.08); background: #fff; }
+
+/* ── CONTEXT FIELDS ── */
+.context-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.ctx-field { display: flex; flex-direction: column; gap: 5px; }
+.ctx-field label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.ctx-field input, .ctx-field select {
+  padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 7px;
+  font-size: 13px; color: var(--text); font-family: 'Inter',sans-serif;
+  outline: none; transition: border-color .15s; background: var(--surface);
+}
+.ctx-field input:focus, .ctx-field select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16,128,90,0.08); }
+
+/* ── EXTRACT BUTTON ── */
+.extract-btn {
+  width: 100%; padding: 12px; border: none; border-radius: 10px;
+  background: var(--primary); color: #fff; font-family: 'Inter',sans-serif;
+  font-size: 14px; font-weight: 700; cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  letter-spacing: 0.2px;
+}
+.extract-btn:hover { background: var(--primary-h); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(16,128,90,0.25); }
+.extract-btn:disabled { opacity: .55; cursor: not-allowed; transform: none; box-shadow: none; }
+.extract-btn .spinner {
+  width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── AI STATUS BAR ── */
+.ai-status {
+  display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+  border-radius: 8px; font-size: 12.5px; margin-top: 12px;
+  background: var(--bg); border: 1px solid var(--border);
+}
+.ai-status.processing { background: rgba(59,130,246,0.05); border-color: rgba(59,130,246,0.2); color: var(--accent); }
+.ai-status.success    { background: var(--primary-light); border-color: rgba(16,128,90,0.2); color: var(--primary); }
+.ai-status.error      { background: #FEF2F2; border-color: rgba(239,68,68,0.2); color: var(--danger); }
+.ai-status-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.ai-status.processing .ai-status-dot { animation: pulse 1.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:.35} }
+
+/* ── RESULTS GRID ── */
+.results-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.results-title { font-size: 14px; font-weight: 700; color: var(--heading); }
+.results-actions { display: flex; gap: 8px; }
+.results-btn {
+  padding: 7px 14px; border-radius: 7px; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--text); font-family: 'Inter',sans-serif;
+  font-size: 12px; font-weight: 600; cursor: pointer; transition: all .12s;
+  display: flex; align-items: center; gap: 5px;
+}
+.results-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+.results-btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.results-btn.primary:hover { background: var(--primary-h); }
+
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+
+/* ── CARD PREVIEW ── */
+.card-preview {
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px;
+  overflow: hidden; box-shadow: var(--shadow); transition: all .15s;
+  position: relative;
+}
+.card-preview:hover { border-color: var(--primary); box-shadow: 0 4px 16px rgba(16,128,90,0.1); }
+.card-preview.selected { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16,128,90,0.12); }
+.card-preview.rejected { opacity: .4; }
+
+.card-label-bar { height: 3px; }
+.card-preview-body { padding: 14px 14px 10px; }
+.card-check {
+  position: absolute; top: 12px; right: 12px; width: 20px; height: 20px;
+  border-radius: 50%; border: 2px solid var(--border); background: var(--surface);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 11px; transition: all .12s;
+}
+.card-check.checked { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+.cp-title { font-size: 13px; font-weight: 700; color: var(--heading); margin-bottom: 8px; padding-right: 28px; line-height: 1.4; }
+.cp-notes { font-size: 11.5px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.cp-meta { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.cp-badge { font-size: 10px; padding: 2px 8px; border-radius: 99px; font-weight: 600; }
+.cp-badge.priority-critical { background: rgba(139,92,246,.12); color: #7C3AED; border: 1px solid rgba(139,92,246,.2); }
+.cp-badge.priority-high     { background: rgba(239,68,68,.1);  color: #DC2626;  border: 1px solid rgba(239,68,68,.2); }
+.cp-badge.priority-medium   { background: rgba(245,158,11,.1); color: #D97706;  border: 1px solid rgba(245,158,11,.2); }
+.cp-badge.priority-low      { background: rgba(59,130,246,.1); color: #2563EB;  border: 1px solid rgba(59,130,246,.2); }
+.cp-badge.col   { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+.cp-badge.tag   { background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
+.cp-badge.cat-project      { background: rgba(59,130,246,.08); color: #2563EB; border: 1px solid rgba(59,130,246,.15); }
+.cp-badge.cat-deliverable  { background: rgba(34,197,94,.08);  color: #16A34A; border: 1px solid rgba(34,197,94,.15); }
+.cp-badge.cat-adhoc        { background: rgba(245,158,11,.08); color: #D97706; border: 1px solid rgba(245,158,11,.15); }
+
+.cp-footer { display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid var(--border); margin-top: 8px; flex-wrap: wrap; }
+.cp-assignee { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 8.5px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.cp-due { font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 3px; }
+.cp-due.overdue { color: var(--danger); font-weight: 600; }
+.cp-edit-btn {
+  margin-left: auto; padding: 3px 10px; border-radius: 5px; border: 1px solid var(--border);
+  background: var(--bg); color: var(--muted); font-size: 11px; font-weight: 600;
+  cursor: pointer; font-family: 'Inter',sans-serif; transition: all .12s;
+}
+.cp-edit-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(59,130,246,0.05); }
+
+/* ── INLINE EDIT PANEL ── */
+.card-edit-panel {
+  background: #F8FAFC; border-top: 1px solid var(--border); padding: 14px;
+  display: none; flex-direction: column; gap: 10px;
+}
+.card-edit-panel.open { display: flex; }
+.edit-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.edit-field { display: flex; flex-direction: column; gap: 4px; }
+.edit-field label { font-size: 10.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.edit-field input, .edit-field select, .edit-field textarea {
+  padding: 6px 10px; border: 1.5px solid var(--border); border-radius: 6px;
+  font-size: 12.5px; color: var(--text); font-family: 'Inter',sans-serif;
+  outline: none; transition: border-color .15s; background: var(--surface);
+}
+.edit-field input:focus, .edit-field select:focus, .edit-field textarea:focus {
+  border-color: var(--primary); box-shadow: 0 0 0 2px rgba(16,128,90,0.08);
+}
+.edit-field textarea { resize: vertical; min-height: 60px; }
+.edit-save-btn {
+  padding: 7px 14px; border-radius: 7px; border: none;
+  background: var(--primary); color: #fff; font-family: 'Inter',sans-serif;
+  font-size: 12px; font-weight: 700; cursor: pointer; align-self: flex-end;
+}
+
+/* ── COLUMN CHIPS ── */
+.col-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.col-chip {
+  padding: 5px 12px; border-radius: 99px; border: 1.5px solid var(--border);
+  background: var(--surface); color: var(--muted); font-size: 11.5px; font-weight: 500;
+  cursor: pointer; transition: all .12s; font-family: 'Inter',sans-serif;
+  display: flex; align-items: center; gap: 5px;
+}
+.col-chip.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 700; }
+.col-chip-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* ── EXPORT SECTION ── */
+.export-bar {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: 16px 20px; display: flex; align-items: center; gap: 12px;
+  box-shadow: var(--shadow); flex-wrap: wrap;
+}
+.export-info { flex: 1; }
+.export-title { font-weight: 700; font-size: 13.5px; color: var(--heading); margin-bottom: 2px; }
+.export-sub { font-size: 12px; color: var(--muted); }
+
+/* ── HISTORY PANEL ── */
+.history-list { display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; }
+.history-item {
+  padding: 10px 14px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border);
+  display: flex; align-items: flex-start; gap: 10px; cursor: pointer; transition: border-color .12s;
+}
+.history-item:hover { border-color: var(--primary); }
+.history-item-icon { font-size: 18px; flex-shrink: 0; }
+.history-item-title { font-weight: 600; font-size: 12.5px; color: var(--heading); margin-bottom: 2px; }
+.history-item-sub { font-size: 11px; color: var(--muted); }
+.history-item-count { margin-left: auto; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--primary-light); color: var(--primary); flex-shrink: 0; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  background: var(--heading); color: #fff; padding: 10px 18px;
+  border-radius: 10px; font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-lg); opacity: 0; transform: translateY(8px);
+  transition: all .22s; pointer-events: none; max-width: 340px;
+}
+#toast.show { opacity: 1; transform: translateY(0); }
+#toast.success { background: var(--primary); }
+#toast.error   { background: var(--danger); }
+#toast.info    { background: var(--accent); }
+
+/* ── EMPTY STATE ── */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-title { font-size: 15px; font-weight: 700; color: var(--heading); margin-bottom: 6px; }
+.empty-sub { font-size: 12.5px; }
+
+/* ── COLUMN MANAGER ── */
+.col-manager { display: flex; flex-direction: column; gap: 8px; }
+.col-manager-row {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  background: var(--bg); border-radius: 8px; border: 1px solid var(--border);
+}
+.col-manager-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.col-manager-name { flex: 1; font-size: 12.5px; font-weight: 600; color: var(--heading); }
+.col-manager-remove { border: none; background: none; cursor: pointer; color: var(--muted); font-size: 14px; }
+.col-manager-remove:hover { color: var(--danger); }
+.col-add-row { display: flex; gap: 8px; }
+.col-add-row input {
+  flex: 1; padding: 8px 12px; border: 1.5px solid var(--border); border-radius: 7px;
+  font-size: 12.5px; font-family: 'Inter',sans-serif; outline: none; color: var(--text);
+}
+.col-add-row input:focus { border-color: var(--primary); }
+.col-add-row button {
+  padding: 8px 14px; border-radius: 7px; border: none;
+  background: var(--primary); color: #fff; font-size: 12.5px; font-weight: 700;
+  cursor: pointer; font-family: 'Inter',sans-serif;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--divider); border-radius: 99px; }
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  #sidebar { display: none; }
+  .context-grid, .edit-row { grid-template-columns: 1fr; }
+  .cards-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-badge">RIO</div>
+    <div>
+      <div class="sb-app-name">RIO Intake</div>
+      <div class="sb-app-sub">Agentic Card Generator</div>
+    </div>
+  </div>
+
+  <div class="sb-section">Intake Mode</div>
+  <button class="sb-btn active" onclick="setMode('email',this)" data-tip="Email">
+    <span class="sb-icon">✉️</span> Email Parser
+  </button>
+  <button class="sb-btn" onclick="setMode('screenshot',this)" data-tip="Screenshot">
+    <span class="sb-icon">🖼️</span> Screenshot / Image
+  </button>
+  <button class="sb-btn" onclick="setMode('prompt',this)" data-tip="Prompt">
+    <span class="sb-icon">💬</span> Manual Prompt
+  </button>
+
+  <hr class="sb-divider">
+
+  <div class="sb-section">Board Setup</div>
+  <button class="sb-btn" onclick="setMode('columns',this)" data-tip="Columns">
+    <span class="sb-icon">🗂️</span> Manage Columns
+  </button>
+  <button class="sb-btn" onclick="setMode('history',this)" data-tip="History">
+    <span class="sb-icon">🕐</span> Intake History
+    <span class="sb-badge" id="historyCount">0</span>
+  </button>
+
+  <hr class="sb-divider">
+
+  <div class="sb-section">Export</div>
+  <button class="sb-btn" onclick="exportJSON()" data-tip="JSON">
+    <span class="sb-icon">📦</span> Export JSON
+  </button>
+  <button class="sb-btn" onclick="exportLocalStorage()" data-tip="LocalStorage">
+    <span class="sb-icon">💾</span> Push to RIO Board
+  </button>
+</aside>
+
+<!-- MAIN -->
+<div id="appMain">
+  <!-- TOPBAR -->
+  <div id="topbar">
+    <div class="tb-title" id="topTitle">Email Parser</div>
+    <div class="tb-right">
+      <span class="tb-badge" id="cardCountBadge">0 cards staged</span>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div id="content">
+
+    <!-- EMAIL MODE -->
+    <div id="mode-email" class="page active">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-icon">✉️</span>
+          <span class="panel-title">Paste Email Content</span>
+          <span class="panel-sub">Paste the full email thread — Claude will extract action items</span>
+        </div>
+        <div class="panel-body">
+          <div class="context-grid">
+            <div class="ctx-field">
+              <label>Default Assignee</label>
+              <input id="email-assignee" type="text" placeholder="e.g. Rio Decz" list="globalAssigneeList">
+            </div>
+            <div class="ctx-field">
+              <label>Default Column</label>
+              <select id="email-column"></select>
+            </div>
+            <div class="ctx-field">
+              <label>Sender / Project Context</label>
+              <input id="email-context" type="text" placeholder="e.g. Flatiron PBI Report project">
+            </div>
+            <div class="ctx-field">
+              <label>Default Priority</label>
+              <select id="email-priority">
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+          </div>
+          <textarea id="emailText" class="email-input-area" placeholder="Paste email content here...
+
+From: manager@company.com
+Subject: Weekly Deliverables
+
+Hi team,
+Please complete the MIS Update by Friday EOD.
+Also prepare the SPI Report for Monday's meeting.
+Ricky — please coordinate with the TL Feedback process..."></textarea>
+          <br>
+          <button class="extract-btn" id="emailExtractBtn" onclick="runExtract('email')">
+            <span>✨ Extract Cards with AI</span>
+          </button>
+          <div id="emailStatus" class="ai-status" style="display:none"></div>
+        </div>
+      </div>
+      <div id="emailResults"></div>
+    </div>
+
+    <!-- SCREENSHOT MODE -->
+    <div id="mode-screenshot" class="page">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-icon">🖼️</span>
+          <span class="panel-title">Upload Screenshot or Image</span>
+          <span class="panel-sub">Screenshots of tasks, tickets, chats, reports, or any document</span>
+        </div>
+        <div class="panel-body">
+          <div class="context-grid">
+            <div class="ctx-field">
+              <label>Default Assignee</label>
+              <input id="img-assignee" type="text" placeholder="e.g. Rio Decz" list="globalAssigneeList">
+            </div>
+            <div class="ctx-field">
+              <label>Default Column</label>
+              <select id="img-column"></select>
+            </div>
+            <div class="ctx-field">
+              <label>Image Context</label>
+              <input id="img-context" type="text" placeholder="e.g. Jira board screenshot, Slack message">
+            </div>
+            <div class="ctx-field">
+              <label>Default Priority</label>
+              <select id="img-priority">
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+          </div>
+          <div class="drop-zone" id="dropZone" ondragover="dzOver(event)" ondragleave="dzLeave()" ondrop="dzDrop(event)">
+            <input type="file" id="imgFileInput" accept="image/*" multiple onchange="handleFiles(this.files)">
+            <div class="drop-icon">📎</div>
+            <div class="drop-title">Drop images here or click to browse</div>
+            <div class="drop-sub">Supports PNG, JPG, WEBP — screenshots, photos, diagrams</div>
+          </div>
+          <div class="image-preview-grid" id="imgPreviews"></div>
+          <br>
+          <button class="extract-btn" id="imgExtractBtn" onclick="runExtract('screenshot')" style="margin-top:8px">
+            <span>✨ Analyse Images with AI</span>
+          </button>
+          <div id="imgStatus" class="ai-status" style="display:none"></div>
+        </div>
+      </div>
+      <div id="imgResults"></div>
+    </div>
+
+    <!-- PROMPT MODE -->
+    <div id="mode-prompt" class="page">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-icon">💬</span>
+          <span class="panel-title">Describe Your Tasks</span>
+          <span class="panel-sub">Tell Claude what needs doing — in plain language</span>
+        </div>
+        <div class="panel-body">
+          <div class="context-grid">
+            <div class="ctx-field">
+              <label>Default Assignee</label>
+              <input id="prompt-assignee" type="text" placeholder="e.g. Rio Decz" list="globalAssigneeList">
+            </div>
+            <div class="ctx-field">
+              <label>Default Column</label>
+              <select id="prompt-column"></select>
+            </div>
+            <div class="ctx-field">
+              <label>Default Priority</label>
+              <select id="prompt-priority">
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="critical">Critical</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div class="ctx-field">
+              <label>Max Cards to Generate</label>
+              <select id="prompt-maxcards">
+                <option value="5">Up to 5</option>
+                <option value="10" selected>Up to 10</option>
+                <option value="20">Up to 20</option>
+                <option value="50">Up to 50</option>
+              </select>
+            </div>
+          </div>
+          <textarea id="promptText" class="prompt-input" placeholder="Describe your tasks, deliverables, or project scope...
+
+Examples:
+• 'Create recurring weekly cards for MIS Update, CPL Attrition Report, and OT Tracker — all due Fridays'
+• 'I need to set up the Flatiron PBI Report project with milestones for data collection, analysis, and presentation'
+• 'Add a blocked card for Org Chart Automation — waiting on headcount data from HR'
+• 'Sprint planning: 8 tasks for Q3 Compliance Dashboard build-out, medium priority, assigned to Rio'"></textarea>
+          <br>
+          <button class="extract-btn" id="promptExtractBtn" onclick="runExtract('prompt')">
+            <span>✨ Generate Cards with AI</span>
+          </button>
+          <div id="promptStatus" class="ai-status" style="display:none"></div>
+        </div>
+      </div>
+      <div id="promptResults"></div>
+    </div>
+
+    <!-- COLUMNS MODE -->
+    <div id="mode-columns" class="page">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-icon">🗂️</span>
+          <span class="panel-title">Board Column Configuration</span>
+          <span class="panel-sub">These columns will appear in generated cards' "Status" field</span>
+        </div>
+        <div class="panel-body">
+          <div class="col-manager" id="colManager"></div>
+          <br>
+          <div class="col-add-row">
+            <input id="newColName" type="text" placeholder="New column name (e.g. Review, Blocked…)" onkeydown="if(event.key==='Enter')addColumn()">
+            <button onclick="addColumn()">+ Add</button>
+          </div>
+          <br>
+          <button class="extract-btn" style="background:var(--secondary)" onclick="resetColumns()">↩ Reset to RIO Defaults</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY MODE -->
+    <div id="mode-history" class="page">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-icon">🕐</span>
+          <span class="panel-title">Intake History</span>
+          <span class="panel-sub">Previously generated card batches — click to restore</span>
+        </div>
+        <div class="panel-body">
+          <div class="history-list" id="historyList">
+            <div class="empty-state">
+              <div class="empty-icon">📋</div>
+              <div class="empty-title">No history yet</div>
+              <div class="empty-sub">Run an intake and your results will appear here</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /appMain -->
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Global datalist -->
+<datalist id="globalAssigneeList"></datalist>
+
+<script>
+// ── STATE ──────────────────────────────────────────────────────────────────────
+const STORAGE_KEY = 'rio_intake_v1';
+
+const DEFAULT_COLUMNS = [
+  { id:'backlog',    title:'Backlog',     color:'#94A3B8' },
+  { id:'todo',       title:'To Do',       color:'#3B82F6' },
+  { id:'inprogress', title:'In Progress', color:'#F59E0B' },
+  { id:'review',     title:'Review',      color:'#8B5CF6' },
+  { id:'done',       title:'Done',        color:'#22C55E' },
+];
+
+const PRIORITY_COLORS = {
+  critical: '#8B5CF6', high: '#EF4444', medium: '#F59E0B', low: '#3B82F6'
+};
+
+const CARD_LABEL_COLORS = {
+  critical: '#8B5CF6', high: '#EF4444', medium: '#F59E0B', low: '#3B82F6'
+};
+
+let state = loadState();
+let stagedCards = [];     // cards extracted in current session
+let uploadedImages = [];  // {base64, mime, name}
+let currentMode = 'email';
+
+// ── PERSISTENCE ───────────────────────────────────────────────────────────────
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  return { columns: DEFAULT_COLUMNS, history: [], allAssignees: [] };
+}
+
+function saveState() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  $id('historyCount').textContent = state.history.length;
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+function $id(id) { return document.getElementById(id); }
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function showToast(msg, type='', duration=3000) {
+  const t = $id('toast');
+  t.textContent = msg; t.className = 'show ' + type;
+  setTimeout(() => t.className = '', duration);
+}
+
+function nameToColor(name) {
+  const colors = ['#10805A','#3B82F6','#8B5CF6','#EF4444','#F59E0B','#06B6D4','#EC4899','#14B8A6'];
+  let h = 0; for (let c of (name||'')) h = (h*31 + c.charCodeAt(0)) & 0xFFFF;
+  return colors[h % colors.length];
+}
+
+function nameToInitials(name) {
+  return (name||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+}
+
+function setStatus(elId, type, msg) {
+  const el = $id(elId);
+  if (!el) return;
+  if (!msg) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.className = 'ai-status ' + type;
+  el.innerHTML = `<div class="ai-status-dot"></div><span>${msg}</span>`;
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+const MODE_TITLES = {
+  email: 'Email Parser', screenshot: 'Screenshot / Image',
+  prompt: 'Manual Prompt', columns: 'Manage Columns', history: 'Intake History'
+};
+
+function setMode(mode, btn) {
+  currentMode = mode;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('active'));
+  const page = $id('mode-' + mode);
+  if (page) page.classList.add('active');
+  if (btn) btn.classList.add('active');
+  $id('topTitle').textContent = MODE_TITLES[mode] || mode;
+}
+
+// ── COLUMN MANAGEMENT ─────────────────────────────────────────────────────────
+function renderColSelects() {
+  const selIds = ['email-column','img-column','prompt-column'];
+  selIds.forEach(id => {
+    const sel = $id(id); if (!sel) return;
+    sel.innerHTML = state.columns.map(c =>
+      `<option value="${c.id}">${c.title}</option>`
+    ).join('');
+  });
+}
+
+function renderColManager() {
+  const el = $id('colManager'); if (!el) return;
+  el.innerHTML = '';
+  state.columns.forEach((col, i) => {
+    const row = document.createElement('div');
+    row.className = 'col-manager-row';
+    row.innerHTML = `
+      <div class="col-manager-dot" style="background:${col.color}"></div>
+      <div class="col-manager-name">${col.title}</div>
+      <button class="col-manager-remove" onclick="removeColumn(${i})" title="Remove">✕</button>`;
+    el.appendChild(row);
+  });
+}
+
+function addColumn() {
+  const inp = $id('newColName');
+  const name = (inp.value||'').trim();
+  if (!name) return;
+  const colors = ['#94A3B8','#3B82F6','#F59E0B','#8B5CF6','#22C55E','#EF4444','#06B6D4','#EC4899'];
+  const color = colors[state.columns.length % colors.length];
+  state.columns.push({ id: name.toLowerCase().replace(/\s+/g,'_') + '_' + genId().slice(0,4), title: name, color });
+  inp.value = '';
+  saveState(); renderColManager(); renderColSelects();
+  showToast('Column added', 'success');
+}
+
+function removeColumn(i) {
+  if (state.columns.length <= 1) { showToast('Need at least one column', 'error'); return; }
+  state.columns.splice(i, 1);
+  saveState(); renderColManager(); renderColSelects();
+}
+
+function resetColumns() {
+  if (!confirm('Reset to RIO One defaults?')) return;
+  state.columns = [...DEFAULT_COLUMNS];
+  saveState(); renderColManager(); renderColSelects();
+  showToast('Columns reset', 'info');
+}
+
+// ── IMAGE HANDLING ─────────────────────────────────────────────────────────────
+function dzOver(e) { e.preventDefault(); $id('dropZone').classList.add('over'); }
+function dzLeave() { $id('dropZone').classList.remove('over'); }
+function dzDrop(e) {
+  e.preventDefault(); dzLeave();
+  handleFiles(e.dataTransfer.files);
+}
+
+function handleFiles(files) {
+  [...files].forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result.split(',')[1];
+      uploadedImages.push({ base64, mime: file.type, name: file.name });
+      renderImagePreviews();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderImagePreviews() {
+  const grid = $id('imgPreviews');
+  grid.innerHTML = uploadedImages.map((img, i) => `
+    <div class="image-thumb">
+      <img src="data:${img.mime};base64,${img.base64}" alt="${img.name}">
+      <button class="image-thumb-remove" onclick="removeImage(${i})">✕</button>
+    </div>`).join('');
+}
+
+function removeImage(i) {
+  uploadedImages.splice(i, 1);
+  renderImagePreviews();
+}
+
+// ── CARD RENDERING ─────────────────────────────────────────────────────────────
+function renderResults(cards, containerId) {
+  const container = $id(containerId);
+  if (!container) return;
+
+  if (!cards.length) {
+    container.innerHTML = `<div class="panel"><div class="panel-body">
+      <div class="empty-state"><div class="empty-icon">🔍</div>
+      <div class="empty-title">No cards extracted</div>
+      <div class="empty-sub">Try adding more context or a clearer description</div></div>
+    </div></div>`;
+    return;
+  }
+
+  // Filter chips
+  const allCols = [...new Set(cards.map(c => c.status))];
+  const colChips = allCols.map(s => {
+    const col = state.columns.find(c => c.id === s) || { title: s, color: '#94A3B8' };
+    return `<button class="col-chip active" data-col="${s}" onclick="filterCol(this,'${containerId}')">
+      <div class="col-chip-dot" style="background:${col.color}"></div>${col.title}
+    </button>`;
+  }).join('');
+
+  const html = `
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-icon">✅</span>
+        <span class="panel-title">${cards.length} cards extracted</span>
+        <span class="panel-sub">Review, edit, then export</span>
+      </div>
+      <div class="panel-body">
+        <div class="results-header">
+          <div class="col-chips">${colChips}</div>
+          <div class="results-actions">
+            <button class="results-btn" onclick="selectAll('${containerId}')">☑ Select All</button>
+            <button class="results-btn" onclick="deselectAll('${containerId}')">☐ Deselect</button>
+          </div>
+        </div>
+        <div class="cards-grid" id="grid-${containerId}">
+          ${cards.map(card => renderCardPreview(card)).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="export-bar">
+      <div class="export-info">
+        <div class="export-title">Ready to export</div>
+        <div class="export-sub">Selected cards will be exported or pushed to your RIO board</div>
+      </div>
+      <button class="results-btn" onclick="exportJSON()">📦 Export JSON</button>
+      <button class="results-btn primary" onclick="pushToBoard('${containerId}')">🚀 Push to RIO Board</button>
+    </div>`;
+
+  container.innerHTML = html;
+}
+
+function renderCardPreview(card) {
+  const col = state.columns.find(c => c.id === card.status) || { title: card.status, color: '#94A3B8' };
+  const priColor = PRIORITY_COLORS[card.priority] || '#94A3B8';
+  const today = new Date(); today.setHours(0,0,0,0);
+  let dueHtml = '';
+  if (card.dueDate) {
+    const due = new Date(card.dueDate + 'T00:00:00');
+    const diff = Math.round((due - today) / 86400000);
+    const cls = diff < 0 ? 'overdue' : diff <= 3 ? 'soon' : '';
+    dueHtml = `<span class="cp-due ${cls}">📅 ${card.dueDate}</span>`;
+  }
+  const catClass = card.category ? 'cat-' + card.category : '';
+  const catLabel = card.category === 'project' ? '📋 Project' : card.category === 'deliverable' ? '✅ Deliverable' : card.category === 'adhoc' ? '⚡ Adhoc' : '';
+
+  return `<div class="card-preview selected" id="crd-${card.id}">
+    <div class="card-label-bar" style="background:${CARD_LABEL_COLORS[card.priority]||'#94A3B8'}"></div>
+    <div class="card-preview-body">
+      <div class="card-check checked" onclick="toggleCard('${card.id}')" title="Include in export">✓</div>
+      <div class="cp-title">${escHtml(card.title)}</div>
+      ${card.notes ? `<div class="cp-notes">${escHtml(card.notes)}</div>` : ''}
+      <div class="cp-meta">
+        <span class="cp-badge priority-${card.priority}">${(card.priority||'medium').toUpperCase()}</span>
+        <span class="cp-badge col">📍 ${escHtml(col.title)}</span>
+        ${catLabel ? `<span class="cp-badge ${catClass}">${catLabel}</span>` : ''}
+        ${(card.tags||[]).slice(0,2).map(t => `<span class="cp-badge tag">${escHtml(t)}</span>`).join('')}
+      </div>
+      <div class="cp-footer">
+        ${card.assignee ? `<div class="cp-assignee" style="background:${nameToColor(card.assignee)}" title="${escHtml(card.assignee)}">${nameToInitials(card.assignee)}</div>` : ''}
+        ${dueHtml}
+        <button class="cp-edit-btn" onclick="toggleEdit('${card.id}')">✎ Edit</button>
+      </div>
+    </div>
+    <div class="card-edit-panel" id="edit-${card.id}">
+      <div class="edit-row">
+        <div class="edit-field" style="grid-column:1/-1">
+          <label>Title</label>
+          <input type="text" id="ef-title-${card.id}" value="${escHtml(card.title)}">
+        </div>
+      </div>
+      <div class="edit-row">
+        <div class="edit-field">
+          <label>Status / Column</label>
+          <select id="ef-status-${card.id}">
+            ${state.columns.map(c => `<option value="${c.id}" ${c.id===card.status?'selected':''}>${c.title}</option>`).join('')}
+          </select>
+        </div>
+        <div class="edit-field">
+          <label>Priority</label>
+          <select id="ef-priority-${card.id}">
+            ${['critical','high','medium','low'].map(p => `<option value="${p}" ${p===card.priority?'selected':''}>${p.charAt(0).toUpperCase()+p.slice(1)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="edit-row">
+        <div class="edit-field">
+          <label>Assignee</label>
+          <input type="text" id="ef-assignee-${card.id}" value="${escHtml(card.assignee||'')}" list="globalAssigneeList">
+        </div>
+        <div class="edit-field">
+          <label>Due Date</label>
+          <input type="date" id="ef-due-${card.id}" value="${card.dueDate||''}">
+        </div>
+      </div>
+      <div class="edit-row">
+        <div class="edit-field">
+          <label>Category</label>
+          <select id="ef-cat-${card.id}">
+            <option value="" ${!card.category?'selected':''}>— None —</option>
+            <option value="project" ${card.category==='project'?'selected':''}>📋 Project</option>
+            <option value="deliverable" ${card.category==='deliverable'?'selected':''}>✅ Deliverable</option>
+            <option value="adhoc" ${card.category==='adhoc'?'selected':''}>⚡ Adhoc</option>
+          </select>
+        </div>
+        <div class="edit-field">
+          <label>Tags (comma-separated)</label>
+          <input type="text" id="ef-tags-${card.id}" value="${escHtml((card.tags||[]).join(', '))}">
+        </div>
+      </div>
+      <div class="edit-row">
+        <div class="edit-field" style="grid-column:1/-1">
+          <label>Notes</label>
+          <textarea id="ef-notes-${card.id}">${escHtml(card.notes||'')}</textarea>
+        </div>
+      </div>
+      <button class="edit-save-btn" onclick="saveEdit('${card.id}')">✓ Save Changes</button>
+    </div>
+  </div>`;
+}
+
+function toggleCard(id) {
+  const el = $id('crd-' + id);
+  const chk = el?.querySelector('.card-check');
+  if (!el || !chk) return;
+  if (el.classList.contains('selected')) {
+    el.classList.remove('selected'); el.classList.add('rejected');
+    chk.classList.remove('checked'); chk.textContent = '';
+  } else {
+    el.classList.add('selected'); el.classList.remove('rejected');
+    chk.classList.add('checked'); chk.textContent = '✓';
+  }
+  updateCardCountBadge();
+}
+
+function toggleEdit(id) {
+  const panel = $id('edit-' + id);
+  if (!panel) return;
+  panel.classList.toggle('open');
+}
+
+function saveEdit(id) {
+  const card = stagedCards.find(c => c.id === id);
+  if (!card) return;
+  card.title    = $id('ef-title-'+id)?.value.trim() || card.title;
+  card.status   = $id('ef-status-'+id)?.value || card.status;
+  card.priority = $id('ef-priority-'+id)?.value || card.priority;
+  card.assignee = $id('ef-assignee-'+id)?.value.trim() || '';
+  card.dueDate  = $id('ef-due-'+id)?.value || '';
+  card.category = $id('ef-cat-'+id)?.value || '';
+  card.notes    = $id('ef-notes-'+id)?.value.trim() || '';
+  card.tags     = ($id('ef-tags-'+id)?.value||'').split(',').map(t=>t.trim()).filter(Boolean);
+  card.label    = CARD_LABEL_COLORS[card.priority] || '#94A3B8';
+
+  // Re-render just this card
+  const crdEl = $id('crd-' + id);
+  if (crdEl) {
+    const isSelected = crdEl.classList.contains('selected');
+    crdEl.outerHTML = renderCardPreview(card);
+    const newEl = $id('crd-' + id);
+    if (newEl && !isSelected) { newEl.classList.remove('selected'); newEl.classList.add('rejected'); }
+  }
+  showToast('Card updated', 'success');
+}
+
+function filterCol(btn, containerId) {
+  btn.classList.toggle('active');
+  const activeIds = [...document.querySelectorAll('.col-chip.active')].map(b => b.dataset.col);
+  document.querySelectorAll(`#grid-${containerId} .card-preview`).forEach(el => {
+    const cardId = el.id.replace('crd-','');
+    const card = stagedCards.find(c => c.id === cardId);
+    el.style.display = card && activeIds.includes(card.status) ? '' : 'none';
+  });
+}
+
+function selectAll(containerId) {
+  document.querySelectorAll(`#grid-${containerId} .card-preview`).forEach(el => {
+    el.classList.add('selected'); el.classList.remove('rejected');
+    const chk = el.querySelector('.card-check');
+    if (chk) { chk.classList.add('checked'); chk.textContent = '✓'; }
+  });
+  updateCardCountBadge();
+}
+
+function deselectAll(containerId) {
+  document.querySelectorAll(`#grid-${containerId} .card-preview`).forEach(el => {
+    el.classList.remove('selected'); el.classList.add('rejected');
+    const chk = el.querySelector('.card-check');
+    if (chk) { chk.classList.remove('checked'); chk.textContent = ''; }
+  });
+  updateCardCountBadge();
+}
+
+function updateCardCountBadge() {
+  const selected = document.querySelectorAll('.card-preview.selected').length;
+  $id('cardCountBadge').textContent = `${selected} card${selected!==1?'s':''} staged`;
+}
+
+function escHtml(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── AI EXTRACTION ─────────────────────────────────────────────────────────────
+async function runExtract(mode) {
+  const btnId = { email:'emailExtractBtn', screenshot:'imgExtractBtn', prompt:'promptExtractBtn' }[mode];
+  const statusId = { email:'emailStatus', screenshot:'imgStatus', prompt:'promptStatus' }[mode];
+  const resultsId = { email:'emailResults', screenshot:'imgResults', prompt:'promptResults' }[mode];
+
+  const btn = $id(btnId);
+
+  // Validate inputs
+  if (mode === 'email' && !$id('emailText').value.trim()) {
+    showToast('Paste some email content first', 'error'); return;
+  }
+  if (mode === 'screenshot' && !uploadedImages.length) {
+    showToast('Upload at least one image first', 'error'); return;
+  }
+  if (mode === 'prompt' && !$id('promptText').value.trim()) {
+    showToast('Enter a description first', 'error'); return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div><span>Analysing…</span>`;
+  setStatus(statusId, 'processing', 'Claude is reading your input and extracting tasks…');
+
+  try {
+    const cards = await callClaude(mode);
+    stagedCards = [...stagedCards, ...cards];
+
+    // Track assignees
+    cards.forEach(c => {
+      if (c.assignee && !state.allAssignees.includes(c.assignee)) {
+        state.allAssignees.push(c.assignee);
+      }
+    });
+    renderAssigneeList();
+
+    // Save to history
+    const label = mode === 'email' ? ($id('email-context').value || 'Email intake') :
+                  mode === 'screenshot' ? 'Screenshot intake' : $id('promptText').value.slice(0,60);
+    state.history.unshift({ id: genId(), mode, label, cards, ts: new Date().toISOString() });
+    if (state.history.length > 30) state.history.pop();
+    saveState();
+    renderHistory();
+
+    setStatus(statusId, 'success', `✓ ${cards.length} cards extracted successfully`);
+    renderResults(cards, resultsId);
+    updateCardCountBadge();
+    showToast(`✓ ${cards.length} cards generated`, 'success');
+
+  } catch(err) {
+    setStatus(statusId, 'error', '⚠ ' + (err.message || 'Extraction failed — please try again'));
+    showToast('Extraction failed: ' + err.message, 'error');
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = `<span>✨ ${mode==='prompt'?'Generate':'Extract'} Cards with AI</span>`;
+}
+
+async function callClaude(mode) {
+  const colDefs = state.columns.map(c => `"${c.id}" (${c.title})`).join(', ');
+  const defaultCol = {
+    email: $id('email-column')?.value,
+    screenshot: $id('img-column')?.value,
+    prompt: $id('prompt-column')?.value
+  }[mode] || state.columns[0]?.id || 'todo';
+  const defaultPri = {
+    email: $id('email-priority')?.value,
+    screenshot: $id('img-priority')?.value,
+    prompt: $id('prompt-priority')?.value
+  }[mode] || 'medium';
+  const defaultAssignee = {
+    email: $id('email-assignee')?.value,
+    screenshot: $id('img-assignee')?.value,
+    prompt: $id('prompt-assignee')?.value
+  }[mode] || '';
+  const maxCards = $id('prompt-maxcards')?.value || 10;
+
+  const systemPrompt = `You are a PMO assistant that extracts Kanban tasks from any input.
+
+Available columns: ${colDefs}
+Default column when uncertain: "${defaultCol}"
+Default priority when uncertain: "${defaultPri}"
+Default assignee when not specified: "${defaultAssignee || 'unassigned'}"
+
+Output ONLY a valid JSON array of card objects. No markdown, no explanation, no preamble.
+
+Each card object MUST follow this exact schema:
+{
+  "id": "<unique 8-char alphanumeric string>",
+  "title": "<concise action-oriented task title>",
+  "notes": "<expanded description, context, or details if available, else empty string>",
+  "status": "<one of the column IDs: ${state.columns.map(c=>c.id).join('|')}>",
+  "priority": "<critical|high|medium|low>",
+  "assignee": "<full name or empty string>",
+  "dueDate": "<YYYY-MM-DD or empty string>",
+  "startDate": "",
+  "endDate": "",
+  "tags": ["<relevant tags as strings>"],
+  "label": "<hex color matching priority: critical=#8B5CF6, high=#EF4444, medium=#F59E0B, low=#3B82F6>",
+  "category": "<project|deliverable|adhoc or empty string>",
+  "isBlocked": false,
+  "blockedReason": "",
+  "subtasks": [],
+  "link": "",
+  "extraLinks": [],
+  "projectLink": "",
+  "recurParentId": "",
+  "updateLog": ""
+}
+
+Rules:
+- Extract EVERY distinct actionable task mentioned. Do not merge unrelated tasks.
+- Be generous: if something could be a task, include it.
+- Title should be a clear action phrase (verb + object), e.g. "Prepare MIS Update Report"
+- Infer priority from urgency language ("ASAP", "urgent", "by EOD" → high/critical)
+- Infer due dates if mentioned (e.g. "by Friday", "next Monday", "July 25")
+- Today's date is ${new Date().toISOString().slice(0,10)}
+- Assign to the default assignee unless a different person is explicitly mentioned
+- Tags: use relevant keywords from context (report type, program, tool, etc.)
+- Category: "deliverable" for recurring reports, "project" for multi-step initiatives, "adhoc" for one-off tasks
+- Max cards: ${maxCards}
+- Generate IDs as 8 random alphanumeric chars`;
+
+  const messages = [];
+
+  if (mode === 'email') {
+    const ctx = $id('email-context').value;
+    messages.push({
+      role: 'user',
+      content: `Extract all actionable Kanban cards from this email${ctx ? ` (context: ${ctx})` : ''}:\n\n${$id('emailText').value}`
+    });
+  } else if (mode === 'screenshot') {
+    const ctx = $id('img-context').value;
+    const contentParts = [];
+    uploadedImages.forEach(img => {
+      contentParts.push({
+        type: 'image',
+        source: { type: 'base64', media_type: img.mime, data: img.base64 }
+      });
+    });
+    contentParts.push({
+      type: 'text',
+      text: `Extract all actionable Kanban tasks visible in ${uploadedImages.length > 1 ? 'these images' : 'this image'}${ctx ? ` (context: ${ctx})` : ''}.`
+    });
+    messages.push({ role: 'user', content: contentParts });
+  } else {
+    messages.push({
+      role: 'user',
+      content: `Generate Kanban cards from this description. Max ${maxCards} cards:\n\n${$id('promptText').value}`
+    });
+  }
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error?.message || `API error ${response.status}`);
+  }
+
+  const data = await response.json();
+  const raw = data.content?.find(b => b.type === 'text')?.text || '[]';
+
+  // Strip any accidental markdown fences
+  const clean = raw.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+  let cards;
+  try {
+    cards = JSON.parse(clean);
+  } catch(e) {
+    // Try to extract JSON array
+    const match = clean.match(/\[[\s\S]*\]/);
+    if (match) cards = JSON.parse(match[0]);
+    else throw new Error('Could not parse AI response as JSON');
+  }
+
+  if (!Array.isArray(cards)) throw new Error('AI returned unexpected structure');
+
+  // Ensure IDs and schema integrity
+  return cards.map(card => ({
+    id: card.id || genId(),
+    title: card.title || 'Untitled Task',
+    notes: card.notes || '',
+    status: state.columns.find(c => c.id === card.status) ? card.status : defaultCol,
+    priority: ['critical','high','medium','low'].includes(card.priority) ? card.priority : defaultPri,
+    assignee: card.assignee || defaultAssignee || '',
+    dueDate: card.dueDate || '',
+    startDate: card.startDate || '',
+    endDate: card.endDate || '',
+    tags: Array.isArray(card.tags) ? card.tags : [],
+    label: card.label || CARD_LABEL_COLORS[card.priority] || '#F59E0B',
+    category: card.category || '',
+    isBlocked: card.isBlocked || false,
+    blockedReason: card.blockedReason || '',
+    subtasks: Array.isArray(card.subtasks) ? card.subtasks : [],
+    link: card.link || '',
+    extraLinks: Array.isArray(card.extraLinks) ? card.extraLinks : [],
+    projectLink: card.projectLink || '',
+    recurParentId: card.recurParentId || '',
+    updateLog: card.updateLog || '',
+  }));
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+function renderHistory() {
+  const list = $id('historyList');
+  if (!list) return;
+  if (!state.history.length) {
+    list.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div>
+      <div class="empty-title">No history yet</div>
+      <div class="empty-sub">Run an intake and your results will appear here</div></div>`;
+    return;
+  }
+  const icons = { email:'✉️', screenshot:'🖼️', prompt:'💬' };
+  list.innerHTML = state.history.map(h => `
+    <div class="history-item" onclick="restoreHistory('${h.id}')">
+      <div class="history-item-icon">${icons[h.mode]||'📋'}</div>
+      <div>
+        <div class="history-item-title">${escHtml(h.label)}</div>
+        <div class="history-item-sub">${new Date(h.ts).toLocaleString()}</div>
+      </div>
+      <div class="history-item-count">${h.cards.length} cards</div>
+    </div>`).join('');
+}
+
+function restoreHistory(id) {
+  const entry = state.history.find(h => h.id === id);
+  if (!entry) return;
+  stagedCards = [...stagedCards, ...entry.cards];
+  updateCardCountBadge();
+  showToast(`Restored ${entry.cards.length} cards from history`, 'info');
+}
+
+// ── ASSIGNEE DATALIST ─────────────────────────────────────────────────────────
+function renderAssigneeList() {
+  const dl = $id('globalAssigneeList');
+  if (!dl) return;
+  dl.innerHTML = state.allAssignees.map(a => `<option value="${escHtml(a)}">`).join('');
+}
+
+// ── EXPORT ────────────────────────────────────────────────────────────────────
+function getSelectedCards() {
+  const ids = [...document.querySelectorAll('.card-preview.selected')]
+    .map(el => el.id.replace('crd-',''));
+  return stagedCards.filter(c => ids.includes(c.id));
+}
+
+function exportJSON() {
+  const cards = getSelectedCards();
+  if (!cards.length) { showToast('No cards selected', 'error'); return; }
+  const blob = new Blob([JSON.stringify({ columns: state.columns, cards }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `rio_intake_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  showToast(`✓ Exported ${cards.length} cards as JSON`, 'success');
+}
+
+function pushToBoard(containerId) {
+  const cards = getSelectedCards();
+  if (!cards.length) { showToast('No cards selected', 'error'); return; }
+
+  // RIO One uses localStorage key: riodecz_v1_<last8ofBoardKey>
+  // Board key pattern: rio_board_<user_id>
+  // We push to a known local key — user can set it
+  const lsKey = prompt('Enter your RIO board localStorage key (e.g. riodecz_v1_XXXXXXXX):', 'riodecz_v1_');
+  if (!lsKey) return;
+
+  try {
+    const existing = localStorage.getItem(lsKey);
+    let boardState = existing ? JSON.parse(existing) : { columns: state.columns, cards: [] };
+
+    // Merge columns (add new ones that don't exist)
+    state.columns.forEach(col => {
+      if (!boardState.columns.find(c => c.id === col.id)) {
+        boardState.columns.push(col);
+      }
+    });
+
+    // Add cards (avoid duplicates by title+status)
+    const existingTitles = new Set(boardState.cards.map(c => c.title + c.status));
+    const newCards = cards.filter(c => !existingTitles.has(c.title + c.status));
+    boardState.cards = [...boardState.cards, ...newCards];
+    boardState.ts = Date.now();
+
+    localStorage.setItem(lsKey, JSON.stringify(boardState));
+    showToast(`✓ Pushed ${newCards.length} cards to RIO board — refresh the board to see them`, 'success', 5000);
+  } catch(err) {
+    showToast('Push failed: ' + err.message, 'error');
+  }
+}
+
+function exportLocalStorage() {
+  // Quick export all staged selected cards
+  const cards = getSelectedCards();
+  if (!cards.length) { showToast('Select cards first', 'error'); return; }
+  pushToBoard('');
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+function init() {
+  renderColSelects();
+  renderColManager();
+  renderHistory();
+  renderAssigneeList();
+  $id('historyCount').textContent = state.history.length;
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payslip Extractor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f1a14;--surface:#162110;--panel:#1e2d18;--raised:#243318;
+  --border:#2a3d22;--border2:#344d28;
+  --accent:#4ade80;--accent2:#22c55e;--accent-dim:#1a3d22;
+  --muted:#6b7c62;--text:#e2ead8;--text2:#a8b89a;
+  --danger:#f87171;--danger-dim:#3d1a1a;
+  --gold:#fbbf24;--gold-dim:#3d2d0a;
+  --mono:'DM Mono',monospace;--sans:'Inter',sans-serif;
+  --r:8px;--r2:12px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5}
+
+/* ── Layout ── */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:260px;min-width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+
+/* ── Sidebar ── */
+.sb-logo{padding:20px 18px 16px;border-bottom:1px solid var(--border)}
+.sb-logo h1{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--accent);letter-spacing:.04em}
+.sb-logo p{font-size:11px;color:var(--muted);margin-top:2px}
+.sb-section{padding:14px 18px;border-bottom:1px solid var(--border)}
+.sb-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.sb-input{width:100%;background:var(--panel);border:1px solid var(--border2);border-radius:var(--r);padding:7px 10px;font-family:var(--mono);font-size:11px;color:var(--text);outline:none;transition:border-color .15s}
+.sb-input:focus{border-color:var(--accent)}
+.sb-input::placeholder{color:var(--muted)}
+.sb-status{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;color:var(--muted)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0;transition:background .3s}
+.dot.ok{background:var(--accent)}
+.dot.err{background:var(--danger)}
+.dot.loading{background:var(--gold);animation:pulse 1s infinite}
+.sb-history{flex:1;overflow-y:auto;padding:14px 18px}
+.hist-item{padding:10px 12px;border-radius:var(--r);cursor:pointer;border:1px solid transparent;margin-bottom:6px;transition:all .15s}
+.hist-item:hover{background:var(--panel);border-color:var(--border)}
+.hist-item.active{background:var(--accent-dim);border-color:var(--accent)}
+.hist-date{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:500}
+.hist-net{font-family:var(--mono);font-size:13px;color:var(--gold);font-weight:500;margin-top:2px}
+.hist-gross{font-size:11px;color:var(--muted);margin-top:1px}
+.hist-empty{font-size:12px;color:var(--muted);text-align:center;padding:24px 0;line-height:1.7}
+
+/* ── Main header ── */
+.main-header{padding:20px 28px 0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.main-header h2{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.btn{padding:7px 14px;border-radius:var(--r);border:1px solid var(--border2);background:var(--panel);color:var(--text2);font-size:12px;cursor:pointer;font-family:var(--sans);transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--raised);border-color:var(--border2);color:var(--text)}
+.btn.primary{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+.btn.primary:hover{background:var(--accent);color:#0f1a14}
+.btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── Drop zone ── */
+.drop-wrap{padding:24px 28px;flex-shrink:0}
+.drop-zone{border:1.5px dashed var(--border2);border-radius:var(--r2);padding:36px 24px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--accent);background:var(--accent-dim)}
+.drop-zone.scanning{border-color:var(--accent);border-style:solid;background:var(--accent-dim)}
+.drop-zone.scanning::after{content:'';position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:scan 1.4s ease-in-out infinite;top:0}
+@keyframes scan{0%{top:0;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:100%;opacity:0}}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+.drop-icon{margin:0 auto 12px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:var(--panel);border-radius:50%;border:1px solid var(--border2)}
+.drop-icon svg{width:18px;height:18px;stroke:var(--accent2);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.drop-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px}
+.drop-sub{font-size:12px;color:var(--muted)}
+.scan-msg{font-family:var(--mono);font-size:12px;color:var(--accent);display:none}
+.scanning .scan-msg{display:block}
+.scanning .drop-title,.scanning .drop-sub,.scanning .drop-icon{display:none}
+input[type=file]{display:none}
+
+/* ── Results area ── */
+.results{padding:0 28px 28px;flex:1}
+
+/* ── Slip card ── */
+.slip-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:16px;overflow:hidden}
+.slip-head{padding:16px 20px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:1px solid var(--border);gap:12px;flex-wrap:wrap}
+.slip-name{font-size:15px;font-weight:600;color:var(--text)}
+.slip-meta{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
+.slip-badge{font-family:var(--mono);font-size:11px;background:var(--accent-dim);color:var(--accent);border:1px solid var(--border2);border-radius:20px;padding:3px 10px;white-space:nowrap}
+
+/* summary metrics */
+.slip-metrics{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--border)}
+.metric{padding:14px 20px;border-right:1px solid var(--border)}
+.metric:last-child{border-right:none}
+.metric-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);font-weight:600;margin-bottom:4px}
+.metric-val{font-family:var(--mono);font-size:18px;font-weight:500}
+.metric-val.green{color:var(--accent)}
+.metric-val.red{color:var(--danger)}
+.metric-val.gold{color:var(--gold)}
+
+/* panels */
+.slip-panels{display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border)}
+.panel{padding:14px 18px;border-right:1px solid var(--border)}
+.panel:last-child{border-right:none}
+.panel-title{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.line-item{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:3px 0;border-bottom:1px solid var(--border);font-size:12px}
+.line-item:last-child{border-bottom:none}
+.line-item .li-label{color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.line-item .li-val{font-family:var(--mono);font-size:12px;color:var(--text);white-space:nowrap;flex-shrink:0}
+.line-item .li-val.dim{color:var(--muted)}
+.line-item.total{margin-top:6px;padding-top:6px;border-top:1px solid var(--border2);border-bottom:none}
+.line-item.total .li-label{font-weight:600;color:var(--text)}
+.line-item.total .li-val{color:var(--accent);font-weight:500}
+.li-hrs{font-size:10px;color:var(--muted);margin-right:4px;font-family:var(--mono)}
+
+/* ── Comparison ── */
+.compare-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);margin-bottom:16px;overflow:hidden}
+.compare-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.compare-head h3{font-family:var(--mono);font-size:12px;color:var(--accent);letter-spacing:.05em;text-transform:uppercase}
+.compare-table{width:100%;border-collapse:collapse}
+.compare-table th{padding:10px 18px;text-align:right;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.05em;border-bottom:1px solid var(--border);background:var(--panel)}
+.compare-table th:first-child{text-align:left}
+.compare-table td{padding:9px 18px;text-align:right;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);color:var(--text)}
+.compare-table td:first-child{text-align:left;font-family:var(--sans);font-size:12px;color:var(--text2)}
+.compare-table tr:last-child td{border-bottom:none;font-weight:500;background:var(--panel)}
+.diff-pos{color:var(--accent)}
+.diff-neg{color:var(--danger)}
+
+/* ── Toast ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--panel);border:1px solid var(--border2);border-radius:var(--r);padding:10px 16px;font-size:13px;display:flex;align-items:center;gap:8px;z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;max-width:320px}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{border-color:var(--accent);color:var(--accent)}
+.toast.err{border-color:var(--danger);color:var(--danger)}
+
+/* ── Empty state ── */
+.empty-state{padding:60px 28px;text-align:center}
+.empty-state p{font-size:13px;color:var(--muted);line-height:1.8}
+.empty-title{font-family:var(--mono);font-size:16px;color:var(--text2);margin-bottom:8px}
+
+/* ── Mobile ── */
+@media(max-width:700px){
+  .app{flex-direction:column}
+  .sidebar{width:100%;min-width:0;height:auto;border-right:none;border-bottom:1px solid var(--border);flex-direction:row;flex-wrap:wrap}
+  .sb-logo{border-bottom:none;padding:14px 16px;flex:1}
+  .sb-section{padding:10px 14px;border-bottom:none;border-left:1px solid var(--border)}
+  .sb-history{display:none}
+  .main{height:calc(100vh - 60px)}
+  .slip-panels{grid-template-columns:1fr}
+  .panel{border-right:none;border-bottom:1px solid var(--border)}
+  .slip-metrics{grid-template-columns:1fr 1fr 1fr}
+  .metric-val{font-size:14px}
+  .main-header,.drop-wrap,.results{padding-left:16px;padding-right:16px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <h1>⬡ payslip extractor</h1>
+      <p>Sagility PH · powered by Claude</p>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Anthropic API Key</div>
+      <input class="sb-input" type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off">
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Proxy (Cloudflare Worker)</div>
+      <input class="sb-input" type="text" id="proxyUrl" placeholder="https://xxxx.workers.dev" autocomplete="off">
+      <div class="sb-status">
+        <div class="dot" id="pxDot"></div>
+        <span id="pxMsg">not tested</span>
+        <button class="btn" style="margin-left:auto;padding:3px 8px;font-size:10px" onclick="testProxy()">Test</button>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Supabase</div>
+      <div class="sb-status"><div class="dot" id="sbDot"></div><span id="sbMsg">not connected</span></div>
+    </div>
+
+    <div class="sb-history">
+      <div class="sb-label">History</div>
+      <div id="histList"><div class="hist-empty">Enter your API key and drop a payslip to get started.</div></div>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main class="main">
+    <div class="main-header">
+      <h2>Payslip OCR</h2>
+      <div style="display:flex;gap:8px">
+        <button class="btn" id="clearBtn" onclick="clearAll()" style="display:none">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          Clear
+        </button>
+        <button class="btn primary" onclick="document.getElementById('fileInput').click()">
+          <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Upload PDF
+        </button>
+      </div>
+    </div>
+
+    <div class="drop-wrap">
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+        <div class="drop-icon">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        </div>
+        <div class="drop-title">Drop payslip PDF here</div>
+        <div class="drop-sub">or click to browse · PDF only</div>
+        <div class="scan-msg" id="scanMsg">scanning document…</div>
+      </div>
+      <input type="file" id="fileInput" accept=".pdf" multiple>
+    </div>
+
+    <div class="results" id="results">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-title">No payslips loaded</div>
+        <p>Drop a Sagility PDF above.<br>Data is extracted by Claude and saved to Supabase.</p>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────
+const SB_URL = "https://qvqgolyuvyqsbqzlblqf.supabase.co";
+function getProxyUrl() {
+  return (document.getElementById("proxyUrl")?.value || "").trim().replace(/\/+$/, "");
+}
+
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2cWdvbHl1dnlxc2JxemxibHFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNjY3NzYsImV4cCI6MjA5Nzc0Mjc3Nn0.4w83XpsHKUimPho_kYjN_8bGHNEJjqq623MIIHdC0xQ";
+
+const SB_HDR = {
+  "apikey": SB_KEY,
+  "Authorization": `Bearer ${SB_KEY}`,
+  "Content-Type": "application/json",
+  "Prefer": "resolution=merge-duplicates,return=representation"
+};
+
+// ── State ─────────────────────────────────────────────────────────────────
+let slips = [];         // parsed payslips this session
+let history = [];       // loaded from Supabase
+
+// ── Persist API key ───────────────────────────────────────────────────────
+const apiInput = document.getElementById("apiKey");
+apiInput.value = localStorage.getItem("ps_api_key") || "";
+apiInput.addEventListener("input", () => localStorage.setItem("ps_api_key", apiInput.value.trim()));
+
+// ── Supabase helpers ──────────────────────────────────────────────────────
+async function sbSelect(table, qs = "") {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${qs}`, { headers: SB_HDR });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sbUpsert(table, payload) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
+    method: "POST", headers: SB_HDR,
+    body: JSON.stringify(Array.isArray(payload) ? payload : [payload])
+  });
+  if (!r.ok) throw new Error(await r.text());
+  return r.json();
+}
+
+async function sbDelete(table, qs) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${qs}`, {
+    method: "DELETE", headers: SB_HDR
+  });
+  return r.ok;
+}
+
+// ── Supabase status + history load ───────────────────────────────────────
+async function initSupabase() {
+  const dot = document.getElementById("sbDot");
+  const msg = document.getElementById("sbMsg");
+  dot.className = "dot loading"; msg.textContent = "connecting…";
+  try {
+    const rows = await sbSelect(
+      "payslip_records",
+      "select=id,employee_code,employee_name,payout_date,gross_earnings,net_pay&order=payout_date.desc&limit=30"
+    );
+    history = rows;
+    dot.className = "dot ok";
+    msg.textContent = `${rows.length} record${rows.length !== 1 ? "s" : ""} stored`;
+    renderHistory();
+  } catch (e) {
+    dot.className = "dot err";
+    msg.textContent = "connection failed";
+    console.error(e);
+  }
+}
+
+function renderHistory() {
+  const el = document.getElementById("histList");
+  if (!history.length) {
+    el.innerHTML = `<div class="hist-empty">No stored payslips yet.<br>Upload one to get started.</div>`;
+    return;
+  }
+  el.innerHTML = history.map(r => `
+    <div class="hist-item" onclick="loadFromHistory('${r.id}')">
+      <div class="hist-date">${r.payout_date || "—"}</div>
+      <div class="hist-net">${phpFmt(r.net_pay)}</div>
+      <div class="hist-gross">gross ${phpFmt(r.gross_earnings)}</div>
+    </div>`).join("");
+}
+
+// ── Formatting ────────────────────────────────────────────────────────────
+function phpFmt(v) {
+  if (v === null || v === undefined) return "—";
+  return "₱" + Number(v).toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function dimDash(v) {
+  if (v === null || v === undefined) return `<span class="li-val dim">—</span>`;
+  return `<span class="li-val">${phpFmt(v)}</span>`;
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+let toastTimer;
+function toast(msg, type = "ok") {
+  const el = document.getElementById("toast");
+  el.textContent = msg;
+  el.className = `toast show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), 3500);
+}
+
+// ── PDF → base64 ──────────────────────────────────────────────────────────
+function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(",")[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+// ── Claude extraction ─────────────────────────────────────────────────────
+const PROMPT = `You are a payslip OCR parser for Philippine payslips (Sagility format).
+Extract all data and return ONLY valid JSON — no markdown, no explanation, no backticks.
+
+Return exactly this structure:
+{
+  "employee_name": "",
+  "employee_code": "",
+  "company": "",
+  "subprocess": "",
+  "payout_date": "",
+  "earnings": [{"label":"","taxable":null,"non_taxable":null,"days_hrs":null}],
+  "deductions": [{"label":"","amount":null}],
+  "overtime": [{"label":"","hours":null,"amount":null}],
+  "totals": {
+    "earnings_taxable":null,
+    "earnings_non_taxable":null,
+    "deductions_total":null,
+    "overtime_total":null,
+    "gross_earnings":null,
+    "net_pay":null
+  }
+}
+
+Rules:
+- All numeric values as plain floats (no commas). Use null if absent.
+- payout_date format: "Jun 30, 2026"
+- Include ALL line items including those with null amounts (e.g. SSS - Contribution with no amount shown)`;
+
+async function extractWithClaude(file) {
+  const key = apiInput.value.trim();
+  if (!key) throw new Error("No API key — enter your Anthropic key in the sidebar");
+  const b64 = await toBase64(file);
+  const proxyUrl = getProxyUrl();
+  if (!proxyUrl) {
+    throw new Error("Enter your Cloudflare Worker URL in the sidebar (Proxy section)");
+  }
+  let resp;
+  try {
+    resp = await fetch(proxyUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Api-Key": key,          // worker forwards this to Anthropic
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1500,
+      messages: [{
+        role: "user",
+        content: [
+          { type: "document", source: { type: "base64", media_type: "application/pdf", data: b64 } },
+          { type: "text", text: PROMPT }
+        ]
+      }]
+    })
+    });
+  } catch (netErr) {
+    throw new Error("Cannot reach proxy — check the Worker URL is correct and deployed (click Test in sidebar)");
+  }
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `API error ${resp.status}`);
+  }
+  const data = await resp.json();
+  const raw = data.content?.map(c => c.text || "").join("").replace(/```json|```/g,"").trim();
+  try { return JSON.parse(raw); }
+  catch(e) { throw new Error("Claude returned invalid JSON — try again"); }
+}
+
+// ── Upload to Supabase ────────────────────────────────────────────────────
+async function uploadSlip(parsed, filename) {
+  const t = parsed.totals || {};
+  const record = {
+    employee_code:        parsed.employee_code || "UNKNOWN",
+    employee_name:        parsed.employee_name,
+    company:              parsed.company,
+    subprocess:           parsed.subprocess,
+    payout_date:          parsed.payout_date,
+    source_file:          filename,
+    extraction_method:    "claude-sonnet-4-6 (vision)",
+    earnings_taxable:     t.earnings_taxable,
+    earnings_non_taxable: t.earnings_non_taxable,
+    overtime_total:       t.overtime_total,
+    gross_earnings:       t.gross_earnings,
+    deductions_total:     t.deductions_total,
+    net_pay:              t.net_pay,
+    raw_json:             parsed,
+    parsed_at:            new Date().toISOString(),
+  };
+
+  const rows = await sbUpsert("payslip_records", record);
+  if (!rows?.length) throw new Error("Supabase upsert returned no rows");
+  const record_id    = rows[0].id;
+  const employee_code = rows[0].employee_code;
+  const payout_date  = rows[0].payout_date;
+
+  // Delete and re-insert line items
+  await sbDelete("payslip_line_items", `record_id=eq.${record_id}`);
+
+  const items = [];
+  (parsed.earnings || []).forEach((e, i) => items.push({
+    record_id, employee_code, payout_date, section: "earnings",
+    label: e.label, taxable: e.taxable, non_taxable: e.non_taxable,
+    days_hrs: e.days_hrs, hours: null,
+    amount: e.taxable ?? e.non_taxable, sort_order: i
+  }));
+  (parsed.overtime || []).forEach((o, i) => items.push({
+    record_id, employee_code, payout_date, section: "overtime",
+    label: o.label, taxable: null, non_taxable: null, days_hrs: null,
+    hours: o.hours, amount: o.amount, sort_order: i
+  }));
+  (parsed.deductions || []).forEach((d, i) => items.push({
+    record_id, employee_code, payout_date, section: "deductions",
+    label: d.label, taxable: null, non_taxable: null, days_hrs: null,
+    hours: null, amount: d.amount, sort_order: i
+  }));
+
+  if (items.length) await sbUpsert("payslip_line_items", items);
+  return record_id;
+}
+
+// ── Process file ──────────────────────────────────────────────────────────
+async function processFile(file) {
+  const dz = document.getElementById("dropZone");
+  const sm = document.getElementById("scanMsg");
+  dz.classList.add("scanning");
+  sm.textContent = `scanning ${file.name}…`;
+
+  try {
+    const parsed = await extractWithClaude(file);
+    parsed._filename = file.name;
+    slips.push(parsed);
+    renderSlips();
+
+    // Upload
+    try {
+      sm.textContent = "saving to Supabase…";
+      const id = await uploadSlip(parsed, file.name);
+      toast(`✓ Saved — ${parsed.payout_date || file.name}`, "ok");
+      await initSupabase(); // refresh history
+    } catch(e) {
+      toast(`Saved locally · Supabase failed: ${e.message}`, "err");
+    }
+  } catch(e) {
+    toast(e.message, "err");
+  } finally {
+    dz.classList.remove("scanning");
+  }
+}
+
+// ── Load from history ─────────────────────────────────────────────────────
+async function loadFromHistory(id) {
+  try {
+    const rows = await sbSelect(
+      "payslip_records",
+      `id=eq.${id}&select=*`
+    );
+    if (!rows?.length) return;
+    const rec = rows[0];
+    const parsed = rec.raw_json || {};
+    parsed._filename = rec.source_file;
+    parsed.payout_date = rec.payout_date;
+    parsed.employee_name = rec.employee_name;
+    parsed.employee_code = rec.employee_code;
+
+    // Avoid duplicates
+    if (!slips.find(s => s.payout_date === parsed.payout_date)) {
+      slips.push(parsed);
+      renderSlips();
+    }
+    toast(`Loaded ${rec.payout_date}`, "ok");
+  } catch(e) {
+    toast(`Failed to load: ${e.message}`, "err");
+  }
+}
+
+// ── Render ────────────────────────────────────────────────────────────────
+function renderSlips() {
+  const el = document.getElementById("results");
+  const clearBtn = document.getElementById("clearBtn");
+  const emptyState = document.getElementById("emptyState");
+
+  if (!slips.length) {
+    el.innerHTML = `<div class="empty-state" id="emptyState">
+      <div class="empty-title">No payslips loaded</div>
+      <p>Drop a Sagility PDF above.<br>Data is extracted by Claude and saved to Supabase.</p>
+    </div>`;
+    clearBtn.style.display = "none";
+    return;
+  }
+
+  clearBtn.style.display = "flex";
+  let html = slips.map((s, i) => renderSlipCard(s, i)).join("");
+  if (slips.length >= 2) html += renderCompare(slips[0], slips[1]);
+  el.innerHTML = html;
+}
+
+function renderSlipCard(s, idx) {
+  const t = s.totals || {};
+  const earnings  = s.earnings  || [];
+  const deductions= s.deductions|| [];
+  const overtime  = s.overtime  || [];
+
+  const earnRows = earnings.map(e => {
+    const dh = e.days_hrs ? `<span class="li-hrs">[${e.days_hrs > 0 ? "+" : ""}${e.days_hrs}d]</span>` : "";
+    const val = e.taxable !== null ? phpFmt(e.taxable) :
+                e.non_taxable !== null ? phpFmt(e.non_taxable) : "—";
+    const valClass = val === "—" ? "li-val dim" : "li-val";
+    const col = e.non_taxable !== null && e.taxable === null ? "color:var(--muted)" : "";
+    return `<div class="line-item">
+      <span class="li-label">${e.label}</span>
+      ${dh}<span class="${valClass}" style="${col}">${val}</span>
+    </div>`;
+  }).join("") + `<div class="line-item total">
+    <span class="li-label">Taxable</span><span class="li-val">${phpFmt(t.earnings_taxable)}</span>
+  </div>
+  <div class="line-item total" style="margin-top:0">
+    <span class="li-label">Non-taxable</span><span class="li-val">${phpFmt(t.earnings_non_taxable)}</span>
+  </div>`;
+
+  const otRows = overtime.length ? overtime.map(o => `
+    <div class="line-item">
+      <span class="li-label">${o.label}</span>
+      <span class="li-hrs">${o.hours != null ? o.hours + "h" : ""}</span>
+      ${dimDash(o.amount)}
+    </div>`).join("") + `<div class="line-item total">
+      <span class="li-label">OT total</span><span class="li-val">${phpFmt(t.overtime_total)}</span>
+    </div>` : `<div style="font-size:12px;color:var(--muted);padding:8px 0">No overtime</div>`;
+
+  const dedRows = deductions.map(d => `
+    <div class="line-item">
+      <span class="li-label">${d.label}</span>
+      ${dimDash(d.amount)}
+    </div>`).join("") + `<div class="line-item total">
+    <span class="li-label">Total deductions</span><span class="li-val" style="color:var(--danger)">${phpFmt(t.deductions_total)}</span>
+  </div>`;
+
+  return `<div class="slip-card">
+    <div class="slip-head">
+      <div>
+        <div class="slip-name">${s.employee_name || "Unknown"}</div>
+        <div class="slip-meta">${s.employee_code || "—"} · ${s.company || "—"}</div>
+      </div>
+      <span class="slip-badge">${s.payout_date || s._filename}</span>
+    </div>
+    <div class="slip-metrics">
+      <div class="metric"><div class="metric-label">Gross earnings</div><div class="metric-val green">${phpFmt(t.gross_earnings)}</div></div>
+      <div class="metric"><div class="metric-label">Deductions</div><div class="metric-val red">${phpFmt(t.deductions_total)}</div></div>
+      <div class="metric"><div class="metric-label">Net pay</div><div class="metric-val gold">${phpFmt(t.net_pay)}</div></div>
+    </div>
+    <div class="slip-panels">
+      <div class="panel"><div class="panel-title">Earnings</div>${earnRows}</div>
+      <div class="panel"><div class="panel-title">Overtime &amp; Night Diff</div>${otRows}</div>
+      <div class="panel"><div class="panel-title">Deductions</div>${dedRows}</div>
+    </div>
+  </div>`;
+}
+
+function renderCompare(a, b) {
+  const at = a.totals || {}, bt = b.totals || {};
+  const rows = [
+    ["Gross earnings",   "gross_earnings"],
+    ["Deductions",       "deductions_total"],
+    ["Overtime total",   "overtime_total"],
+    ["Net pay",          "net_pay"],
+  ];
+  const trs = rows.map(([lbl, key]) => {
+    const av = at[key], bv = bt[key];
+    const diff = (av != null && bv != null) ? bv - av : null;
+    let diffStr = "—";
+    let diffClass = "";
+    if (diff !== null) {
+      diffClass = diff >= 0 ? "diff-pos" : "diff-neg";
+      diffStr = (diff >= 0 ? "+" : "") + phpFmt(Math.abs(diff));
+    }
+    const isLast = key === "net_pay";
+    return `<tr${isLast ? ' style="font-weight:600"' : ""}>
+      <td>${lbl}</td>
+      <td>${phpFmt(av)}</td>
+      <td>${phpFmt(bv)}</td>
+      <td class="${diffClass}">${diffStr}</td>
+    </tr>`;
+  }).join("");
+
+  return `<div class="compare-card">
+    <div class="compare-head">
+      <h3>Period comparison</h3>
+      <span style="font-size:11px;color:var(--muted);font-family:var(--mono)">${a.payout_date || "A"} vs ${b.payout_date || "B"}</span>
+    </div>
+    <table class="compare-table">
+      <thead><tr>
+        <th>Item</th>
+        <th>${a.payout_date || "Period A"}</th>
+        <th>${b.payout_date || "Period B"}</th>
+        <th>Change</th>
+      </tr></thead>
+      <tbody>${trs}</tbody>
+    </table>
+  </div>`;
+}
+
+function clearAll() {
+  slips = [];
+  renderSlips();
+}
+
+// ── Drag & drop ───────────────────────────────────────────────────────────
+const dz = document.getElementById("dropZone");
+const fi = document.getElementById("fileInput");
+
+dz.addEventListener("dragover",  e => { e.preventDefault(); dz.classList.add("drag"); });
+dz.addEventListener("dragleave", () => dz.classList.remove("drag"));
+dz.addEventListener("drop", e => {
+  e.preventDefault(); dz.classList.remove("drag");
+  [...e.dataTransfer.files].forEach(f => f.type === "application/pdf" && processFile(f));
+});
+fi.addEventListener("change", e => {
+  [...e.target.files].forEach(f => processFile(f));
+  fi.value = "";
+});
+
+// ── Proxy persistence + test ──────────────────────────────────────────────
+const proxyInput = document.getElementById("proxyUrl");
+proxyInput.value = localStorage.getItem("ps_proxy_url") || "https://payslip-proxy.shadowofthepast317.workers.dev";
+proxyInput.addEventListener("input", () => localStorage.setItem("ps_proxy_url", proxyInput.value.trim()));
+
+async function testProxy() {
+  const dot = document.getElementById("pxDot");
+  const msg = document.getElementById("pxMsg");
+  const url = getProxyUrl();
+  if (!url) { dot.className = "dot err"; msg.textContent = "enter URL first"; return; }
+  dot.className = "dot loading"; msg.textContent = "testing…";
+  try {
+    const r = await fetch(url, { method: "GET" });
+    const j = await r.json();
+    if (j.status === "ok") {
+      dot.className = "dot ok"; msg.textContent = "proxy reachable";
+      toast("✓ Proxy is working", "ok");
+    } else {
+      dot.className = "dot err"; msg.textContent = "unexpected response";
+    }
+  } catch (e) {
+    dot.className = "dot err"; msg.textContent = "unreachable";
+    toast("Proxy unreachable — check URL / deployment", "err");
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+initSupabase();
+if (proxyInput.value) testProxy();
+</script>
+</body>
+</html>

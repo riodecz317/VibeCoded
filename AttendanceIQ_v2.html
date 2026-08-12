@@ -1,0 +1,2955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AttendanceIQ — Clinical Group Portal</title>
+<meta name="theme-color" content="#0A1628">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  /* Clinical palette — deep navy/teal */
+  --brand:         #0D7A6B;
+  --brand-h:       #0B6B5D;
+  --brand-light:   #E6F6F4;
+  --brand-glow:    rgba(13,122,107,0.18);
+
+  --bg:            #F0F4F8;
+  --bg2:           #E4EBF2;
+  --surface:       #FFFFFF;
+  --surface2:      #F7FAFC;
+  --border:        #DDE4EE;
+  --divider:       #C8D3E0;
+
+  --heading:       #0B1929;
+  --text:          #1C2D3E;
+  --muted:         #5E7289;
+  --disabled:      #9AABBE;
+
+  --success: #16A085;
+  --warning: #E67E22;
+  --danger:  #E74C3C;
+  --info:    #2980B9;
+
+  --hero-from: #0A1628;
+  --hero-to:   #0D7A6B;
+
+  --shadow:    0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+  --shadow-xl: 0 20px 60px rgba(0,0,0,0.16);
+  --card-sh:   0 2px 8px rgba(0,0,0,0.05);
+
+  --radius:    8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --t-fast: 0.12s ease;
+  --t-base: 0.2s ease;
+  --t-slow: 0.35s cubic-bezier(.4,0,.2,1);
+}
+
+[data-theme="dark"] {
+  --bg:            #0B1320;
+  --bg2:           #111B2B;
+  --surface:       #162030;
+  --surface2:      #1C2840;
+  --border:        #263548;
+  --divider:       #334660;
+  --heading:       #E2EAF4;
+  --text:          #B8C8DA;
+  --muted:         #6A82A0;
+  --disabled:      #3D546E;
+  --brand:         #14C4AB;
+  --brand-h:       #11AE98;
+  --brand-light:   rgba(20,196,171,0.12);
+  --brand-glow:    rgba(20,196,171,0.2);
+  --shadow:    0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+  --card-sh:   0 2px 8px rgba(0,0,0,0.3);
+  --hero-from: #060D18;
+  --hero-to:   #0D5C50;
+}
+
+body {
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:13.5px; background:var(--bg); color:var(--text);
+  min-height:100vh; -webkit-font-smoothing:antialiased;
+  line-height:1.55; transition:background var(--t-slow),color var(--t-slow);
+}
+
+/* ── AUTH ──────────────────────────────────────────────── */
+#authOverlay {
+  position:fixed;inset:0;z-index:1000;
+  background:linear-gradient(135deg, var(--hero-from) 0%, var(--hero-to) 100%);
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+#authOverlay.hidden{display:none}
+.auth-card {
+  background:var(--surface);border-radius:20px;
+  padding:36px 32px 28px;width:100%;max-width:400px;
+  box-shadow:0 24px 80px rgba(0,0,0,0.35);
+}
+.auth-logo {
+  display:flex;align-items:center;gap:14px;margin-bottom:28px;
+}
+.auth-logo-mark {
+  width:48px;height:48px;border-radius:14px;
+  background:linear-gradient(135deg,var(--brand),#0A4A8A);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:900;color:#fff;
+  font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:-1px;
+  box-shadow:0 4px 16px var(--brand-glow);flex-shrink:0;
+}
+.auth-brand-name {
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:18px;
+  font-weight:800;color:var(--heading);line-height:1.1;
+}
+.auth-brand-sub { font-size:11.5px;color:var(--muted);margin-top:2px; }
+.auth-field { margin-bottom:14px; }
+.auth-field label { display:block;font-size:11px;font-weight:700;color:var(--heading);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px; }
+.auth-input {
+  width:100%;padding:10px 13px;border:1.5px solid var(--border);
+  border-radius:var(--radius);background:var(--surface2);color:var(--text);
+  font-size:13.5px;font-family:'Inter',sans-serif;
+  transition:border-color var(--t-fast);outline:none;
+}
+.auth-input:focus{border-color:var(--brand);}
+.auth-btn {
+  width:100%;padding:12px;border:none;border-radius:var(--radius);
+  background:var(--brand);color:#fff;font-size:14px;font-weight:700;
+  font-family:'Inter',sans-serif;cursor:pointer;margin-top:6px;
+  transition:all var(--t-fast);letter-spacing:.01em;
+}
+.auth-btn:hover{background:var(--brand-h);}
+.auth-btn:disabled{opacity:.6;cursor:not-allowed;}
+.auth-msg { font-size:12px;margin-top:10px;text-align:center;min-height:18px;color:var(--muted); }
+.auth-msg.error{color:var(--danger);}
+.auth-msg.ok{color:var(--success);}
+.auth-tabs{display:flex;gap:4px;background:var(--bg2);border-radius:10px;padding:4px;margin-bottom:20px;}
+.auth-tab{flex:1;padding:8px;border:none;border-radius:8px;background:transparent;color:var(--muted);font-size:12.5px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;}
+.auth-tab.active{background:var(--surface);color:var(--heading);box-shadow:var(--shadow);}
+
+/* ── TOPBAR ──────────────────────────────────────────── */
+#topbar {
+  height:54px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;position:sticky;top:0;z-index:200;
+  box-shadow:0 1px 4px rgba(0,0,0,0.05);
+}
+.topbar-brand{display:flex;align-items:center;gap:12px;}
+.topbar-mark {
+  width:32px;height:32px;border-radius:9px;
+  background:linear-gradient(135deg,var(--brand),#0A4A8A);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:900;color:#fff;
+  font-family:'Plus Jakarta Sans',sans-serif;
+}
+.topbar-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:800;color:var(--heading);}
+.topbar-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.tb-avatar{width:32px;height:32px;border-radius:50%;background:var(--brand);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.tb-btn{border:1.5px solid var(--border);background:var(--surface2);border-radius:var(--radius);padding:6px 10px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;transition:all var(--t-fast);}
+.tb-btn:hover{background:var(--bg);color:var(--heading);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--disabled);display:inline-block;margin-right:4px;}
+.sync-dot.ok{background:var(--success);}
+#syncLabel{font-size:11px;color:var(--muted);}
+
+/* ── NAV TABS ────────────────────────────────────────── */
+#navTabs {
+  background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;gap:0;padding:0 24px;overflow-x:auto;
+  scrollbar-width:none;
+}
+#navTabs::-webkit-scrollbar{display:none;}
+.nav-tab {
+  padding:12px 20px;border:none;background:transparent;
+  font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;
+  border-bottom:2px solid transparent;white-space:nowrap;
+  font-family:'Inter',sans-serif;transition:all var(--t-fast);display:flex;align-items:center;gap:7px;
+}
+.nav-tab:hover{color:var(--heading);}
+.nav-tab.active{color:var(--brand);border-bottom-color:var(--brand);}
+.nav-tab svg{flex-shrink:0;}
+
+/* ── MAIN CONTENT ────────────────────────────────────── */
+#appMain{max-width:1080px;margin:0 auto;padding:24px;}
+
+.page{display:none;}
+.page.active{display:block;}
+
+/* ── CLOCK HERO ──────────────────────────────────────── */
+.clock-hero {
+  background:linear-gradient(135deg, var(--hero-from) 0%, var(--hero-to) 100%);
+  border-radius:var(--radius-xl);padding:28px 32px;
+  display:flex;align-items:center;justify-content:space-between;gap:24px;
+  margin-bottom:20px;position:relative;overflow:hidden;
+  box-shadow:0 8px 36px rgba(10,22,40,0.3);
+}
+.clock-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:220px;height:220px;background:rgba(255,255,255,.04);border-radius:50%;}
+.clock-hero::after{content:'';position:absolute;bottom:-40px;left:30%;width:160px;height:160px;background:rgba(13,122,107,.12);border-radius:50%;}
+.clock-left{flex:1;position:relative;z-index:1;}
+.clock-status-label{font-size:10.5px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px;}
+.clock-status-text{font-size:26px;font-weight:800;color:#fff;letter-spacing:-.5px;margin-bottom:4px;font-family:'Plus Jakarta Sans',sans-serif;}
+.clock-sub{font-size:13px;color:rgba(255,255,255,.55);}
+.clock-badges{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.clock-right{display:flex;flex-direction:column;align-items:center;gap:14px;position:relative;z-index:1;}
+.clock-face{font-size:44px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.5px;line-height:1;color:#fff;font-family:'DM Mono',monospace;}
+.clock-date-line{font-size:11.5px;color:rgba(255,255,255,.45);text-align:center;margin-top:2px;}
+
+.pulse-wrap{position:relative;display:grid;place-items:center;}
+.pulse-ring{position:absolute;width:76px;height:76px;border-radius:50%;border:2px solid rgba(20,196,171,0.5);opacity:0;animation:pulseOut 2s ease-out infinite;}
+.pulse-ring:nth-child(2){animation-delay:.6s;}
+.pulse-ring:nth-child(3){animation-delay:1.2s;}
+@keyframes pulseOut{0%{transform:scale(.9);opacity:.6}100%{transform:scale(1.6);opacity:0}}
+.pulse-wrap.paused .pulse-ring{animation-play-state:paused;opacity:0;}
+
+.clock-btn{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;font-size:18px;font-weight:700;display:grid;place-items:center;transition:all .2s;position:relative;z-index:1;}
+.clock-btn:hover{transform:scale(1.07);}
+.clock-btn:active{transform:scale(.96);}
+.clock-btn.btn-in{background:#16A085;color:#fff;box-shadow:0 4px 20px rgba(22,160,133,.4);}
+.clock-btn.btn-out{background:var(--danger);color:#fff;box-shadow:0 4px 20px rgba(231,76,60,.4);}
+.clock-btn-label{font-size:11px;color:rgba(255,255,255,.45);text-align:center;}
+
+/* ── STAT CARDS ──────────────────────────────────────── */
+.att-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+.att-stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--card-sh);}
+.att-stat-label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
+.att-stat-val{font-size:22px;font-weight:800;color:var(--heading);letter-spacing:-.3px;font-family:'Plus Jakarta Sans',sans-serif;}
+
+/* ── CARDS ───────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--card-sh);overflow:hidden;margin-bottom:16px;}
+.card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);}
+.card-title{font-size:13.5px;font-weight:700;color:var(--heading);}
+.card-body{padding:16px 18px;}
+.mt-16{margin-top:16px;}
+
+/* ── TABLE ───────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding:9px 14px;border-bottom:1px solid var(--border);background:var(--surface2);text-align:left;white-space:nowrap;}
+td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12.5px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(13,122,107,0.03);}
+
+/* ── BUTTONS ─────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius);font-size:12.5px;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;transition:all var(--t-fast);}
+.btn-primary{background:var(--brand);color:#fff;}
+.btn-primary:hover{background:var(--brand-h);}
+.btn-secondary{background:var(--surface2);border:1.5px solid var(--border);color:var(--text);}
+.btn-secondary:hover{background:var(--bg);border-color:var(--divider);}
+.btn-danger{background:rgba(231,76,60,.1);color:var(--danger);border:1.5px solid rgba(231,76,60,.2);}
+.btn-danger:hover{background:rgba(231,76,60,.18);}
+.btn-sm{padding:5px 10px;font-size:11.5px;}
+
+/* ── BADGES ──────────────────────────────────────────── */
+.loc-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600;}
+.loc-onsite,.loc-office{background:rgba(13,122,107,.15);color:#0D7A6B;}
+.loc-home{background:rgba(230,126,34,.15);color:#c0641a;}
+.loc-outside,.loc-unknown{background:rgba(231,76,60,.12);color:var(--danger);}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:700;}
+.badge-teal{background:rgba(13,122,107,.1);color:var(--brand);}
+.detect-badge{background:rgba(41,128,185,.1);color:#2980B9;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;}
+
+/* ── FORMS ───────────────────────────────────────────── */
+.form-group{margin-bottom:14px;}
+.form-label{display:block;font-size:11px;font-weight:700;color:var(--heading);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+.form-input,.form-select,.form-textarea{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Inter',sans-serif;transition:border-color var(--t-fast);outline:none;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--brand);}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.err-box{background:rgba(231,76,60,.08);border:1px solid rgba(231,76,60,.25);border-radius:8px;padding:9px 12px;font-size:12px;color:#c0392b;margin-bottom:10px;}
+.err-box.hidden{display:none;}
+
+/* ── MODALS ──────────────────────────────────────────── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.modal-overlay.hidden{display:none;}
+.modal-box{background:var(--surface);border-radius:var(--radius-xl);padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:var(--shadow-xl);}
+.modal-title{font-size:17px;font-weight:800;color:var(--heading);margin-bottom:4px;font-family:'Plus Jakarta Sans',sans-serif;}
+.modal-sub{font-size:12.5px;color:var(--muted);margin-bottom:18px;}
+.modal-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;border:none;background:var(--bg2);color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all var(--t-fast);}
+.modal-close:hover{background:var(--border);color:var(--heading);}
+.modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);}
+
+/* ── DETECTION MODAL SPECIFICS ───────────────────────── */
+.detect-step{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:6px;background:var(--bg);font-size:13px;}
+.detect-step.active{background:rgba(41,128,185,.08);}
+.detect-step.done{background:rgba(13,122,107,.08);}
+.detect-step.failed{background:rgba(231,76,60,.08);}
+.step-status{margin-left:auto;font-size:11px;font-weight:700;}
+.step-status.ok{color:var(--success);}
+.step-status.fail{color:var(--danger);}
+.step-status.running{color:#2980B9;}
+.gps-warn{background:rgba(230,126,34,.1);border:1px solid rgba(230,126,34,.25);border-radius:8px;padding:10px 14px;font-size:12px;color:#8a4a00;margin:10px 0;}
+.cm-sel{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border-color var(--t-fast);}
+.cm-sel:focus{border-color:var(--brand);}
+.cm-notes{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Inter',sans-serif;resize:vertical;outline:none;}
+.cm-field{margin-bottom:12px;}
+.cm-field label{display:block;font-size:11px;font-weight:700;color:var(--heading);text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px;}
+
+/* ── TOGGLE ──────────────────────────────────────────── */
+.toggle{width:40px;height:22px;border-radius:99px;border:none;cursor:pointer;position:relative;background:var(--border);transition:background .2s;flex-shrink:0;}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .2s;}
+.toggle.on{background:var(--brand);}
+.toggle.on::after{transform:translateX(18px);}
+
+/* ── SECTION HEADER ──────────────────────────────────── */
+.section-h{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.section-title{font-size:18px;font-weight:800;color:var(--heading);font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:-.3px;}
+.section-sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+/* ── KPI STRIP ───────────────────────────────────────── */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--card-sh);}
+.kpi-val{font-size:28px;font-weight:800;color:var(--heading);letter-spacing:-.5px;font-family:'Plus Jakarta Sans',sans-serif;}
+.kpi-label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:4px;}
+.kpi-trend{font-size:11px;margin-top:4px;}
+.kpi-trend.up{color:var(--success);}
+.kpi-trend.down{color:var(--danger);}
+
+/* ── TOAST ───────────────────────────────────────────── */
+#toastContainer{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.toast{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;background:var(--heading);color:#fff;border-radius:var(--radius-lg);box-shadow:var(--shadow-xl);max-width:320px;font-size:13px;animation:toastIn .25s ease;pointer-events:all;}
+.toast.success{background:#0D7A6B;}
+.toast.error{background:var(--danger);}
+.toast.warn{background:var(--warning);}
+.toast.info{background:#2980B9;}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── EMPTY STATE ─────────────────────────────────────── */
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted);}
+.empty-icon{font-size:36px;margin-bottom:10px;}
+.empty-sub{font-size:13px;}
+
+/* ── SKELETON ────────────────────────────────────────── */
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+.skel{background:linear-gradient(90deg,var(--border) 25%,var(--bg2) 50%,var(--border) 75%);background-size:800px 100%;animation:shimmer 1.4s infinite;border-radius:6px;}
+
+/* ── PEOPLE (admin) ──────────────────────────────────── */
+.people-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+.person-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:18px;box-shadow:var(--card-sh);transition:all .15s;}
+.person-card:hover{border-color:var(--brand);box-shadow:0 4px 16px var(--brand-glow);}
+.person-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;margin-bottom:10px;}
+.person-name{font-size:13.5px;font-weight:700;color:var(--heading);}
+.person-role{font-size:11.5px;color:var(--muted);margin-bottom:6px;}
+.online-dot{width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block;}
+.offline-dot{width:7px;height:7px;border-radius:50%;background:var(--disabled);display:inline-block;}
+
+/* ── RESPONSIVE ──────────────────────────────────────── */
+@media(max-width:768px){
+  #appMain{padding:16px;}
+  .att-stats{grid-template-columns:1fr 1fr;gap:10px;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .clock-face{font-size:34px;}
+  .clock-status-text{font-size:20px;}
+  .clock-hero{padding:20px;}
+  .form-grid{grid-template-columns:1fr;}
+  .modal-box{margin:8px;}
+  th,td{padding:8px 10px;}
+  #navTabs{padding:0 12px;}
+  .nav-tab{padding:10px 14px;font-size:12px;}
+}
+@media(max-width:500px){
+  .att-stats{grid-template-columns:1fr;}
+  .kpi-grid{grid-template-columns:1fr;}
+  .auth-card{padding:24px 18px;}
+}
+
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:4px;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important;}}
+
+/* ── PRESENCE STYLES ─────────────────────────────────────────── */
+.live-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:99px;font-size:10.5px;font-weight:700;letter-spacing:.04em;}
+.live-badge.live{background:rgba(22,160,133,.15);color:#0D7A6B;}
+.live-badge.reconnecting{background:rgba(230,126,34,.15);color:#c0641a;}
+.live-badge.offline{background:rgba(153,153,153,.15);color:var(--muted);}
+.live-dot{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;}
+.live-dot.pulse{animation:livePulse 1.5s ease-in-out infinite;}
+@keyframes livePulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* Presence status dots */
+.ps-online{color:#16A085;}
+.ps-away{color:#E67E22;}
+.ps-offline{color:var(--disabled);}
+.ps-dot{width:9px;height:9px;border-radius:50%;background:currentColor;display:inline-block;flex-shrink:0;}
+.ps-dot.ps-online{background:#16A085;}
+.ps-dot.ps-away{background:#E67E22;}
+.ps-dot.ps-offline{background:var(--disabled);}
+
+/* Attendance status badge */
+.att-status-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:700;}
+.att-clocked-in{background:rgba(22,160,133,.12);color:#0D7A6B;}
+.att-clocked-out{background:rgba(94,114,137,.1);color:var(--muted);}
+.att-not-started{background:rgba(94,114,137,.08);color:var(--disabled);}
+
+/* Enhanced team member cards */
+.emp-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--card-sh);transition:all .15s;position:relative;}
+.emp-card:hover{border-color:var(--brand);box-shadow:0 4px 16px var(--brand-glow);}
+.emp-card-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;}
+.emp-avatar{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;position:relative;}
+.emp-avatar-badge{position:absolute;bottom:-2px;right:-2px;width:12px;height:12px;border-radius:50%;border:2px solid var(--surface);}
+.emp-avatar-badge.online{background:#16A085;}
+.emp-avatar-badge.away{background:#E67E22;}
+.emp-avatar-badge.offline{background:var(--disabled);}
+.emp-name{font-size:13px;font-weight:700;color:var(--heading);line-height:1.2;}
+.emp-role-dept{font-size:11px;color:var(--muted);margin-top:1px;}
+.emp-status-row{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11.5px;}
+.emp-last-seen{font-size:10.5px;color:var(--muted);margin-top:4px;}
+
+/* Activity feed */
+.activity-feed{display:flex;flex-direction:column;gap:0;}
+.activity-item{display:flex;align-items:flex-start;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.activity-item:last-child{border-bottom:none;}
+.activity-time{font-size:10.5px;color:var(--muted);white-space:nowrap;min-width:60px;font-family:'DM Mono',monospace;padding-top:1px;}
+.activity-icon{font-size:14px;flex-shrink:0;}
+.activity-text{color:var(--text);flex:1;line-height:1.4;}
+.activity-text strong{color:var(--heading);}
+
+/* Live indicator in topbar */
+#liveIndicator{display:inline-flex;align-items:center;gap:5px;margin-right:4px;}
+
+/* Realtime KPI grid — wider */
+.presence-kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px;margin-bottom:18px;}
+
+/* Team view tabs */
+.view-tabs{display:flex;gap:4px;background:var(--bg2);border-radius:8px;padding:3px;margin-bottom:16px;}
+.view-tab{flex:1;padding:6px 10px;border:none;border-radius:6px;background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;white-space:nowrap;}
+.view-tab.active{background:var(--surface);color:var(--heading);box-shadow:var(--shadow);}
+
+/* Connection state bar */
+#connStateBar{position:fixed;top:0;left:0;right:0;z-index:9990;padding:7px 24px;font-size:12.5px;font-weight:600;text-align:center;display:none;transition:all .3s;}
+#connStateBar.reconnecting{background:#E67E22;color:#fff;display:block;}
+#connStateBar.offline{background:var(--danger);color:#fff;display:block;}
+
+</style>
+</head>
+<body>
+
+<!-- ══ CONNECTION STATE BAR ══ -->
+<div id="connStateBar"></div>
+
+<!-- ══ TOAST ══ -->
+<div id="toastContainer"></div>
+
+<!-- ══ AUTH ══ -->
+<div id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-mark">AIQ</div>
+      <div>
+        <div class="auth-brand-name">AttendanceIQ</div>
+        <div class="auth-brand-sub">Sagility Clinical Group · Workforce Portal</div>
+      </div>
+    </div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+      <button class="auth-tab" onclick="switchAuthTab('signup')">Register</button>
+    </div>
+    <div id="authLoginForm">
+      <div class="auth-field">
+        <label for="authEmail">Email</label>
+        <input class="auth-input" type="email" id="authEmail" placeholder="you@sagility.com" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div class="auth-field">
+        <label for="authPassword">Password</label>
+        <input class="auth-input" type="password" id="authPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="auth-btn" id="authLoginBtn" onclick="doLogin()">Sign In</button>
+    </div>
+    <div id="authSignupForm" style="display:none">
+      <div class="auth-field">
+        <label for="authFullName">Full Name</label>
+        <input class="auth-input" type="text" id="authFullName" placeholder="Your full name">
+      </div>
+      <div class="auth-field">
+        <label for="authEmailS">Email</label>
+        <input class="auth-input" type="email" id="authEmailS" placeholder="you@sagility.com">
+      </div>
+      <div class="auth-field">
+        <label for="authPasswordS">Password (min 6 chars)</label>
+        <input class="auth-input" type="password" id="authPasswordS" placeholder="••••••••">
+      </div>
+      <div class="auth-field">
+        <label for="authDept">Team / Account</label>
+        <input class="auth-input" type="text" id="authDept" placeholder="e.g. Clinical Ops, Medical Review">
+      </div>
+      <button class="auth-btn" id="authSignupBtn" onclick="doSignup()">Create Account</button>
+    </div>
+    <div class="auth-msg" id="authMsg"></div>
+    <div style="text-align:center;margin-top:12px">
+      <button onclick="enterLocalMode()" style="background:none;border:none;color:var(--muted);font-size:11.5px;cursor:pointer;text-decoration:underline;font-family:inherit;padding:4px 8px;" id="localModeBtn">
+        Network blocked? Continue in read-only local mode
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TOPBAR ══ -->
+<header id="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-mark">AIQ</div>
+    <div>
+      <div class="topbar-name">AttendanceIQ</div>
+      <div class="topbar-sub">Clinical Group Portal</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span id="liveIndicator">
+      <span class="live-badge offline" id="liveBadge">
+        <span class="live-dot" id="liveDot"></span>
+        <span id="liveLabel">Connecting…</span>
+      </span>
+    </span>
+    <span id="syncDot" class="sync-dot" style="display:none"></span>
+    <span id="syncLabel" style="display:none">Connecting…</span>
+    <div style="display:flex;align-items:center;gap:6px;margin-left:12px;">
+      <div class="tb-avatar" id="tbAvatar" title="Account">--</div>
+      <div style="line-height:1.2;">
+        <div style="font-size:12.5px;font-weight:700;color:var(--heading)" id="tbName">—</div>
+        <div style="font-size:10.5px;color:var(--muted)" id="tbRole">—</div>
+        <div style="font-size:10px;color:var(--disabled);margin-top:1px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="tbEmail"></div>
+      </div>
+    </div>
+    <button class="tb-btn" onclick="toggleTheme()" title="Toggle theme">🌙</button>
+    <button class="tb-btn" onclick="doLogout()">Sign Out</button>
+  </div>
+</header>
+
+<!-- ══ NAV TABS ══ -->
+<nav id="navTabs">
+  <button class="nav-tab active" data-tab="clock" onclick="switchTab('clock')">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+    Clock In/Out
+  </button>
+  <button class="nav-tab" data-tab="logs" onclick="switchTab('logs')">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+    My Logs
+  </button>
+  <button class="nav-tab" id="tabSettings" data-tab="settings" onclick="switchTab('settings')">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Detection Settings
+  </button>
+  <button class="nav-tab" id="tabAdmin" data-tab="admin" onclick="switchTab('admin')" style="display:none">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    Team View
+  </button>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<main id="appMain">
+
+  <!-- ══════ PAGE: CLOCK ══════ -->
+  <div class="page active" id="page-clock">
+    <!-- Clock Hero -->
+    <div class="clock-hero">
+      <div class="clock-left">
+        <div class="clock-status-label">Current Status</div>
+        <div class="clock-status-text" id="attHeroStatus">Not Clocked In</div>
+        <div class="clock-sub" id="attHeroSub">Press Clock In to start your shift</div>
+        <div class="clock-badges" id="attBadges"></div>
+      </div>
+      <div class="clock-right">
+        <div>
+          <div class="clock-face" id="attClockFace">--:--</div>
+          <div class="clock-date-line" id="attClockDate"></div>
+        </div>
+        <div class="pulse-wrap paused" id="attPulseWrap">
+          <div class="pulse-ring"></div>
+          <div class="pulse-ring"></div>
+          <div class="pulse-ring"></div>
+          <button class="clock-btn btn-in" id="mainClockBtn" onclick="initiateClockAction()">▶</button>
+        </div>
+        <div class="clock-btn-label" id="attBtnLabel">Clock In</div>
+      </div>
+    </div>
+
+    <!-- Stat strip -->
+    <div class="att-stats">
+      <div class="att-stat">
+        <div class="att-stat-label">Clock In</div>
+        <div class="att-stat-val" id="attIn">—</div>
+      </div>
+      <div class="att-stat">
+        <div class="att-stat-label">Clock Out</div>
+        <div class="att-stat-val" id="attOut">—</div>
+      </div>
+      <div class="att-stat">
+        <div class="att-stat-label">Duration</div>
+        <div class="att-stat-val" id="attDur">0h 0m</div>
+      </div>
+      <div class="att-stat">
+        <div class="att-stat-label">Location</div>
+        <div class="att-stat-val" id="attLoc" style="font-size:16px">—</div>
+      </div>
+    </div>
+
+    <!-- Today summary -->
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">📅 Today's Summary</span>
+        <span style="font-size:11.5px;color:var(--muted)" id="todayDateLabel"></span>
+      </div>
+      <div class="card-body" id="todaySummaryBody">
+        <div class="empty-state" style="padding:16px">
+          <div class="empty-icon">⏰</div>
+          <div class="empty-sub">No activity logged yet today</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ PAGE: LOGS ══════ -->
+  <div class="page" id="page-logs">
+    <div class="section-h">
+      <div>
+        <div class="section-title">Attendance Logs</div>
+        <div class="section-sub">Your recent clock-in/out records</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select class="form-select" id="logsRangeFilter" onchange="loadRecentAttLogs()" style="width:auto;padding:7px 10px;font-size:12.5px;">
+          <option value="7">Last 7 days</option>
+          <option value="14">Last 14 days</option>
+          <option value="30">Last 30 days</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="exportAttCSV()">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI strip -->
+    <div class="kpi-grid" id="logsKpiGrid">
+      <div class="kpi-card"><div class="kpi-val" id="kpiTotalDays">—</div><div class="kpi-label">Days Present</div></div>
+      <div class="kpi-card"><div class="kpi-val" id="kpiAvgHours">—</div><div class="kpi-label">Avg Hours/Day</div></div>
+      <div class="kpi-card"><div class="kpi-val" id="kpiOnsiteRate">—</div><div class="kpi-label">Onsite Rate</div></div>
+    </div>
+
+    <div class="card">
+      <div id="attRecentWrap">
+        <div class="empty-state"><div class="empty-icon">📭</div><div class="empty-sub">Loading…</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ PAGE: SETTINGS ══════ -->
+  <div class="page" id="page-settings">
+    <div class="section-h">
+      <div>
+        <div class="section-title">Detection Settings</div>
+        <div class="section-sub">Configure GPS, home location, and office sites</div>
+      </div>
+    </div>
+
+    <!-- GPS Toggles -->
+    <div class="card">
+      <div class="card-head"><span class="card-title">⚙ Location Detection</span></div>
+      <div class="card-body">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--heading)">GPS Detection</div>
+            <div style="font-size:12px;color:var(--muted)">Use device geolocation for accurate clock-in tracking</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="gpsLockedLabel" style="display:none;font-size:10.5px;color:var(--muted);font-weight:600">🔒 Always On</span>
+            <button class="toggle on" id="toggle-gps"></button>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--heading)">IP Fallback</div>
+            <div style="font-size:12px;color:var(--muted)">Use IP address when GPS is unavailable</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="ipLockedLabel" style="display:none;font-size:10.5px;color:var(--muted);font-weight:600">🔒 Always On</span>
+            <button class="toggle on" id="toggle-ip"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Home Location -->
+    <div class="card mt-16" id="attHomeCard">
+      <div class="card-head">
+        <span class="card-title">🏠 My Home Location <span style="font-size:11px;color:var(--muted);font-weight:400">— 150m geofence radius</span></span>
+        <button class="btn btn-primary btn-sm" id="attSetHomeBtn" onclick="openHomeModal()">📍 Set Home Location</button>
+      </div>
+      <div class="card-body">
+        <div id="attHomeEmpty" style="color:var(--muted);font-size:13px">⚠ No home location set. Clock-in will not detect <strong>Home</strong> until you configure this.</div>
+        <div id="attHomeInfo" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;max-width:520px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+            <span style="font-size:24px">🏠</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--heading)" id="homeDisplayName">My Home</div>
+              <div style="font-size:12px;color:var(--muted)" id="homeDisplayAddr"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+            <div style="font-size:11.5px;color:var(--muted)">📍 <span id="homeDisplayCoords" style="font-family:'DM Mono',monospace;color:var(--text)">—</span></div>
+            <div style="font-size:11.5px;color:var(--muted)">⭕ <span style="color:var(--text)">150m geofence radius</span></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary btn-sm" onclick="openHomeModal(true)">✏ Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="clearHomeLocation()">✕ Remove</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Office Sites (admin/manager) -->
+    <div class="card mt-16" id="attSitesCard" style="display:none">
+      <div class="card-head">
+        <span class="card-title">🏢 Office Sites <span style="font-size:11px;color:var(--muted);font-weight:400">— GPS geofence boundaries</span></span>
+        <button class="btn btn-primary btn-sm" id="attAddSiteBtn" style="display:none" onclick="openSiteModal()">+ Add Site</button>
+      </div>
+      <div class="card-body" style="padding:0">
+        <div id="attSiteGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;padding:16px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ PAGE: ADMIN / TEAM ══════ -->
+  <div class="page" id="page-admin">
+    <div class="section-h">
+      <div>
+        <div class="section-title">Team Presence &amp; Attendance</div>
+        <div class="section-sub" id="adminSyncSub">Clinical Group workforce — real-time view</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <select class="form-select" id="adminRangeFilter" onchange="loadTeamLogs()" style="width:auto;padding:7px 10px;font-size:12.5px;">
+          <option value="7">Last 7 days</option>
+          <option value="14">Last 14 days</option>
+          <option value="30">Last 30 days</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="exportTeamCSV()">
+          <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+
+    <!-- Presence KPIs -->
+    <div class="presence-kpi-grid" id="adminKpiGrid">
+      <div class="kpi-card"><div class="kpi-val" id="kpiTeamMembers">—</div><div class="kpi-label">Total</div></div>
+      <div class="kpi-card" style="border-color:rgba(22,160,133,.3)"><div class="kpi-val" id="kpiOnlineNow" style="color:#0D7A6B">—</div><div class="kpi-label">🟢 Online</div></div>
+      <div class="kpi-card" style="border-color:rgba(230,126,34,.3)"><div class="kpi-val" id="kpiAway" style="color:#E67E22">—</div><div class="kpi-label">🟡 Away</div></div>
+      <div class="kpi-card"><div class="kpi-val" id="kpiOffline" style="color:var(--muted)">—</div><div class="kpi-label">⚫ Offline</div></div>
+      <div class="kpi-card" style="border-color:rgba(13,122,107,.3)"><div class="kpi-val" id="kpiClockedIn" style="color:#0D7A6B">—</div><div class="kpi-label">🟢 Clocked In</div></div>
+      <div class="kpi-card"><div class="kpi-val" id="kpiTeamOnsite">—</div><div class="kpi-label">🏢 Onsite</div></div>
+      <div class="kpi-card"><div class="kpi-val" id="kpiTeamHome">—</div><div class="kpi-label">🏠 WFH</div></div>
+      <div class="kpi-card"><div class="kpi-val" id="kpiTeamOut">—</div><div class="kpi-label">⚪ Not Clocked In</div></div>
+    </div>
+
+    <!-- View tabs -->
+    <div class="view-tabs">
+      <button class="view-tab active" onclick="switchAdminView('presence')" id="vt-presence">🟢 Live Presence</button>
+      <button class="view-tab" onclick="switchAdminView('logs')" id="vt-logs">📋 Attendance Logs</button>
+      <button class="view-tab" onclick="switchAdminView('activity')" id="vt-activity">📡 Activity Feed</button>
+    </div>
+
+    <!-- PRESENCE VIEW -->
+    <div id="adminView-presence">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">Employee Presence</span>
+          <span style="font-size:11px;color:var(--muted)" id="presenceLastSync">Last sync: —</span>
+        </div>
+        <div class="card-body" id="teamPresenceGrid">
+          <div class="empty-state" style="padding:16px"><div class="empty-sub">Loading presence data…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGS VIEW -->
+    <div id="adminView-logs" style="display:none">
+      <div class="card">
+        <div class="card-head"><span class="card-title">All Team Logs</span></div>
+        <div id="teamLogsWrap">
+          <div class="empty-state" style="padding:24px"><div class="empty-icon">📊</div><div class="empty-sub">Loading team records…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVITY FEED VIEW -->
+    <div id="adminView-activity" style="display:none">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">📡 Live Activity Feed</span>
+          <button class="btn btn-secondary btn-sm" onclick="clearActivityFeed()">Clear</button>
+        </div>
+        <div class="card-body" id="activityFeedBody">
+          <div class="empty-state" style="padding:16px"><div class="empty-sub">Waiting for activity…</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ══ HOME LOCATION MODAL ══ -->
+<div class="modal-overlay hidden" id="homeModal">
+  <div class="modal-box" style="max-width:480px">
+    <button class="modal-close" onclick="document.getElementById('homeModal').classList.add('hidden')">✕</button>
+    <div class="modal-title">🏠 Set Home Location</div>
+    <div class="modal-sub">Your GPS coordinates will detect when you're working from home.</div>
+    <div class="form-group">
+      <label class="form-label">Label / Nickname</label>
+      <input class="form-input" id="homeName" placeholder="e.g. My Home, Condo Unit">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Address (optional)</label>
+      <input class="form-input" id="homeAddress" placeholder="e.g. Blk 3 Lot 5 Sampaguita St., QC">
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Latitude *</label>
+        <input class="form-input" id="homeLat" type="number" step="0.000001" placeholder="14.5490">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Longitude *</label>
+        <input class="form-input" id="homeLng" type="number" step="0.000001" placeholder="121.0510">
+      </div>
+    </div>
+    <button class="btn btn-secondary" style="width:100%;margin-bottom:12px" onclick="captureHomeGPS()" id="homeGPSBtn">
+      📡 Use My Current GPS Location
+    </button>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">A 150m geofence radius will be applied. Clock-ins within this range log as <strong>Home</strong>.</div>
+    <div class="err-box hidden" id="homeErr"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('homeModal').classList.add('hidden')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveHomeLocation()">Save Home Location</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SITE MODAL ══ -->
+<div class="modal-overlay hidden" id="siteModal">
+  <div class="modal-box" style="max-width:480px">
+    <button class="modal-close" onclick="document.getElementById('siteModal').classList.add('hidden')">✕</button>
+    <div class="modal-title" id="siteModalTitle">Add Office Site</div>
+    <div class="modal-sub">Define a GPS geofence for clock-in/out verification</div>
+    <input type="hidden" id="siteRowId">
+    <div class="form-group">
+      <label class="form-label">Site Name *</label>
+      <input class="form-input" id="siteName" placeholder="e.g. Zeta Tower, Bridgetowne">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Address</label>
+      <input class="form-input" id="siteAddress" placeholder="Full address">
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label class="form-label">Latitude *</label>
+        <input class="form-input" id="siteLat" type="number" step="0.000001" placeholder="14.5490">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Longitude *</label>
+        <input class="form-input" id="siteLng" type="number" step="0.000001" placeholder="121.0510">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Radius (meters)</label>
+      <input class="form-input" id="siteRadius" type="number" value="200" min="50" max="2000">
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">100–200m for single building, 300–500m for campus</div>
+    </div>
+    <div class="err-box hidden" id="siteErr"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('siteModal').classList.add('hidden')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSite()">Save Site</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LOCATION DETECTION MODAL ══ -->
+<div class="modal-overlay hidden" id="locationModal">
+  <div class="modal-box" style="max-width:460px">
+    <button class="modal-close" onclick="closeLocationModal()">✕</button>
+    <div class="modal-title" id="locModalTitle">Clock In — Detecting Location</div>
+    <div class="modal-sub" id="locModalSub">Running smart location detection…</div>
+    <div id="detectSteps">
+      <div class="detect-step" id="step-gps"><span>🛰</span><span style="flex:1">GPS Coordinates</span><span class="step-status running" id="step-gps-status">Requesting…</span></div>
+      <div class="detect-step" id="step-site"><span>🏢</span><span style="flex:1">Office Site Match</span><span class="step-status" id="step-site-status">Waiting</span></div>
+      <div class="detect-step" id="step-home"><span>🏠</span><span style="flex:1">Home Match</span><span class="step-status" id="step-home-status">Waiting</span></div>
+      <div class="detect-step" id="step-ip"><span>🌐</span><span style="flex:1">IP Fallback</span><span class="step-status" id="step-ip-status">Waiting</span></div>
+    </div>
+    <div id="detectResult" style="display:none">
+      <div class="gps-warn" id="gpsWarnBox" style="display:none">⚠️ <strong>GPS unavailable</strong> — location estimated via IP. Less accurate.</div>
+      <div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
+        <div style="font-size:28px" id="resultEmoji">📍</div>
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--heading)" id="resultLocText">Unknown</div>
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <span class="detect-badge" id="resultMethodBadge">GPS</span>
+            <span id="resultSiteBadge" style="display:none" class="badge badge-teal"></span>
+          </div>
+        </div>
+      </div>
+      <div class="cm-field">
+        <label for="locOverride">Override (optional)</label>
+        <select class="cm-sel" id="locOverride" onchange="handleOverrideChange()">
+          <option value="auto">✅ Use Detected</option>
+        </select>
+      </div>
+      <div id="overrideSection" style="display:none">
+        <div class="err-box" id="onsiteBlockedNote" style="display:none">🔒 Onsite blocked — GPS confirms you're off-site.</div>
+        <div class="cm-field">
+          <label for="overrideReason">Override Reason *</label>
+          <textarea class="cm-notes" id="overrideReason" rows="2" placeholder="Why are you overriding?"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeLocationModal()">Cancel</button>
+      <button class="btn btn-primary" id="confirmClockBtn" onclick="confirmClock()" style="display:none">
+        <span id="confirmClockLabel">Confirm Clock In</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  AttendanceIQ v2 — Clinical Group Portal
+//  Real-Time Presence + Attendance Architecture
+//  Supabase: qvqgolyuvyqsbqzlblqf.supabase.co
+// ═══════════════════════════════════════════════════════════════
+
+const SUPABASE_URL  = 'https://qvqgolyuvyqsbqzlblqf.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2cWdvbHl1dnlxc2JxemxibHFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNjY3NzYsImV4cCI6MjA5Nzc0Mjc3Nn0.4w83XpsHKUimPho_kYjN_8bGHNEJjqq623MIIHdC0xQ';
+const ADMIN_EMAILS  = ['rio.decz317@gmail.com','ricky.delatorre@sagility.com'];
+
+// Presence timeouts
+const PRESENCE_TIMEOUT_MS   = 90000;  // 90s — allows for 7 missed heartbeats before offline
+const HEARTBEAT_INTERVAL_MS = 12000;  // 12s heartbeat
+const AWAY_TIMEOUT_MS       = 300000; // 5min inactivity → away
+const RECONCILE_INTERVAL_MS = 30000;  // 30s reconciliation — fast fallback until Realtime is confirmed working
+
+/* ════════════════════════════════════════════════════════════
+   REQUIRED SUPABASE MIGRATION — run once in SQL Editor
+   ════════════════════════════════════════════════════════════
+
+CREATE TABLE IF NOT EXISTS user_presence (
+  user_id          UUID PRIMARY KEY REFERENCES dept_profiles(user_id) ON DELETE CASCADE,
+  status           TEXT NOT NULL DEFAULT 'offline'
+                     CHECK (status IN ('online','away','offline')),
+  connection_state TEXT NOT NULL DEFAULT 'disconnected'
+                     CHECK (connection_state IN ('connected','reconnecting','disconnected')),
+  clocked_in       BOOLEAN DEFAULT false,
+  session_id       TEXT,
+  login_at         TIMESTAMPTZ,
+  last_seen        TIMESTAMPTZ DEFAULT NOW(),
+  last_activity    TIMESTAMPTZ DEFAULT NOW(),
+  logout_at        TIMESTAMPTZ,
+  current_location TEXT,
+  browser_info     TEXT,
+  ip_address       TEXT,
+  updated_at       TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Enable Realtime on required tables:
+ALTER PUBLICATION supabase_realtime ADD TABLE user_presence;
+ALTER PUBLICATION supabase_realtime ADD TABLE attendance_logs;
+ALTER PUBLICATION supabase_realtime ADD TABLE dept_profiles;
+
+-- RLS: Users can upsert/update their own presence row
+ALTER TABLE user_presence ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "own_presence_upsert" ON user_presence
+  FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "presence_read_admin" ON user_presence
+  FOR SELECT USING (
+    auth.uid() = user_id
+    OR EXISTS (
+      SELECT 1 FROM dept_profiles dp
+      WHERE dp.user_id = auth.uid()
+      AND dp.role IN ('admin','manager','supervisor')
+    )
+  );
+════════════════════════════════════════════════════════════ */
+
+let _sb = null;
+
+// ══════════════════════════════════════════════════════════════
+//  MIMECAST BYPASS — XHR-based fetch override
+//  Mimecast's browser extension hooks window.fetch() to rewrite
+//  /auth/v1/ URLs through mimecastprotect.com proxy, breaking CORS.
+//  XMLHttpRequest is NOT hooked by Mimecast in the same way.
+//  We override fetch() with an XHR shim BEFORE supabase-js binds
+//  its internal reference, so all Supabase calls go through XHR.
+// ══════════════════════════════════════════════════════════════
+(function installXHRFetchShim(){
+  // Only install on file:// or when Mimecast is detected
+  // Keep native fetch for non-Supabase URLs (Anthropic API etc.)
+  const _nativeFetch = window.fetch.bind(window);
+  const SUPABASE_HOST = 'qvqgolyuvyqsbqzlblqf.supabase.co';
+
+  function xhrFetch(url, options){
+    const urlStr = typeof url === 'string' ? url : (url?.url || String(url));
+
+    // Only intercept Supabase REST/Auth calls — NOT WebSocket or Realtime
+    if(!urlStr.includes(SUPABASE_HOST)){
+      return _nativeFetch(url, options);
+    }
+
+    // Pass WebSocket upgrade requests and Realtime connections through native fetch
+    // XHR cannot handle WebSocket protocol upgrades — must use native fetch
+    const upgradeHeader = options?.headers?.['Upgrade'] || options?.headers?.['upgrade'] ||
+      (options?.headers instanceof Headers ? options.headers.get('upgrade') : null);
+    const isWebSocket  = upgradeHeader === 'websocket';
+    const isRealtime   = urlStr.includes('/realtime/') || urlStr.includes('realtime-php');
+    const isLongPoll   = urlStr.includes('longpoll') || urlStr.includes('websocket');
+
+    if(isWebSocket || isRealtime || isLongPoll){
+      return _nativeFetch(url, options);
+    }
+
+    return new Promise((resolve, reject) => {
+      const method  = (options?.method || 'GET').toUpperCase();
+      const headers = options?.headers || {};
+      const body    = options?.body;
+      const xhr = new XMLHttpRequest();
+      xhr.open(method, urlStr, true);
+      // Set all headers
+      const headerObj = headers instanceof Headers
+        ? Object.fromEntries(headers.entries())
+        : (typeof headers === 'object' ? headers : {});
+      Object.entries(headerObj).forEach(([k,v]) => {
+        try { xhr.setRequestHeader(k, v); } catch(e){}
+      });
+      // Ensure JSON content type for POST requests with body
+      if(body && !headerObj['Content-Type'] && !headerObj['content-type']){
+        try { xhr.setRequestHeader('Content-Type','application/json'); } catch(e){}
+      }
+      xhr.withCredentials = false;
+      xhr.onload = function(){
+        // Build a Response-like object matching the fetch() API
+        const responseHeaders = new Headers();
+        xhr.getAllResponseHeaders().split('\r\n').forEach(line => {
+          const idx = line.indexOf(': ');
+          if(idx > 0) {
+            try{ responseHeaders.set(line.slice(0,idx), line.slice(idx+2)); }catch(e){}
+          }
+        });
+        // HTTP 204 No Content, 304 Not Modified, 101 Switching Protocols
+        // must NOT have a body — passing one throws TypeError
+        const nullBodyStatuses = [101, 204, 205, 304];
+        const responseBody = nullBodyStatuses.includes(xhr.status)
+          ? null
+          : (xhr.responseText || '');
+        let response;
+        try {
+          response = new Response(responseBody, {
+            status:     xhr.status,
+            statusText: xhr.statusText || '',
+            headers:    responseHeaders,
+          });
+        } catch(e) {
+          // Fallback: construct with empty body if browser still rejects
+          response = new Response('', {
+            status:     xhr.status || 200,
+            statusText: xhr.statusText || '',
+            headers:    responseHeaders,
+          });
+        }
+        resolve(response);
+      };
+      xhr.onerror = function(){
+        reject(new TypeError('XHR fetch shim: network error for '+urlStr));
+      };
+      xhr.ontimeout = function(){
+        reject(new TypeError('XHR fetch shim: timeout for '+urlStr));
+      };
+      xhr.timeout = 30000;
+      try {
+        xhr.send(body || null);
+      } catch(e) {
+        reject(e);
+      }
+    });
+  }
+
+  // Override window.fetch with our shim
+  window.fetch = xhrFetch;
+  window._nativeFetch = _nativeFetch; // preserve for Anthropic API calls
+  console.log('[AttendanceIQ] XHR fetch shim installed — Mimecast bypass active');
+})();
+
+function initSB(){
+  try{
+    _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+      auth: {
+        persistSession:    true,
+        autoRefreshToken:  true,
+        detectSessionInUrl: false,
+        // Use localStorage for session persistence across page reloads
+        storage: {
+          getItem:    (k) => { try{ return localStorage.getItem(k); }catch(e){ return null; } },
+          setItem:    (k,v) => { try{ localStorage.setItem(k,v); }catch(e){} },
+          removeItem: (k) => { try{ localStorage.removeItem(k); }catch(e){} },
+        }
+      },
+      global: {
+        // Supabase-js uses this fetch reference internally
+        // Our window.fetch is already the XHR shim at this point
+        fetch: window.fetch,
+      }
+    });
+  }catch(e){ console.warn('SB unavailable',e); }
+}
+
+// Restore native fetch for Anthropic API calls (not subject to Mimecast)
+// Called before any Anthropic fetch so it uses the real browser fetch
+function _anthropicFetch(url, options){
+  return (window._nativeFetch || window.fetch)(url, options);
+}
+
+// ── SAFE STORAGE ─────────────────────────────────────────────
+const _memStore = new Map();
+let _lsBlocked = false;
+const SafeStorage = {
+  _test() { if(_lsBlocked)return false; try{localStorage.setItem('__aiq_t__','1');localStorage.removeItem('__aiq_t__');return true;}catch(e){_lsBlocked=true;return false;} },
+  setItem(k,v){ if(this._test()){try{localStorage.setItem(k,v);}catch(e){_lsBlocked=true;_memStore.set(k,v);}}else _memStore.set(k,v); },
+  getItem(k){ if(this._test()){try{return localStorage.getItem(k);}catch(e){_lsBlocked=true;return _memStore.get(k)??null;}} return _memStore.get(k)??null; },
+  removeItem(k){ if(this._test()){try{localStorage.removeItem(k);}catch(e){_lsBlocked=true;}} _memStore.delete(k); },
+};
+
+// ── IAM ───────────────────────────────────────────────────────
+const IAM = {
+  _record:null,
+  async fetch(userId) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/aiq_access?user_id=eq.${userId}&select=*&limit=1`,
+        {headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON}});
+      if(res.ok){const rows=await res.json();this._record=rows?.[0]||null;}
+    } catch(e){this._record=null;}
+  },
+  checkAccess(programId) {
+    const r=this._record;
+    // No IAM record = open access (user not in control table yet)
+    if(!r) return {allowed:true};
+    if(r.status==='suspended') return {allowed:false, reason:'Account suspended'};
+    if(r.status==='rejected')  return {allowed:false, reason:'Access rejected'};
+    if(r.status==='pending')   return {allowed:false, reason:'Account pending approval'};
+    const t = r.tools || {};
+    // Empty tools = no restrictions = allow all
+    if(Object.keys(t).length === 0) return {allowed:true};
+    // Wildcard grant
+    if(t['*'] === true) return {allowed:true};
+    // Explicit tool grant
+    if(t[programId] === true) return {allowed:true};
+    // Tool key absent entirely = not restricted (only explicit false = blocked)
+    // This prevents locking out users whose IAM record was created for other tools
+    if(!(programId in t)) return {allowed:true};
+    // Explicit false = blocked
+    return {allowed:false, reason:'No access to this tool'};
+  },
+  getRole(user,fallback='employee'){return this._record?.role||user?.app_metadata?.role||user?.user_metadata?.role||fallback;},
+};
+
+// ── STATE ─────────────────────────────────────────────────────
+let _sbUser=null,_sbProfile={};
+let allSites=[],attProfile={homeLat:null,homeLng:null,homeName:null,homeAddr:null};
+let todayLog=null,attClockedIn=false,attWorkStart=null,attWorktimer=null;
+let clockAction='in',gpsVerified=false,detectedLocation=null,detectedMethod=null,detectedSiteName=null;
+// Central employee state map: user_id → {profile, presence, attendance}
+let _employeeState = new Map();
+let _allMembers=[];
+let _activityLog=[];   // in-memory activity feed (max 100)
+let _currentAdminView = 'presence';
+let _authInProgress = false; // guard against double onAuthSuccess
+let _localMode      = false; // true when network is blocked (e.g. Mimecast/corporate proxy)
+
+// ── LOCAL MODE (network-blocked fallback) ─────────────────────────
+// Mirrors RIO One's enterLocalMode() — lets users view cached/local
+// data when Supabase is unreachable due to corporate proxy (Mimecast etc.)
+function enterLocalMode(){
+  _localMode = true;
+  $id('authOverlay').classList.add('hidden');
+  // Show degraded topbar state
+  setLiveIndicator('offline');
+  setSyncBadge('','Local mode');
+  setConnStateBar('reconnecting','⚠ Running in local mode — cloud features unavailable. Clock-in/out and team view require network access.');
+  // Populate minimal UI so tabs are usable
+  updateUserUI('Local User','member');
+  setText('tbRole','Local');
+  applyAttendanceRoleUI();
+  startAttClock();
+  updateTodayDateLabel();
+  showToast('⚠ Network blocked (corporate proxy). Running in read-only local mode. Clock In/Out requires direct network access to Supabase.','warn',10000);
+  console.warn('AttendanceIQ: entered local mode due to network block.');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PRESENCE MANAGER
+// ══════════════════════════════════════════════════════════════
+class PresenceManager {
+  constructor(userId) {
+    this.userId        = userId;
+    this.sessionId     = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                           ? crypto.randomUUID()
+                           : Math.random().toString(36).slice(2)+Date.now();
+    this.heartbeatTimer    = null;
+    this.reconcileTimer    = null;
+    this.awayTimer         = null;
+    this.channel           = null;
+    this.attChannel        = null;
+    this.status            = 'offline';
+    this.connectionState   = 'disconnected';
+    this._lastActivity     = Date.now();
+    this._destroyed        = false;
+    this._boundVisible     = this._onVisibility.bind(this);
+    this._boundOnline      = this._onNetworkOnline.bind(this);
+    this._boundOffline     = this._onNetworkOffline.bind(this);
+    this._boundActivity    = this._onUserActivity.bind(this);
+  }
+
+  // ── LOGIN ──────────────────────────────────────────────────
+  async login() {
+    if(!_sb||!this.userId) return;
+    try {
+      const {error} = await _sb.from('aiq_presence').upsert({
+        user_id:          this.userId,
+        status:           'online',
+        connection_state: 'connected',
+        session_id:       this.sessionId,
+        login_at:         new Date().toISOString(),
+        last_seen:        new Date().toISOString(),
+        last_activity:    new Date().toISOString(),
+        logout_at:        null,
+        updated_at:       new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+
+      if(error){
+        // Log full error so we can see exactly what's failing in the console
+        console.warn('PresenceManager.login error:', error.code, error.message, error.details, error.hint);
+        if(error.code==='42P01'||error.message?.includes('does not exist')){
+          this._presenceTableMissing = true;
+          console.warn('aiq_presence table not found — run aiq_dedicated_tables.sql migration.');
+        } else if(error.code==='42501'||error.message?.includes('permission denied')||error.message?.includes('policy')){
+          // RLS blocked the upsert — try INSERT only as fallback
+          console.warn('Presence upsert blocked by RLS — trying INSERT fallback');
+          const {error: insErr} = await _sb.from('aiq_presence').insert({
+            user_id:          this.userId,
+            status:           'online',
+            connection_state: 'connected',
+            session_id:       this.sessionId,
+            login_at:         new Date().toISOString(),
+            last_seen:        new Date().toISOString(),
+            last_activity:    new Date().toISOString(),
+            updated_at:       new Date().toISOString(),
+          });
+          if(insErr) console.warn('Presence INSERT fallback also failed:', insErr.code, insErr.message);
+          else console.log('Presence INSERT fallback succeeded');
+        }
+      } else {
+        console.log('[PresenceManager] login upsert OK');
+      }
+
+      this.status          = 'online';
+      this.connectionState = 'connected';
+      this._startHeartbeat();
+      this._startReconcile();
+      this._watchBrowserEvents();
+      this.subscribe();
+      setLiveIndicator('live');
+    } catch(e) {
+      console.warn('PresenceManager.login exception:', e.message);
+      this._startHeartbeat();
+      this._watchBrowserEvents();
+      this.subscribe();
+    }
+  }
+
+  // ── LOGOUT ─────────────────────────────────────────────────
+  async logout() {
+    if(this._destroyed) return;
+    this._destroyed = true;
+    this._stopHeartbeat();
+    this._stopReconcile();
+    this._stopAwayTimer();
+    this._removeBrowserEvents();
+    this.unsubscribe();
+    if(!_sb||!this.userId||this._presenceTableMissing) return;
+    try {
+      await _sb.from('aiq_presence').update({
+        status:           'offline',
+        connection_state: 'disconnected',
+        logout_at:        new Date().toISOString(),
+        last_seen:        new Date().toISOString(),
+        updated_at:       new Date().toISOString(),
+      }).eq('user_id', this.userId);
+    } catch(e) { console.warn('PresenceManager.logout:', e); }
+  }
+
+  // ── HEARTBEAT ──────────────────────────────────────────────
+  async heartbeat() {
+    if(!_sb||!this.userId||this._destroyed||this._presenceTableMissing) return;
+    try {
+      const now = new Date().toISOString();
+      await _sb.from('aiq_presence').update({
+        last_seen:        now,
+        connection_state: 'connected',
+        updated_at:       now,
+        // only update last_activity if user was recently active
+        ...(Date.now()-this._lastActivity < AWAY_TIMEOUT_MS ? {last_activity: now} : {}),
+      }).eq('user_id', this.userId).eq('session_id', this.sessionId);
+    } catch(e) { console.warn('PresenceManager.heartbeat:', e); }
+  }
+
+  _startHeartbeat() {
+    this._stopHeartbeat();
+    this.heartbeatTimer = setInterval(()=>this.heartbeat(), HEARTBEAT_INTERVAL_MS);
+  }
+  _stopHeartbeat() { if(this.heartbeatTimer){clearInterval(this.heartbeatTimer);this.heartbeatTimer=null;} }
+
+  _startReconcile() {
+    this._stopReconcile();
+    this.reconcileTimer = setInterval(()=>this.reconcile(), RECONCILE_INTERVAL_MS);
+  }
+  _stopReconcile() { if(this.reconcileTimer){clearInterval(this.reconcileTimer);this.reconcileTimer=null;} }
+
+  // ── STATUS SETTERS ─────────────────────────────────────────
+  async setOnline() {
+    if(this.status==='online'&&this.connectionState==='connected') return;
+    this.status='online'; this.connectionState='connected';
+    if(!_sb||!this.userId||this._destroyed||this._presenceTableMissing) return;
+    try {
+      const now=new Date().toISOString();
+      await _sb.from('aiq_presence').update({status:'online',connection_state:'connected',last_seen:now,last_activity:now,updated_at:now}).eq('user_id',this.userId);
+    } catch(e){}
+    setLiveIndicator('live');
+  }
+
+  async setAway() {
+    if(this.status==='away') return;
+    this.status='away';
+    if(!_sb||!this.userId||this._destroyed||this._presenceTableMissing) return;
+    try {
+      await _sb.from('aiq_presence').update({status:'away',updated_at:new Date().toISOString()}).eq('user_id',this.userId);
+    } catch(e){}
+  }
+
+  async setOffline() {
+    if(this.status==='offline') return;
+    this.status='offline'; this.connectionState='disconnected';
+    if(!_sb||!this.userId||this._destroyed||this._presenceTableMissing) return;
+    try {
+      await _sb.from('aiq_presence').update({status:'offline',connection_state:'disconnected',last_seen:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('user_id',this.userId);
+    } catch(e){}
+    setLiveIndicator('offline');
+  }
+
+  // ── AWAY TIMER ─────────────────────────────────────────────
+  _resetAwayTimer() {
+    this._stopAwayTimer();
+    this.awayTimer = setTimeout(()=>this.setAway(), AWAY_TIMEOUT_MS);
+  }
+  _stopAwayTimer() { if(this.awayTimer){clearTimeout(this.awayTimer);this.awayTimer=null;} }
+
+  // ── BROWSER EVENTS ─────────────────────────────────────────
+  _watchBrowserEvents() {
+    document.addEventListener('visibilitychange', this._boundVisible);
+    window.addEventListener('online',  this._boundOnline);
+    window.addEventListener('offline', this._boundOffline);
+    ['mousemove','keydown','click','touchstart'].forEach(e=>
+      document.addEventListener(e, this._boundActivity, {passive:true}));
+    this._resetAwayTimer();
+  }
+
+  _removeBrowserEvents() {
+    document.removeEventListener('visibilitychange', this._boundVisible);
+    window.removeEventListener('online',  this._boundOnline);
+    window.removeEventListener('offline', this._boundOffline);
+    ['mousemove','keydown','click','touchstart'].forEach(e=>
+      document.removeEventListener(e, this._boundActivity));
+  }
+
+  _onVisibility() {
+    if(document.hidden) {
+      // Don't immediately go away — let the away timer fire after threshold
+    } else {
+      this._lastActivity = Date.now();
+      this._resetAwayTimer();
+      this.setOnline();
+      this.heartbeat();
+    }
+  }
+
+  _onNetworkOnline() {
+    this.connectionState='connected';
+    setConnStateBar('');
+    this._startHeartbeat();
+    this.setOnline();
+    this.heartbeat();
+    this.reconcile();
+    showToast('🔗 Connection restored','success',3000);
+  }
+
+  _onNetworkOffline() {
+    this.connectionState='reconnecting';
+    setConnStateBar('reconnecting','⚠ Network disconnected — attempting to reconnect…');
+    this._stopHeartbeat();
+  }
+
+  _onUserActivity() {
+    const now = Date.now();
+    if(now - this._lastActivity > 30000) { // throttle to 30s
+      this._lastActivity = now;
+      if(this.status==='away') this.setOnline();
+      this._resetAwayTimer();
+    }
+  }
+
+  // ── REALTIME SUBSCRIPTIONS ─────────────────────────────────
+  subscribe() {
+    if(!_sb||this._destroyed) return;
+    // Presence channel
+    this.channel = _sb.channel('aiq-presence-v2')
+      .on('postgres_changes',{event:'*',schema:'public',table:'aiq_presence'},
+          payload=>handleRealtimeEvent('presence', payload))
+      .on('postgres_changes',{event:'*',schema:'public',table:'aiq_attendance_logs'},
+          payload=>handleRealtimeEvent('attendance', payload))
+      .subscribe(status=>{
+        if(status==='SUBSCRIBED'){
+          setLiveIndicator('live');
+          setConnStateBar('');
+          setSyncBadge('ok','Live');
+        } else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
+          setLiveIndicator('reconnecting');
+          setConnStateBar('reconnecting','⚠ Realtime reconnecting…');
+          setSyncBadge('','Reconnecting…');
+          setTimeout(()=>{if(!this._destroyed)this.subscribe();},5000);
+        } else if(status==='CLOSED'){
+          setLiveIndicator('offline');
+        }
+      });
+  }
+
+  unsubscribe() {
+    if(this.channel&&_sb){ try{_sb.removeChannel(this.channel);}catch(e){} this.channel=null; }
+  }
+
+  // ── RECONCILE (fallback) ───────────────────────────────────
+  async reconcile() {
+    if(!_sb||!this.userId||this._destroyed) return;
+    try {
+      if(_canViewTeam()){
+        await refreshPresenceDashboard(); // includes fetchTodayAttendance
+      }
+      await loadTodayLog();
+    } catch(e) { console.warn('PresenceManager.reconcile:', e); }
+  }
+
+  destroy() {
+    this._destroyed=true;
+    this._stopHeartbeat();
+    this._stopReconcile();
+    this._stopAwayTimer();
+    this._removeBrowserEvents();
+    this.unsubscribe();
+  }
+}
+
+// Global presence manager instance
+let _presenceMgr = null;
+
+// ── DEFAULT SITES (Sagility Philippines) ─────────────────────
+const SAGILITY_SITES_DEFAULT = [
+  {id:'site-bgc',      name:'BGC — One Bonifacio High Street',          address:'One Bonifacio High Street, BGC, Taguig',                         lat:14.5505, lng:121.0510, radius_meters:200},
+  {id:'site-eastwood', name:'Eastwood — Cyberpark Tower 1',             address:'Eastwood Ave, Quezon City',                                      lat:14.6074, lng:121.0810, radius_meters:200},
+  {id:'site-bridgetowne',name:'Bridgetowne — Zeta Tower',              address:'Bridgetowne, Pasig-QC Boundary',                                 lat:14.6166, lng:121.0836, radius_meters:200},
+  {id:'site-ilo',      name:'Iloilo — Megaworld Business Park',         address:'Megaworld Business Park, Mandurriao, Iloilo City',               lat:10.7078, lng:122.5715, radius_meters:250},
+  {id:'site-cebu',     name:'Cebu — Skyrise 4, IT Park',                address:'Skyrise 4, Lahug, Cebu City',                                    lat:10.3267, lng:123.9023, radius_meters:250},
+  {id:'site-davao',    name:'Davao — Lanang Business Park',             address:'Lanang Business Park, JP Laurel Ave, Davao City',                lat:7.1106,  lng:125.6460, radius_meters:250},
+];
+
+// ── HELPERS ───────────────────────────────────────────────────
+const $id = id => document.getElementById(id);
+function setText(id,v){const e=$id(id);if(e)e.textContent=v;}
+function show(id){const e=$id(id);if(e)e.style.display='';}
+function hide(id){const e=$id(id);if(e)e.style.display='none';}
+function escHtml(s){const d=document.createElement('div');d.appendChild(document.createTextNode(String(s||'')));return d.innerHTML;}
+function fmtDate(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});}
+function fmtTime(iso){if(!iso)return'—';return new Date(iso).toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',hour12:true});}
+function msToDur(ms){if(ms<0)return'—';return`${Math.floor(ms/3600000)}h ${Math.floor((ms%3600000)/60000)}m`;}
+function calcDuration(s,e){if(!s||!e)return'—';return msToDur(new Date(e)-new Date(s));}
+function haversine(lat1,lon1,lat2,lon2){const R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+function locClass(t){const m={Onsite:'loc-onsite',Home:'loc-home',Outside:'loc-outside'};return m[t]||'loc-unknown';}
+function locIcon(t){const m={Onsite:'🏢',Home:'🏠',Outside:'⚠️'};return m[t]||'📍';}
+function nameToInitials(n){return n.split(' ').filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('');}
+const COLORS=['#0D7A6B','#2980B9','#8E44AD','#E67E22','#16A085','#2C3E50','#E74C3C','#27AE60'];
+function nameToColor(n){let h=0;for(const c of n){h=(h<<5)-h+c.charCodeAt(0);h|=0;}return COLORS[Math.abs(h)%COLORS.length];}
+function sanitizeText(s,max=300){return String(s||'').replace(/<[^>]*>/g,'').slice(0,max);}
+function genId(){try{return crypto.randomUUID().replace(/-/g,'').slice(0,16);}catch(_){return Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,10);}}
+
+// ── TOAST ─────────────────────────────────────────────────────
+function showToast(msg,type='info',duration=4000){
+  const c=$id('toastContainer');if(!c)return;
+  const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;
+  c.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transform='translateY(8px)';t.style.transition='all .3s';setTimeout(()=>t.remove(),300);},duration);
+}
+
+// ── THEME ─────────────────────────────────────────────────────
+function toggleTheme(){const d=document.documentElement;const isDark=d.getAttribute('data-theme')==='dark';d.setAttribute('data-theme',isDark?'':'dark');SafeStorage.setItem('aiq_theme',isDark?'light':'dark');}
+(function(){const t=SafeStorage.getItem('aiq_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();
+
+// ── AUTH TAB SWITCH ───────────────────────────────────────────
+function switchAuthTab(tab){
+  document.querySelectorAll('.auth-tab').forEach((b,i)=>b.classList.toggle('active',(tab==='login'&&i===0)||(tab==='signup'&&i===1)));
+  $id('authLoginForm').style.display=tab==='login'?'':'none';
+  $id('authSignupForm').style.display=tab==='signup'?'':'none';
+  setAuthMsg('','');
+}
+function setAuthMsg(text,type){const e=$id('authMsg');if(!e)return;e.textContent=text;e.className='auth-msg'+(type?' '+type:'');}
+
+// ── LOGIN ─────────────────────────────────────────────────────
+async function doLogin(){
+  if(!_sb){setAuthMsg('⚠ Backend unavailable','error');return;}
+  const email=($id('authEmail')?.value||'').trim(),pass=$id('authPassword')?.value||'';
+  if(!email||!pass){setAuthMsg('Please fill in all fields.','error');return;}
+  setAuthMsg('Signing in…','');$id('authLoginBtn').disabled=true;
+  try{
+    const{data,error}=await _sb.auth.signInWithPassword({email,password:pass});
+    if(error){
+      const msg=error.message||'';
+      if(msg.toLowerCase().includes('email not confirmed')||msg.toLowerCase().includes('not confirmed')){
+        setAuthMsg('⚠ Email not yet confirmed. Please check your inbox at '+email+' and click the confirmation link first.','error');
+      } else if(msg.toLowerCase().includes('invalid login')||msg.toLowerCase().includes('invalid credentials')){
+        setAuthMsg('⚠ Incorrect email or password.','error');
+      } else {
+        setAuthMsg('⚠ '+msg,'error');
+      }
+      return;
+    }
+    await onAuthSuccess(data.user);
+  }catch(e){
+    const msg = (e.message||'').toLowerCase();
+    // Detect corporate proxy / Mimecast / CORS / network block
+    const isNetworkBlock = msg.includes('failed to fetch')
+      || msg.includes('network')
+      || msg.includes('cors')
+      || msg.includes('err_failed')
+      || msg.includes('err_network')
+      || msg.includes('mimecast');
+    if(isNetworkBlock){
+      setAuthMsg('⚠ Network blocked — your corporate proxy (e.g. Mimecast) is intercepting the connection to Supabase. Try a personal hotspot, or use local mode below.','error');
+      // Show the local mode button prominently
+      const btn=$id('localModeBtn');
+      if(btn){btn.style.color='var(--warning)';btn.style.fontWeight='700';btn.textContent='→ Continue in local mode (no clock-in)';}
+    } else {
+      setAuthMsg('⚠ Network error: '+e.message,'error');
+    }
+  }finally{$id('authLoginBtn').disabled=false;}
+}
+
+async function doSignup(){
+  if(!_sb){setAuthMsg('⚠ Backend unavailable','error');return;}
+  const name=($id('authFullName')?.value||'').trim();
+  const email=($id('authEmailS')?.value||'').trim();
+  const pass=$id('authPasswordS')?.value||'';
+  const dept=($id('authDept')?.value||'').trim();
+
+  if(!name||!email||!pass){setAuthMsg('Please fill all required fields.','error');return;}
+  if(pass.length<6){setAuthMsg('Password must be at least 6 characters.','error');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){setAuthMsg('Please enter a valid email address.','error');return;}
+
+  setAuthMsg('Creating account…','');
+  const btn=$id('authSignupBtn');
+  if(btn)btn.disabled=true;
+
+  try{
+    const{data:signupData, error:signupErr} = await _sb.auth.signUp({
+      email, password:pass,
+      options:{ data:{ full_name:name, department:dept } }
+    });
+
+    // ── Detect already-registered (422 or message-based) ─────────
+    const errMsg = (signupErr?.message||'').toLowerCase();
+    const isAlready = signupErr?.status===422
+      || errMsg.includes('already registered')
+      || errMsg.includes('already been registered')
+      || errMsg.includes('user already registered')
+      // Supabase sometimes returns 200 with empty identities for duplicate emails
+      || (signupData?.user && signupData.user.identities?.length === 0 && signupData.session === null);
+
+    if(isAlready){
+      setAuthMsg('⚠ This email is already registered. Switch to Sign In tab and use your existing password.','error');
+      switchAuthTab('login');
+      const loginEmail=$id('authEmail');
+      if(loginEmail){ loginEmail.value=email; loginEmail.focus(); }
+      return;
+    }
+
+    if(signupErr){
+      setAuthMsg('⚠ Registration failed: '+(signupErr.message||JSON.stringify(signupErr)),'error');
+      return;
+    }
+
+    // ── Success: session returned immediately (confirmations OFF) ─
+    if(signupData?.session){
+      setAuthMsg('✓ Account created! Signing you in…','ok');
+      await onAuthSuccess(signupData.session.user);
+      return;
+    }
+
+    // ── Success: confirmation required ───────────────────────────
+    if(!signupData?.session){
+      setAuthMsg('✓ Account created! Check your inbox at '+email+' for a confirmation link. After confirming, come back and Sign In.','ok');
+      switchAuthTab('login');
+      const loginEmail=$id('authEmail');
+      if(loginEmail) loginEmail.value=email;
+      return;
+    }
+
+  }catch(e){
+    console.error('doSignup error:', e);
+    setAuthMsg('⚠ Network error: '+e.message,'error');
+  }finally{
+    if(btn)btn.disabled=false;
+  }
+}
+
+async function doLogout(){
+  if(!confirm('Sign out?'))return;
+  // Presence: set offline BEFORE signing out
+  if(_presenceMgr){
+    try{await _presenceMgr.logout();}catch(e){}
+    _presenceMgr=null;
+  }
+  if(_sb)await _sb.auth.signOut();
+  _sbUser=null;_sbProfile={};
+  _employeeState.clear();
+  $id('authOverlay').classList.remove('hidden');
+  setSyncBadge('','Offline');
+  setLiveIndicator('offline');
+  setConnStateBar('');
+}
+
+// ── AUTH SUCCESS ──────────────────────────────────────────────
+async function onAuthSuccess(user){
+  // Prevent double-execution if both session restore + SIGNED_IN event fire
+  if(_authInProgress||(_sbUser&&_sbUser.id===user.id))return;
+  _authInProgress=true;
+  try {
+  _sbUser=user;
+  await IAM.fetch(user.id);
+  const check=IAM.checkAccess('attendance');
+  if(!check.allowed){
+    showToast('⚠ Access restricted: '+check.reason,'error',8000);
+    if(_sb)await _sb.auth.signOut();
+    _authInProgress=false;
+    return;
+  }
+  await upsertProfile(user);
+  $id('authOverlay').classList.add('hidden');
+  const name=_sbProfile.full_name||user.email;
+  updateUserUI(name, _sbProfile.role, user.email);
+  setSyncBadge('ok','Live');
+
+  // ── Initialize PresenceManager ──────────────────────────────
+  if(_presenceMgr){ try{_presenceMgr.destroy();}catch(e){} }
+  _presenceMgr = new PresenceManager(user.id);
+  await _presenceMgr.login();
+
+  await loadTodayLog();
+  loadSites();
+  applyAttendanceRoleUI();
+  startAttClock();
+  updateTodayDateLabel();
+  loadRecentAttLogs();
+  if(_canViewTeam()){
+    $id('tabAdmin').style.display='';
+    await initAdminView();
+  }
+  } catch(e){ console.warn('onAuthSuccess error:',e); }
+  finally { _authInProgress=false; }
+}
+
+async function upsertProfile(user){
+  if(!_sb)return;
+  const meta=user.user_metadata||{};
+  const isAdmin=ADMIN_EMAILS.includes((user.email||'').toLowerCase());
+  try{
+    // Fetch existing row first (maybeSingle = no error if missing)
+    const{data,error:selErr}=await _sb.from('aiq_profiles')
+      .select('full_name,department,role,email')
+      .eq('user_id',user.id)
+      .maybeSingle();
+
+    if(selErr) console.warn('upsertProfile select:', selErr.message);
+
+    // Resolve role: IAM override → admin email → existing row → default member
+    const iamRole = IAM.getRole(user, null);
+    let role = iamRole || (isAdmin ? 'admin' : (data?.role || 'member'));
+    if(isAdmin) role = 'admin';
+    // Normalize legacy role names to what the CHECK constraint accepts
+    if(['super_admin','sys_admin'].includes(role)) role = 'admin';
+    if(['program_manager','dept_manager'].includes(role)) role = 'manager';
+    // Preserve valid special roles; unknown roles default to member
+    const VALID_ROLES = ['admin','manager','supervisor','member','employee','trainee','reports_specialist'];
+    if(!VALID_ROLES.includes(role)) role = 'member';
+
+    // Build the profile payload — single upsert handles both INSERT and UPDATE
+    const full_name = data?.full_name || meta.full_name || meta.name || user.email || '';
+    const department = data?.department || meta.department || '';
+
+    _sbProfile = { full_name, department, role };
+
+    // Single upsert — safe for both new and existing users.
+    // Only include columns that exist in aiq_profiles
+    const payload = {
+      user_id:    user.id,
+      email:      user.email,
+      full_name,
+      department,
+      role,
+    };
+
+    // aiq_profiles has no last_seen column — clean single upsert
+    const comment = '// Only include columns that exist in aiq_profiles';
+    const { error: upsertErr } = await _sb.from('aiq_profiles').upsert(
+      payload,
+      { onConflict: 'user_id', ignoreDuplicates: false }
+    );
+    if(upsertErr) console.warn('upsertProfile upsert:', upsertErr.message);
+
+  }catch(e){ console.warn('upsertProfile:', e); }
+}
+
+function updateUserUI(name, role, email){
+  setText('tbAvatar', nameToInitials(name)||'??');
+  setText('tbName', name);
+  setText('tbRole', (role||'member').charAt(0).toUpperCase()+(role||'member').slice(1));
+  const emailEl = $id('tbEmail');
+  if(emailEl) emailEl.textContent = email||'';
+}
+
+async function updatePresence(online=true){
+  // Fully handled by PresenceManager — this shim is intentionally a no-op.
+  // The old dept_profiles.is_online PATCH has been removed (causes 400 on file://).
+  if(!online && _presenceMgr){ try{await _presenceMgr.setOffline();}catch(e){} }
+}
+
+function setSyncBadge(state,label){
+  const d=$id('syncDot');if(d)d.className='sync-dot'+(state==='ok'?' ok':'');
+  setText('syncLabel',label);
+}
+
+function setLiveIndicator(state){
+  // state: 'live' | 'reconnecting' | 'offline'
+  const badge=$id('liveBadge');const dot=$id('liveDot');const lbl=$id('liveLabel');
+  if(!badge)return;
+  badge.className='live-badge '+state;
+  if(dot){dot.className='live-dot'+(state==='live'?' pulse':'');}
+  if(lbl){
+    const labels={live:'LIVE',reconnecting:'RECONNECTING',offline:'Offline'};
+    lbl.textContent=labels[state]||state;
+  }
+}
+
+function setConnStateBar(type, msg=''){
+  const bar=$id('connStateBar');if(!bar)return;
+  bar.className=type||'';
+  bar.textContent=msg;
+  bar.style.display=type?'block':'none';
+}
+
+function timeAgo(isoStr){
+  if(!isoStr) return '—';
+  const diff=Math.floor((Date.now()-new Date(isoStr).getTime())/1000);
+  if(diff<10) return 'Just now';
+  if(diff<60) return diff+'s ago';
+  if(diff<3600) return Math.floor(diff/60)+'m ago';
+  return fmtTime(isoStr);
+}
+
+// ── ROLE HELPERS ──────────────────────────────────────────────
+function _isAdmin(){
+  return ['admin','super_admin'].includes(_sbProfile.role)
+      || ADMIN_EMAILS.includes((_sbUser?.email||'').toLowerCase());
+}
+function _isManager(){
+  return _isAdmin()
+      || ['manager','program_manager','dept_manager','supervisor'].includes(_sbProfile.role);
+}
+function _isReportsSpecialist(){
+  return _sbProfile.role === 'reports_specialist';
+}
+// Who can see the Team View tab and export team data
+function _canViewTeam(){
+  return _isAdmin() || _isManager() || _isReportsSpecialist();
+}
+// Export scope: admin + reports_specialist = ALL data; managers/supervisors = own team only
+function _exportScope(){
+  if(_isAdmin() || _isReportsSpecialist()) return 'all';
+  if(_isManager()) return 'team';
+  return 'own';
+}
+
+// ── NAV ───────────────────────────────────────────────────────
+function switchTab(tab){
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+tab));
+  if(tab==='logs') loadRecentAttLogs();
+  if(tab==='admin'){
+    if(_canViewTeam()){
+      refreshPresenceDashboard();
+      if(_currentAdminView==='logs') loadTeamLogs();
+    }
+  }
+}
+
+// Refresh presence when user returns to the browser tab
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden && _sbUser && _canViewTeam()){
+    // Small delay to avoid fighting with the heartbeat
+    setTimeout(()=>refreshPresenceDashboard(), 500);
+  }
+});
+
+// ── ATTENDANCE ROLE UI ────────────────────────────────────────
+function applyAttendanceRoleUI(){
+  const isAdmin=_isAdmin(),isMgr=_isManager();
+  const gpsBtn=$id('toggle-gps'),ipBtn=$id('toggle-ip');
+  const gpsLbl=$id('gpsLockedLabel'),ipLbl=$id('ipLockedLabel');
+  if(isAdmin){
+    if(gpsBtn){gpsBtn.style.display='';gpsBtn.onclick=()=>gpsBtn.classList.toggle('on');}
+    if(ipBtn){ipBtn.style.display='';ipBtn.onclick=()=>ipBtn.classList.toggle('on');}
+    if(gpsLbl)gpsLbl.style.display='none';if(ipLbl)ipLbl.style.display='none';
+  }else{
+    if(gpsBtn){gpsBtn.classList.add('on');gpsBtn.style.opacity='.5';gpsBtn.style.cursor='default';gpsBtn.onclick=null;}
+    if(ipBtn){ipBtn.classList.add('on');ipBtn.style.opacity='.5';ipBtn.style.cursor='default';ipBtn.onclick=null;}
+    if(gpsLbl)gpsLbl.style.display='';if(ipLbl)ipLbl.style.display='';
+  }
+  const sitesCard=$id('attSitesCard');
+  if(sitesCard)sitesCard.style.display=(isAdmin||isMgr)?'':'none';
+  const addBtn=$id('attAddSiteBtn');
+  if(addBtn)addBtn.style.display=isAdmin?'':'none';
+}
+
+// ── CLOCK ─────────────────────────────────────────────────────
+function startAttClock(){
+  const update=()=>{
+    const now=new Date();
+    const el=$id('attClockFace');if(el)el.textContent=now.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',hour12:true});
+    const dl=$id('attClockDate');if(dl)dl.textContent=now.toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  };
+  update();if(!window._attClockInterval)window._attClockInterval=setInterval(update,1000);
+}
+
+function updateTodayDateLabel(){
+  setText('todayDateLabel',new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'}));
+}
+
+// ── LOAD TODAY LOG ────────────────────────────────────────────
+async function loadTodayLog(){
+  if(!_sb||!_sbUser)return;
+  const today=new Date().toISOString().split('T')[0];
+  // Auto-close stale sessions
+  try{
+    const{data:stale}=await _sb.from('aiq_attendance_logs').select('id,clock_in_time').eq('user_id',_sbUser.id).is('clock_out_time',null).lt('clock_in_time',today+'T00:00:00');
+    if(stale?.length){
+      for(const s of stale){
+        const d=s.clock_in_time.split('T')[0];
+        await _sb.from('aiq_attendance_logs').update({clock_out_time:d+'T23:59:00.000Z',user_override_reason:'Auto-closed on login'}).eq('id',s.id);
+      }
+    }
+  }catch(e){}
+  try{
+    const{data}=await _sb.from('aiq_attendance_logs').select('*').eq('user_id',_sbUser.id)
+      .gte('clock_in_time',today+'T00:00:00').lte('clock_in_time',today+'T23:59:59')
+      .order('clock_in_time',{ascending:false}).limit(1);
+    todayLog=data?.length?data[0]:null;
+    renderAttDashboard();
+  }catch(e){console.warn('loadTodayLog:',e);}
+}
+
+function renderAttDashboard(){
+  if(!todayLog)setAttStatus('not-in');
+  else if(!todayLog.clock_out_time)setAttStatus('working',todayLog);
+  else setAttStatus('done',todayLog);
+  renderTodaySummary();
+}
+
+function setAttStatus(state,log){
+  const btn=$id('mainClockBtn'),pulse=$id('attPulseWrap');
+  const heroSt=$id('attHeroStatus'),heroSub=$id('attHeroSub'),badges=$id('attBadges');
+  if(state==='not-in'){
+    attClockedIn=false;clearInterval(attWorktimer);
+    if(btn){btn.className='clock-btn btn-in';btn.textContent='▶';}
+    if(pulse)pulse.classList.add('paused');
+    if(heroSt)heroSt.textContent='Not Clocked In';
+    if(heroSub)heroSub.textContent='Press Clock In to start your shift';
+    if(badges)badges.innerHTML='';
+    setText('attBtnLabel','Clock In');setText('attIn','—');setText('attOut','—');setText('attDur','0h 0m');setText('attLoc','—');
+  }else if(state==='working'){
+    attClockedIn=true;attWorkStart=new Date(log.clock_in_time);
+    if(btn){btn.className='clock-btn btn-out';btn.textContent='⏹';}
+    if(pulse)pulse.classList.remove('paused');
+    if(heroSt)heroSt.textContent='Currently Working';
+    if(heroSub)heroSub.textContent='Clocked in at '+fmtTime(log.clock_in_time);
+    setText('attBtnLabel','Clock Out');setText('attIn',fmtTime(log.clock_in_time));setText('attOut','—');setText('attLoc',log.location_type||'—');
+    if(badges)badges.innerHTML=`<span class="loc-badge ${locClass(log.location_type)}">${locIcon(log.location_type)} ${log.location_type||'Unknown'}</span>${log.site_name?`<span class="badge badge-teal" style="margin-left:4px">🏢 ${escHtml(log.site_name)}</span>`:''}`;
+    startAttWorktimer();
+  }else if(state==='done'){
+    attClockedIn=false;clearInterval(attWorktimer);
+    if(btn){btn.className='clock-btn btn-in';btn.textContent='▶';}
+    if(pulse)pulse.classList.add('paused');
+    if(heroSt)heroSt.textContent='Clocked Out';
+    if(heroSub)heroSub.textContent='Great work today!';
+    setText('attBtnLabel','New Session');setText('attIn',fmtTime(log.clock_in_time));setText('attOut',fmtTime(log.clock_out_time));setText('attDur',calcDuration(log.clock_in_time,log.clock_out_time));setText('attLoc',log.location_type||'—');
+    if(badges)badges.innerHTML=`<span class="loc-badge ${locClass(log.location_type)}">${locIcon(log.location_type)} ${log.location_type||'Unknown'}</span>`;
+  }
+}
+
+function startAttWorktimer(){
+  clearInterval(attWorktimer);
+  const update=()=>{if(attWorkStart)setText('attDur',msToDur(Date.now()-attWorkStart.getTime()));};
+  update();attWorktimer=setInterval(update,10000);
+}
+
+function renderTodaySummary(){
+  const el=$id('todaySummaryBody');if(!el)return;
+  if(!todayLog){
+    el.innerHTML='<div class="empty-state" style="padding:16px"><div class="empty-icon">⏰</div><div class="empty-sub">No activity logged yet today</div></div>';
+    return;
+  }
+  const dur=todayLog.clock_out_time?calcDuration(todayLog.clock_in_time,todayLog.clock_out_time):'Ongoing';
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px">
+    <div style="background:var(--bg);border-radius:10px;padding:12px 16px">
+      <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Clock In</div>
+      <div style="font-size:18px;font-weight:800;color:var(--heading);font-family:'Plus Jakarta Sans',sans-serif">${fmtTime(todayLog.clock_in_time)}</div>
+    </div>
+    <div style="background:var(--bg);border-radius:10px;padding:12px 16px">
+      <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Clock Out</div>
+      <div style="font-size:18px;font-weight:800;color:var(--heading);font-family:'Plus Jakarta Sans',sans-serif">${todayLog.clock_out_time?fmtTime(todayLog.clock_out_time):'<span style="color:var(--success);font-size:14px;font-weight:700">Ongoing</span>'}</div>
+    </div>
+    <div style="background:var(--bg);border-radius:10px;padding:12px 16px">
+      <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Duration</div>
+      <div style="font-size:18px;font-weight:800;color:var(--heading);font-family:'Plus Jakarta Sans',sans-serif">${dur}</div>
+    </div>
+    <div style="background:var(--bg);border-radius:10px;padding:12px 16px">
+      <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px">Location</div>
+      <span class="loc-badge ${locClass(todayLog.location_type)}">${locIcon(todayLog.location_type)} ${todayLog.location_type||'Unknown'}</span>
+      ${todayLog.site_name?`<div style="font-size:11px;color:var(--muted);margin-top:4px">🏢 ${escHtml(todayLog.site_name)}</div>`:''}
+    </div>
+  </div>
+  ${todayLog.detection_method?`<div style="margin-top:10px;font-size:11px;color:var(--muted)">Detection method: <span class="detect-badge">${todayLog.detection_method}</span></div>`:''}`;
+}
+
+// ── RECENT LOGS ───────────────────────────────────────────────
+async function loadRecentAttLogs(){
+  if(!_sb||!_sbUser)return;
+  const wrap=$id('attRecentWrap');if(!wrap)return;
+  wrap.innerHTML='<div class="empty-state"><div class="empty-sub">Loading…</div></div>';
+  const days=parseInt($id('logsRangeFilter')?.value)||7;
+  try{
+    const{data}=await _sb.from('aiq_attendance_logs').select('*').eq('user_id',_sbUser.id)
+      .gte('clock_in_time',new Date(Date.now()-days*864e5).toISOString())
+      .order('clock_in_time',{ascending:false}).limit(60);
+    if(!data?.length){wrap.innerHTML='<div class="empty-state" style="padding:24px"><div class="empty-icon">📭</div><div class="empty-sub">No records in this range</div></div>';updateLogsKPI([]);return;}
+    updateLogsKPI(data);
+    const todayStr=new Date().toISOString().split('T')[0];
+    wrap.innerHTML=`<div class="tbl-wrap"><table>
+      <thead><tr><th>Date</th><th>In</th><th>Out</th><th>Duration</th><th>Type</th><th>Site</th><th>Method</th><th></th></tr></thead>
+      <tbody>${data.map(r=>{
+        const rowDate=r.clock_in_time.split('T')[0];
+        const isStale=!r.clock_out_time&&rowDate!==todayStr;
+        const isCurrent=!r.clock_out_time&&rowDate===todayStr;
+        const outCell=r.clock_out_time?fmtTime(r.clock_out_time):isCurrent?'<span style="color:var(--success);font-weight:600">Ongoing</span>':'<span style="color:var(--warning);font-weight:600">⚠ Not closed</span>';
+        const durCell=r.clock_out_time?calcDuration(r.clock_in_time,r.clock_out_time):isStale?'<span style="color:var(--warning);font-size:11px">Missing</span>':'—';
+        const rowStyle=isStale?'background:rgba(230,126,34,.04);':'';
+        const actionCell=isStale?`<td><button class="btn btn-sm" style="font-size:10px;padding:2px 8px;background:var(--warning);color:#fff;border:none;cursor:pointer" onclick="attCloseStaleSession('${r.id}','${rowDate}')">Close</button></td>`:'<td></td>';
+        return`<tr style="${rowStyle}">
+          <td>${fmtDate(r.clock_in_time)}${isStale?'<div style="font-size:9.5px;color:var(--warning);font-weight:600">Missed clock-out</div>':''}</td>
+          <td>${fmtTime(r.clock_in_time)}</td><td>${outCell}</td><td>${durCell}</td>
+          <td><span class="loc-badge ${locClass(r.location_type)}">${locIcon(r.location_type)} ${r.location_type||'—'}</span></td>
+          <td>${r.site_name?`<span class="badge badge-teal" style="font-size:10px">🏢 ${escHtml(r.site_name)}</span>`:'—'}</td>
+          <td><span class="detect-badge">${r.detection_method||'—'}</span></td>
+          ${actionCell}
+        </tr>`;
+      }).join('')}</tbody></table></div>`;
+  }catch(e){wrap.innerHTML=`<div class="empty-state" style="padding:24px"><div class="empty-sub">${e.message}</div></div>`;}
+}
+
+function updateLogsKPI(data){
+  const daysPresent=new Set(data.filter(r=>r.clock_in_time).map(r=>r.clock_in_time.split('T')[0])).size;
+  const withDur=data.filter(r=>r.clock_in_time&&r.clock_out_time);
+  const avgMs=withDur.length?withDur.reduce((s,r)=>s+(new Date(r.clock_out_time)-new Date(r.clock_in_time)),0)/withDur.length:0;
+  const avgH=avgMs?`${Math.floor(avgMs/3600000)}h ${Math.floor((avgMs%3600000)/60000)}m`:'—';
+  const onsite=data.filter(r=>r.location_type==='Onsite').length;
+  const onsiteRate=data.length?Math.round(onsite/data.length*100)+'%':'—';
+  setText('kpiTotalDays',daysPresent);
+  setText('kpiAvgHours',avgH);
+  setText('kpiOnsiteRate',onsiteRate);
+}
+
+async function attCloseStaleSession(id,dateStr){
+  if(!_sb||!_sbUser)return;
+  if(!confirm(`Close the missed session from ${dateStr}?\n\nIt will be auto-closed at 11:59 PM of that day.`))return;
+  const autoOut=dateStr+'T23:59:00.000Z';
+  try{
+    const{error}=await _sb.from('aiq_attendance_logs').update({clock_out_time:autoOut,user_override_reason:'Manually closed stale session'}).eq('id',id);
+    if(error)throw error;
+    showToast('✅ Session closed','success');
+    loadRecentAttLogs();
+    loadTodayLog();
+  }catch(e){showToast('❌ Could not close: '+e.message,'error');}
+}
+
+// ── CSV EXPORT ────────────────────────────────────────────────
+// ── CSV DOWNLOAD HELPER ───────────────────────────────────────
+// Uses Blob + createObjectURL which works on file:// protocol.
+// Plain anchor.click() with data: URI is blocked by Edge on file://.
+function downloadCSV(csvContent, filename){
+  try{
+    const blob = new Blob([csvContent], {type:'text/csv;charset=utf-8;'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); document.body.removeChild(a); }, 1000);
+  }catch(e){
+    showToast('Download failed: '+e.message,'error');
+    console.error('downloadCSV:', e);
+  }
+}
+
+function buildCSV(headers, rows){
+  return [headers, ...rows]
+    .map(r => r.map(c => `"${String(c==null?'':c).replace(/"/g,'""')}"`).join(','))
+    .join('\n');
+}
+
+async function exportAttCSV(){
+  if(!_sb||!_sbUser){showToast('Login required','warn');return;}
+  const days=parseInt($id('logsRangeFilter')?.value)||7;
+  try{
+    const{data,error}=await _sb.from('aiq_attendance_logs').select('*')
+      .eq('user_id',_sbUser.id)
+      .gte('clock_in_time',new Date(Date.now()-days*864e5).toISOString())
+      .order('clock_in_time',{ascending:false});
+    if(error) throw error;
+    if(!data?.length){showToast('No records to export','info');return;}
+    const hdr=['Date','Clock In','Clock Out','Duration (h:m)','Location Type','Site','Detection Method','Override Reason'];
+    const rows=data.map(r=>[
+      fmtDate(r.clock_in_time),
+      fmtTime(r.clock_in_time),
+      r.clock_out_time ? fmtTime(r.clock_out_time) : 'Ongoing',
+      r.clock_out_time ? calcDuration(r.clock_in_time,r.clock_out_time) : '',
+      r.location_type||'',
+      r.site_name||'',
+      r.detection_method||'',
+      r.user_override_reason||''
+    ]);
+    const fname=`attendance_${(_sbProfile.full_name||'export').replace(/\s+/g,'_')}_${new Date().toISOString().split('T')[0]}.csv`;
+    downloadCSV(buildCSV(hdr,rows), fname);
+    showToast('✅ CSV exported — check your Downloads folder','success',4000);
+  }catch(e){showToast('Export failed: '+e.message,'error');console.error('exportAttCSV:',e);}
+}
+
+// ── HOME LOCATION ─────────────────────────────────────────────
+function loadHomeProfile(){
+  try{const s=SafeStorage.getItem('rioone_home_profile');if(s){const p=JSON.parse(s);attProfile.homeLat=p.homeLat||null;attProfile.homeLng=p.homeLng||null;attProfile.homeName=p.homeName||'My Home';attProfile.homeAddr=p.homeAddr||'';}}catch(e){}
+  renderHomeCard();
+}
+
+function renderHomeCard(){
+  const empty=$id('attHomeEmpty'),info=$id('attHomeInfo');
+  if(!attProfile.homeLat||!attProfile.homeLng){
+    if(empty)empty.style.display='';if(info)info.style.display='none';
+    const btn=$id('attSetHomeBtn');if(btn)btn.textContent='📍 Set Home Location';
+    return;
+  }
+  if(empty)empty.style.display='none';if(info)info.style.display='';
+  setText('homeDisplayName',attProfile.homeName||'My Home');
+  setText('homeDisplayAddr',attProfile.homeAddr||'');
+  setText('homeDisplayCoords',attProfile.homeLat.toFixed(6)+', '+attProfile.homeLng.toFixed(6));
+  const btn=$id('attSetHomeBtn');if(btn)btn.textContent='✏ Update';
+}
+
+function openHomeModal(isEdit){
+  const m=$id('homeModal');if(!m)return;
+  const errEl=$id('homeErr');if(errEl)errEl.classList.add('hidden');
+  if(isEdit&&attProfile.homeLat){
+    const hn=$id('homeName');if(hn)hn.value=attProfile.homeName||'My Home';
+    const ha=$id('homeAddress');if(ha)ha.value=attProfile.homeAddr||'';
+    const hl=$id('homeLat');if(hl)hl.value=attProfile.homeLat;
+    const hlng=$id('homeLng');if(hlng)hlng.value=attProfile.homeLng;
+  }else{
+    const hn=$id('homeName');if(hn)hn.value='My Home';
+    const ha=$id('homeAddress');if(ha)ha.value='';
+    const hl=$id('homeLat');if(hl)hl.value='';
+    const hlng=$id('homeLng');if(hlng)hlng.value='';
+  }
+  m.classList.remove('hidden');
+}
+
+async function captureHomeGPS(){
+  const btn=$id('homeGPSBtn');
+  if(btn){btn.textContent='⏳ Detecting GPS…';btn.disabled=true;}
+  if(!navigator.geolocation){showToast('GPS not supported','error');if(btn){btn.textContent='📡 Use My Current GPS Location';btn.disabled=false;}return;}
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      const hl=$id('homeLat');if(hl)hl.value=pos.coords.latitude.toFixed(6);
+      const hlng=$id('homeLng');if(hlng)hlng.value=pos.coords.longitude.toFixed(6);
+      if(btn){btn.textContent='✅ GPS Captured!';btn.disabled=false;}
+      setTimeout(()=>{if(btn)btn.textContent='📡 Use My Current GPS Location';},2500);
+    },
+    err=>{showToast('GPS error: '+err.message,'error');if(btn){btn.textContent='📡 Use My Current GPS Location';btn.disabled=false;}},
+    {timeout:12000,maximumAge:0}
+  );
+}
+
+function saveHomeLocation(){
+  const name=($id('homeName')?.value||'').trim()||'My Home';
+  const addr=($id('homeAddress')?.value||'').trim();
+  const lat=parseFloat($id('homeLat')?.value);
+  const lng=parseFloat($id('homeLng')?.value);
+  const errEl=$id('homeErr');
+  if(isNaN(lat)||isNaN(lng)){if(errEl){errEl.textContent='Latitude and Longitude are required.';errEl.classList.remove('hidden');}return;}
+  if(lat<-90||lat>90||lng<-180||lng>180){if(errEl){errEl.textContent='Invalid coordinates.';errEl.classList.remove('hidden');}return;}
+  attProfile.homeLat=lat;attProfile.homeLng=lng;attProfile.homeName=name;attProfile.homeAddr=addr;
+  try{SafeStorage.setItem('rioone_home_profile',JSON.stringify({homeLat:lat,homeLng:lng,homeName:name,homeAddr:addr}));}catch(e){}
+  $id('homeModal').classList.add('hidden');
+  renderHomeCard();showToast('🏠 Home location saved!','success');
+}
+
+function clearHomeLocation(){
+  if(!confirm('Remove your home location?'))return;
+  attProfile.homeLat=null;attProfile.homeLng=null;attProfile.homeName=null;attProfile.homeAddr=null;
+  try{SafeStorage.removeItem('rioone_home_profile');}catch(e){}
+  renderHomeCard();showToast('Home location removed','info');
+}
+
+// ── OFFICE SITES ──────────────────────────────────────────────
+function loadSites(){
+  if(_sb&&_sbUser){
+    _sb.from('aiq_sites').select('*').order('name')
+      .then(({data})=>{
+        if(data&&data.length>0){allSites=data;}
+        else{
+          allSites=[...SAGILITY_SITES_DEFAULT];
+          SAGILITY_SITES_DEFAULT.forEach(s=>{_sb.from('aiq_sites').upsert({name:s.name,address:s.address,lat:s.lat,lng:s.lng,radius_meters:s.radius_meters},{onConflict:'aiq_sites_name_key',ignoreDuplicates:true}).catch(()=>{});});
+        }
+        renderSiteGrid();loadHomeProfile();
+      }).catch(()=>{allSites=[...SAGILITY_SITES_DEFAULT];renderSiteGrid();loadHomeProfile();});
+  }else{
+    try{const s=SafeStorage.getItem('rioone_sites');allSites=s?JSON.parse(s):[...SAGILITY_SITES_DEFAULT];}catch(e){allSites=[...SAGILITY_SITES_DEFAULT];}
+    renderSiteGrid();loadHomeProfile();
+  }
+}
+
+function renderSiteGrid(){
+  const grid=$id('attSiteGrid');if(!grid)return;
+  const isAdmin=_isAdmin();
+  if(!allSites.length){grid.innerHTML='<div class="empty-state"><div class="empty-icon">🏢</div><div class="empty-sub">No office sites configured.</div></div>';return;}
+  grid.innerHTML=allSites.map(s=>`
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px">
+      <div style="font-size:13px;font-weight:700;color:var(--heading);margin-bottom:4px">🏢 ${escHtml(s.name)}</div>
+      ${s.address?`<div style="font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.4">${escHtml(s.address)}</div>`:''}
+      <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:10.5px;color:var(--muted);margin-bottom:${isAdmin?'10':'0'}px">
+        <span>📍 ${s.lat}, ${s.lng}</span><span>📏 ${s.radius_meters}m radius</span>
+      </div>
+      ${isAdmin?`<div style="display:flex;gap:6px">
+        <button class="btn btn-secondary btn-sm" onclick="editSite('${escHtml(String(s.id||s.name))}')">✎ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteSite('${escHtml(String(s.id||s.name))}')">✕ Remove</button>
+      </div>`:''}</div>`).join('');
+}
+
+function openSiteModal(site){
+  const modal=$id('siteModal');if(!modal)return;
+  setText('siteModalTitle',site?'Edit Office Site':'Add Office Site');
+  $id('siteRowId').value=site?(site.id||site.name):'';
+  $id('siteName').value=site?site.name:'';
+  $id('siteAddress').value=site?(site.address||''):'';
+  $id('siteLat').value=site?site.lat:'';
+  $id('siteLng').value=site?site.lng:'';
+  $id('siteRadius').value=site?site.radius_meters:200;
+  const err=$id('siteErr');if(err)err.classList.add('hidden');
+  modal.classList.remove('hidden');
+  $id('siteName').focus();
+}
+function editSite(idOrName){const site=allSites.find(s=>String(s.id||s.name)===idOrName);if(site)openSiteModal(site);}
+
+async function saveSite(){
+  const name=sanitizeText(($id('siteName')?.value||'').trim(),120);
+  const address=sanitizeText(($id('siteAddress')?.value||'').trim(),300);
+  const lat=parseFloat($id('siteLat')?.value);
+  const lng=parseFloat($id('siteLng')?.value);
+  const radius=parseInt($id('siteRadius')?.value)||200;
+  const rowId=$id('siteRowId')?.value||'';
+  const err=$id('siteErr');
+  if(!name){if(err){err.textContent='Site name is required.';err.classList.remove('hidden');}return;}
+  if(isNaN(lat)||isNaN(lng)){if(err){err.textContent='Valid coordinates are required.';err.classList.remove('hidden');}return;}
+  const payload={name,address,lat,lng,radius_meters:radius};
+  let savedId=rowId;
+  if(_sb&&_sbUser){
+    try{
+      if(rowId&&!rowId.startsWith('site-')){await _sb.from('aiq_sites').update(payload).eq('id',rowId);}
+      else{const{data}=await _sb.from('aiq_sites').insert(payload).select().single();if(data)savedId=data.id;}
+    }catch(e){console.warn('saveSite:',e);}
+  }
+  if(rowId){const idx=allSites.findIndex(s=>String(s.id||s.name)===rowId);if(idx>=0)allSites[idx]={...allSites[idx],...payload,id:savedId||allSites[idx].id};else allSites.push({id:savedId||genId(),...payload});}
+  else allSites.push({id:savedId||genId(),...payload});
+  try{SafeStorage.setItem('rioone_sites',JSON.stringify(allSites));}catch(e){}
+  $id('siteModal').classList.add('hidden');renderSiteGrid();showToast(`✓ Site "${name}" saved`,'success');
+}
+
+async function deleteSite(idOrName){
+  const site=allSites.find(s=>String(s.id||s.name)===idOrName);
+  if(!site||!confirm(`Delete "${site.name}"?`))return;
+  if(_sb&&_sbUser&&site.id&&!String(site.id).startsWith('site-')){try{await _sb.from('aiq_sites').delete().eq('id',site.id);}catch(e){}}
+  allSites=allSites.filter(s=>String(s.id||s.name)!==idOrName);
+  try{SafeStorage.setItem('rioone_sites',JSON.stringify(allSites));}catch(e){}
+  renderSiteGrid();showToast('🗑 Site removed','info');
+}
+
+// ── LOCATION DETECTION ────────────────────────────────────────
+async function initiateClockAction(){
+  clockAction=attClockedIn?'out':'in';
+  const m=$id('locationModal');if(!m)return;
+  m.classList.remove('hidden');
+  setText('locModalTitle',`Clock ${clockAction==='in'?'In':'Out'} — Detecting Location`);
+  setText('locModalSub','Running smart location detection…');
+  show('detectSteps');hide('detectResult');
+  ['gps','site','home','ip'].forEach(s=>{
+    const el=$id('step-'+s);if(el)el.className='detect-step';
+    const st=$id('step-'+s+'-status');if(st){st.textContent='Waiting';st.className='step-status';}
+  });
+  detectedLocation=null;detectedMethod=null;detectedSiteName=null;gpsVerified=false;
+  if(clockAction==='out'){
+    $id('confirmClockBtn').style.display='';
+    setText('confirmClockLabel','Confirm Clock Out');
+    hide('detectSteps');show('detectResult');
+    if($id('locOverride'))$id('locOverride').innerHTML='<option value="auto">Clock out now</option>';
+    hide('overrideSection');hide('gpsWarnBox');
+    if($id('resultLocText'))$id('resultLocText').textContent='Clocking out';
+    if($id('resultEmoji'))$id('resultEmoji').textContent='👋';
+    return;
+  }
+  await runDetection();
+}
+
+function setStep(name,state,statusText,ok){
+  const el=$id('step-'+name);if(el)el.className='detect-step '+(state||'');
+  const st=$id('step-'+name+'-status');if(!st)return;
+  st.textContent=statusText;
+  st.className='step-status'+(state==='done'&&ok?' ok':state==='failed'?' fail':' running');
+}
+
+async function runDetection(){
+  setStep('gps','active','Requesting…');
+  const gps=await detectGPS();
+  if(gps.success){
+    gpsVerified=true;setStep('gps','done','Got coordinates',true);setStep('site','active','Checking sites…');
+    const siteMatch=findMatchingSite(gps.lat,gps.lng);
+    setStep('home','active','Checking home…');
+    const homeMatch=isNearHome(gps.lat,gps.lng);
+    if(siteMatch){setStep('site','done',siteMatch.name,true);setStep('home','done',homeMatch?'Also near home':'Not home');detectedLocation='Onsite';detectedMethod='GPS';detectedSiteName=siteMatch.name;}
+    else if(homeMatch){setStep('site','done','Not at any office site');setStep('home','done','Home match',true);detectedLocation='Home';detectedMethod='GPS';detectedSiteName=null;}
+    else{setStep('site','done','Not at any office site');setStep('home','done','Not home');detectedLocation='Outside';detectedMethod='GPS';detectedSiteName=null;}
+    showDetectionResult();return;
+  }
+  gpsVerified=false;setStep('gps','failed',gps.error||'Unavailable');
+  setStep('ip','active','Checking…');
+  const ip=await detectByIP();
+  setStep('site','done','GPS needed');setStep('home','done','GPS needed');
+  if(ip.success){setStep('ip','done','IP resolved',true);detectedLocation='Outside';detectedMethod='IP';}
+  else{setStep('ip','failed','Unavailable');detectedLocation='Outside';detectedMethod='Manual';}
+  showDetectionResult(detectedMethod==='Manual');
+}
+
+function findMatchingSite(lat,lng){return allSites.find(s=>haversine(lat,lng,s.lat,s.lng)<=s.radius_meters)||null;}
+function isNearHome(lat,lng){if(!attProfile.homeLat||!attProfile.homeLng)return false;return haversine(lat,lng,attProfile.homeLat,attProfile.homeLng)<=150;}
+
+async function detectGPS(){
+  return new Promise(resolve=>{
+    if(!navigator.geolocation||!$id('toggle-gps')?.classList.contains('on')){resolve({success:false,error:'Disabled'});return;}
+    navigator.geolocation.getCurrentPosition(
+      pos=>resolve({success:true,lat:pos.coords.latitude,lng:pos.coords.longitude}),
+      err=>resolve({success:false,error:err.message}),
+      {timeout:9000,maximumAge:30000}
+    );
+  });
+}
+
+async function detectByIP(){
+  if(!$id('toggle-ip')?.classList.contains('on'))return{success:false};
+  try{const r=await fetch('https://api.ipify.org?format=json');const d=await r.json();return{success:true,ip:d.ip};}catch(e){return{success:false};}
+}
+
+function showDetectionResult(isManual){
+  hide('detectSteps');show('detectResult');
+  const gpsWarn=$id('gpsWarnBox');
+  if(detectedMethod==='IP'||detectedMethod==='Manual'){if(gpsWarn)gpsWarn.style.display='';}else{if(gpsWarn)gpsWarn.style.display='none';}
+  const onsiteBlocked=gpsVerified&&detectedLocation!=='Onsite';
+  const ovEl=$id('locOverride');
+  if(ovEl)ovEl.innerHTML=`
+    <option value="auto">✅ Use Detected: ${detectedLocation||'Unknown'}${detectedSiteName?' @ '+detectedSiteName:''}</option>
+    ${onsiteBlocked?`<option value="onsite-blocked" disabled>🚫 Onsite — not available (GPS off-site)</option>`:`<option value="Onsite">Override → Onsite 🏢</option>`}
+    <option value="Home">Override → Home 🏠</option>
+    <option value="Outside">Override → Outside ⚠️</option>`;
+  hide('overrideSection');if($id('overrideReason'))$id('overrideReason').value='';
+  const onsiteNote=$id('onsiteBlockedNote');if(onsiteNote)onsiteNote.style.display=onsiteBlocked?'':'none';
+  setText('locModalTitle',isManual?'Confirm Work Location':'Location Detected');
+  setText('locModalSub',isManual?"Couldn't auto-detect. Please select your location.":'Review and confirm to proceed.');
+  setText('resultLocText',(detectedLocation||'Unknown')+(detectedSiteName?' — '+detectedSiteName:''));
+  const icons={Onsite:'🏢',Home:'🏠',Outside:'⚠️'};
+  if($id('resultEmoji'))$id('resultEmoji').textContent=icons[detectedLocation]||'📍';
+  const mb=$id('resultMethodBadge');if(mb)mb.textContent=detectedMethod||'Manual';
+  const sb=$id('resultSiteBadge');if(sb){sb.textContent=detectedSiteName?'🏢 '+detectedSiteName:'';sb.style.display=detectedSiteName?'':'none';}
+  const ccBtn=$id('confirmClockBtn');if(ccBtn)ccBtn.style.display='';
+  setText('confirmClockLabel',clockAction==='in'?'Confirm Clock In':'Confirm Clock Out');
+}
+
+function handleOverrideChange(){
+  const v=$id('locOverride')?.value;
+  if(v==='onsite-blocked'){if($id('locOverride'))$id('locOverride').value='auto';hide('overrideSection');return;}
+  if(v&&v!=='auto')show('overrideSection');else{hide('overrideSection');if($id('overrideReason'))$id('overrideReason').value='';}
+}
+
+async function confirmClock(){
+  const override=$id('locOverride')?.value;
+  if(override==='Onsite'&&gpsVerified&&detectedLocation!=='Onsite'){showToast('🚫 Cannot override to Onsite — GPS confirms off-site.','error',6000);return;}
+  const reason=$id('overrideReason')?.value.trim();
+  const finalLoc=override==='auto'?detectedLocation:override;
+  if(override&&override!=='auto'&&!reason){showToast('Please provide a reason for the override','error');return;}
+  const btn=$id('confirmClockBtn');if(btn)btn.disabled=true;setText('confirmClockLabel','Saving…');
+  if(clockAction==='in')await doClockIn(finalLoc,override!=='auto',reason);
+  else await doClockOut();
+  if(btn)btn.disabled=false;
+  closeLocationModal();
+}
+
+async function doClockIn(loc,isOverride,reason){
+  if(!_sb||!_sbUser){showToast('⚠ Login required to clock in','warn');return;}
+  const site=detectedSiteName?allSites.find(s=>s.name===detectedSiteName):null;
+
+  // Auto-close any stale open sessions from previous days
+  try{
+    const todayStr=new Date().toISOString().split('T')[0];
+    const{data:staleSessions}=await _sb.from('aiq_attendance_logs')
+      .select('id,clock_in_time').eq('user_id',_sbUser.id)
+      .is('clock_out_time',null).lt('clock_in_time',todayStr+'T00:00:00');
+    if(staleSessions?.length){
+      for(const s of staleSessions){
+        const staleDate=s.clock_in_time.split('T')[0];
+        await _sb.from('aiq_attendance_logs').update({
+          clock_out_time:staleDate+'T23:59:00.000Z',
+          user_override_reason:'Auto-closed: new session started'
+        }).eq('id',s.id);
+      }
+    }
+  }catch(e){ console.warn('stale session close:',e); }
+
+  try{
+    // Build insert payload — only include columns confirmed in the schema
+    const payload = {
+      user_id:      _sbUser.id,
+      clock_in_time: new Date().toISOString(),
+      location_type: loc || 'Unknown',
+      site_id:       site?.id || null,
+      site_name:     detectedSiteName || null,
+      detection_method: isOverride ? 'Manual' : (detectedMethod || 'Manual'),
+    };
+    // Add optional columns only if they exist (safe — Supabase ignores unknown cols in insert)
+    if(isOverride && reason) payload.user_override_reason = reason;
+    payload.confirmed_by_user = true;
+
+    // INSERT without .single() to avoid 406 from RLS on the select-back
+    const{error:insertErr} = await _sb.from('aiq_attendance_logs').insert(payload);
+    if(insertErr) throw insertErr;
+
+    // Fetch the newly created record separately (avoids .single() 406)
+    const todayStr = new Date().toISOString().split('T')[0];
+    const{data:newLog, error:fetchErr} = await _sb.from('aiq_attendance_logs')
+      .select('*')
+      .eq('user_id', _sbUser.id)
+      .is('clock_out_time', null)
+      .gte('clock_in_time', todayStr+'T00:00:00')
+      .order('clock_in_time', {ascending:false})
+      .limit(1)
+      .maybeSingle();
+
+    const logData = newLog || { ...payload, id: null };
+    todayLog = logData;
+    setAttStatus('working', logData);
+    renderTodaySummary();
+    showToast('✅ Clocked In — '+loc+(detectedSiteName?' @ '+detectedSiteName:''),'success');
+
+    // Update presence clocked_in flag
+    if(_presenceMgr && !_presenceMgr._presenceTableMissing){
+      try{ await _sb.from('aiq_presence').update({clocked_in:true}).eq('user_id',_sbUser.id); }catch(e){}
+    }
+
+  }catch(e){
+    console.error('doClockIn error:', e);
+    showToast('❌ Clock In failed: '+e.message,'error');
+  }
+}
+
+async function doClockOut(){
+  if(!todayLog){showToast('No active session','warn');return;}
+  if(!_sb||!_sbUser){
+    todayLog={...todayLog,clock_out_time:new Date().toISOString()};
+    setAttStatus('done',todayLog);renderTodaySummary();return;
+  }
+  try{
+    const clockOutTime = new Date().toISOString();
+    // Use id if available, otherwise match by user+open session
+    let updateQuery = _sb.from('aiq_attendance_logs').update({clock_out_time:clockOutTime});
+    if(todayLog.id){
+      updateQuery = updateQuery.eq('id', todayLog.id);
+    } else {
+      updateQuery = updateQuery.eq('user_id',_sbUser.id).is('clock_out_time',null);
+    }
+    const{error} = await updateQuery;
+    if(error) throw error;
+
+    todayLog = {...todayLog, clock_out_time: clockOutTime};
+    setAttStatus('done', todayLog);
+    renderTodaySummary();
+    showToast('✅ Clocked Out — Have a great day!','success');
+
+    // Update presence clocked_in flag
+    if(_presenceMgr && !_presenceMgr._presenceTableMissing){
+      try{ await _sb.from('aiq_presence').update({clocked_in:false}).eq('user_id',_sbUser.id); }catch(e){}
+    }
+
+  }catch(e){
+    console.error('doClockOut error:', e);
+    showToast('❌ Clock Out failed: '+e.message,'error');
+  }
+}
+
+function closeLocationModal(){$id('locationModal')?.classList.add('hidden');}
+
+// ══════════════════════════════════════════════════════════════
+//  REALTIME EVENT PROCESSOR
+// ══════════════════════════════════════════════════════════════
+function handleRealtimeEvent(type, payload){
+  if(type==='presence'){
+    handlePresenceUpdate(payload);
+  } else if(type==='attendance'){
+    handleAttendanceUpdate(payload);
+  }
+}
+
+function handlePresenceUpdate(payload){
+  const rec = payload.new || payload.old;
+  if(!rec||!rec.user_id) return;
+  const uid = rec.user_id;
+  // Update employee state map
+  let emp = _employeeState.get(uid) || {};
+  emp.presence = {
+    status:           rec.status||'offline',
+    connection_state: rec.connection_state||'disconnected',
+    last_seen:        rec.last_seen,
+    last_activity:    rec.last_activity,
+    session_id:       rec.session_id,
+  };
+  _employeeState.set(uid, emp);
+
+  // Update individual card without full re-render
+  updateEmployeeCard(uid);
+  updatePresenceKPIs();
+
+  // Activity feed
+  const profile = _allMembers.find(m=>m.user_id===uid);
+  const name = profile?.full_name || uid.slice(0,8)+'…';
+  if(payload.eventType==='INSERT'||rec.status==='online'){
+    if(rec.status==='online') addActivityEntry('LOGIN','🟢',name,'Logged in');
+  } else if(rec.status==='offline'){
+    addActivityEntry('LOGOUT','🔴',name,'Went offline');
+  } else if(rec.status==='away'){
+    addActivityEntry('AWAY','🟡',name,'Now away');
+  }
+}
+
+function handleAttendanceUpdate(payload){
+  const rec = payload.new || payload.old;
+  if(!rec||!rec.user_id) return;
+  const uid = rec.user_id;
+  let emp = _employeeState.get(uid) || {};
+  emp.attendance = {
+    clocked_in:     !rec.clock_out_time,
+    clock_in_time:  rec.clock_in_time,
+    clock_out_time: rec.clock_out_time,
+    location_type:  rec.location_type,
+    site_name:      rec.site_name,
+    id:             rec.id,
+  };
+  _employeeState.set(uid, emp);
+
+  // If it's the current user's own record, refresh their attendance UI
+  if(_sbUser && uid===_sbUser.id){ loadTodayLog(); }
+
+  // Re-render the specific card and update all KPIs immediately
+  updateEmployeeCard(uid);
+  updatePresenceKPIs();
+
+  const profile = _allMembers.find(m=>m.user_id===uid);
+  const name = profile?.full_name || uid.slice(0,8)+'…';
+  if(!rec.clock_out_time && payload.eventType!=='DELETE'){
+    addActivityEntry('CLOCK_IN','🟢',name,'Clocked in'+(rec.location_type?' — '+rec.location_type:''));
+  } else if(rec.clock_out_time){
+    addActivityEntry('CLOCK_OUT','⏹',name,'Clocked out');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ACTIVITY FEED
+// ══════════════════════════════════════════════════════════════
+function addActivityEntry(type, icon, name, detail){
+  const entry = {type, icon, name, detail, time: new Date()};
+  _activityLog.unshift(entry);
+  if(_activityLog.length>100) _activityLog.pop();
+  renderActivityFeed();
+}
+
+function renderActivityFeed(){
+  const el=$id('activityFeedBody');if(!el)return;
+  if(!_activityLog.length){
+    el.innerHTML='<div class="empty-state" style="padding:16px"><div class="empty-sub">No activity yet</div></div>';return;
+  }
+  el.innerHTML=`<div class="activity-feed">${_activityLog.map(e=>`
+    <div class="activity-item">
+      <span class="activity-time">${e.time.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',hour12:true})}</span>
+      <span class="activity-icon">${e.icon}</span>
+      <span class="activity-text"><strong>${escHtml(e.name)}</strong> ${escHtml(e.detail)}</span>
+    </div>`).join('')}</div>`;
+}
+
+function clearActivityFeed(){_activityLog=[];renderActivityFeed();}
+
+// ══════════════════════════════════════════════════════════════
+//  ADMIN VIEW INITIALIZATION
+// ══════════════════════════════════════════════════════════════
+async function initAdminView(){
+  // Phase 1: Initial data load
+  await loadTeamMembers();
+  await fetchAllPresence();
+  await fetchTodayAttendance();   // ← seed attendance on first load
+  await loadTeamLogs();
+  // Render
+  renderPresenceDashboard();
+  updatePresenceKPIs();
+  setText('presenceLastSync','Last sync: '+new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',hour12:true}));
+}
+
+// Fetch today's active attendance for ALL team members and seed _employeeState
+// Called on init, reconcile, and presence dashboard refresh.
+// Always overwrites attendance state (never skips) so Realtime + DB stay in sync.
+async function fetchTodayAttendance(){
+  if(!_sb||!_sbUser||!_canViewTeam()) return;
+  try{
+    const today = new Date().toISOString().split('T')[0];
+    const{data, error} = await _sb.from('aiq_attendance_logs')
+      .select('user_id, id, clock_in_time, clock_out_time, location_type, site_name')
+      .gte('clock_in_time', today+'T00:00:00')
+      .order('clock_in_time', {ascending:false});
+    if(error) throw error;
+    if(!data) return;
+
+    // Build a map of user_id → most recent record today
+    const latestPerUser = new Map();
+    data.forEach(r=>{
+      if(!latestPerUser.has(r.user_id)) latestPerUser.set(r.user_id, r);
+    });
+
+    // Update ALL members — those with no record get clocked_in:false explicitly
+    _allMembers.forEach(m=>{
+      let emp = _employeeState.get(m.user_id) || {};
+      const rec = latestPerUser.get(m.user_id);
+      emp.attendance = rec ? {
+        clocked_in:     !rec.clock_out_time,
+        clock_in_time:  rec.clock_in_time,
+        clock_out_time: rec.clock_out_time,
+        location_type:  rec.location_type,
+        site_name:      rec.site_name,
+        id:             rec.id,
+      } : {
+        clocked_in:    false,
+        clock_in_time: null,
+        clock_out_time:null,
+        location_type: null,
+        site_name:     null,
+      };
+      _employeeState.set(m.user_id, emp);
+    });
+  }catch(e){ console.warn('fetchTodayAttendance:', e); }
+}
+
+async function fetchAllPresence(){
+  if(!_sb||!_sbUser) return;
+  try{
+    const{data,error}=await _sb.from('aiq_presence').select('*');
+    if(error){
+      if(error.code==='42P01'||error.message?.includes('does not exist')){
+        // Table not created yet — show one-time notice to admins
+        if(_isAdmin()){
+          showToast('ℹ aiq_presence table not found. Run the SQL migration in Supabase to enable real-time presence.','warn',10000);
+        }
+        return;
+      }
+      throw error;
+    }
+    if(data){
+      data.forEach(p=>{
+        let emp = _employeeState.get(p.user_id)||{};
+        emp.presence={
+          status:p.status||'offline',
+          connection_state:p.connection_state||'disconnected',
+          last_seen:p.last_seen,
+          last_activity:p.last_activity,
+          session_id:p.session_id,
+        };
+        _employeeState.set(p.user_id,emp);
+      });
+    }
+  }catch(e){console.warn('fetchAllPresence:',e);}
+}
+
+async function refreshPresenceDashboard(){
+  await fetchAllPresence();
+  await loadTeamMembers();
+  await fetchTodayAttendance();   // ← always refresh attendance state
+  renderPresenceDashboard();
+  updatePresenceKPIs();
+  setText('presenceLastSync','Last sync: '+new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',hour12:true}));
+}
+
+// ── TEAM / ADMIN VIEW ─────────────────────────────────────────
+async function loadTeamMembers(){
+  if(!_sb||!_sbUser)return;
+  try{
+    const{data}=await _sb.from('aiq_profiles').select('*').order('full_name');
+    _allMembers=data||[];
+    setText('kpiTeamMembers',_allMembers.length);
+    // Seed employee state map with profile data
+    _allMembers.forEach(m=>{
+      let emp=_employeeState.get(m.user_id)||{};
+      emp.profile=m;
+      _employeeState.set(m.user_id,emp);
+    });
+  }catch(e){console.warn('loadTeamMembers:',e);}
+}
+
+// Derive live presence status from user_presence table data
+function getEffectiveStatus(emp){
+  const p   = emp.presence;
+  const att = emp.attendance;
+
+  // If no presence row at all but user is actively clocked in → assume online
+  // (presence row gets created on next heartbeat)
+  if(!p){
+    return (att?.clocked_in) ? 'online' : 'offline';
+  }
+
+  // If last_seen exists, check if it has expired
+  if(p.last_seen){
+    const age = Date.now() - new Date(p.last_seen).getTime();
+    if(age > PRESENCE_TIMEOUT_MS){
+      // Still clocked in despite stale presence — show as away rather than offline
+      return (att?.clocked_in) ? 'away' : 'offline';
+    }
+  } else {
+    // No last_seen timestamp at all — presence row exists but was never updated
+    return (att?.clocked_in) ? 'online' : 'offline';
+  }
+
+  return p.status || 'offline';
+}
+
+function renderPresenceDashboard(){
+  const el=$id('teamPresenceGrid');if(!el)return;
+  if(!_allMembers.length){el.innerHTML='<div class="empty-state" style="padding:16px"><div class="empty-sub">No team members found</div></div>';return;}
+  el.innerHTML=`<div class="people-grid">${_allMembers.map(m=>buildEmployeeCard(m)).join('')}</div>`;
+}
+
+function buildEmployeeCard(m){
+  const uid = m.user_id;
+  const emp = _employeeState.get(uid)||{};
+  const presence = emp.presence||{};
+  const att = emp.attendance||{};
+  const status = getEffectiveStatus(emp);
+  const color = nameToColor(m.full_name||'');
+  const initials = nameToInitials(m.full_name||m.email||'?');
+  const lastSeen = presence.last_seen ? timeAgo(presence.last_seen) : '—';
+  const attClocked = att.clocked_in;
+  const attBadgeClass = attClocked ? 'att-clocked-in' : (att.clock_in_time ? 'att-clocked-out' : 'att-not-started');
+  const attBadgeText  = attClocked ? '🟢 Clocked In'  : (att.clock_in_time ? '⏹ Clocked Out'  : '⚪ Not Clocked In');
+  // Only show location when actually clocked in
+  const locText = (attClocked && att.location_type)
+    ? `<span class="loc-badge ${locClass(att.location_type)}" style="font-size:10px;padding:2px 7px">${locIcon(att.location_type)} ${att.location_type}${att.site_name?' — '+att.site_name:''}</span>`
+    : '';
+  const statusDotClass = {online:'ps-online',away:'ps-away',offline:'ps-offline'}[status]||'ps-offline';
+  const statusLabel = {online:'🟢 Online',away:'🟡 Away',offline:'⚫ Offline'}[status]||'⚫ Offline';
+  return`<div class="emp-card" id="empcard-${uid}">
+    <div class="emp-card-header">
+      <div class="emp-avatar" style="background:${color}">
+        ${initials}
+        <span class="emp-avatar-badge ${status}"></span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="emp-name">${escHtml(m.full_name||m.email||'—')}</div>
+        <div class="emp-role-dept">${(m.role||'member').charAt(0).toUpperCase()+(m.role||'member').slice(1)}${m.department?' · '+escHtml(m.department):''}</div>
+        ${m.email?`<div style="font-size:10px;color:var(--disabled);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px" title="${escHtml(m.email)}">${escHtml(m.email)}</div>`:''}
+      </div>
+    </div>
+    <div class="emp-status-row">
+      <span class="ps-dot ${statusDotClass}"></span>
+      <span style="font-size:11.5px;font-weight:600;color:var(--text)">${statusLabel}</span>
+    </div>
+    <div class="emp-status-row">
+      <span class="att-status-badge ${attBadgeClass}">${attBadgeText}</span>
+      ${locText}
+    </div>
+    <div class="emp-last-seen">Last seen: ${lastSeen}</div>
+  </div>`;
+}
+
+function updateEmployeeCard(uid){
+  const el=$id('empcard-'+uid);
+  if(!el)return; // card not rendered yet
+  const m=_allMembers.find(m=>m.user_id===uid);
+  if(!m)return;
+  el.outerHTML=buildEmployeeCard(m);
+}
+
+function updatePresenceKPIs(){
+  if(!_canViewTeam()) return;
+  let online=0,away=0,offline=0,clockedIn=0,onsite=0,home=0;
+  const total=_allMembers.length;
+  _allMembers.forEach(m=>{
+    const emp=_employeeState.get(m.user_id)||{};
+    const st=getEffectiveStatus(emp);
+    if(st==='online') online++;
+    else if(st==='away') away++;
+    else offline++;
+    const att=emp.attendance||{};
+    if(att.clocked_in) clockedIn++;
+    if(att.location_type==='Onsite') onsite++;
+    else if(att.location_type==='Home') home++;
+  });
+  setText('kpiTeamMembers',total);
+  setText('kpiOnlineNow',online);
+  setText('kpiAway',away);
+  setText('kpiOffline',offline);
+  setText('kpiClockedIn',clockedIn);
+  setText('kpiTeamOnsite',onsite);
+  setText('kpiTeamHome',home);
+  setText('kpiTeamOut',Math.max(0,total-clockedIn));
+  setText('presenceLastSync','Last sync: '+new Date().toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',hour12:true}));
+}
+
+function switchAdminView(view){
+  _currentAdminView=view;
+  ['presence','logs','activity'].forEach(v=>{
+    const el=$id('adminView-'+v);if(el)el.style.display=v===view?'':'none';
+    const tab=$id('vt-'+v);if(tab)tab.classList.toggle('active',v===view);
+  });
+  if(view==='logs') loadTeamLogs();
+  if(view==='activity') renderActivityFeed();
+}
+
+async function loadTeamLogs(){
+  if(!_sb||!_sbUser||!_canViewTeam())return;
+  const wrap=$id('teamLogsWrap');if(!wrap)return;
+  wrap.innerHTML='<div class="empty-state" style="padding:24px"><div class="empty-sub">Loading…</div></div>';
+  const days=parseInt($id('adminRangeFilter')?.value)||7;
+  const today=new Date().toISOString().split('T')[0];
+  try{
+    // Fetch without FK join — manual profile lookup instead
+    const scope=_exportScope();
+    let logsQ=_sb.from('aiq_attendance_logs')
+      .select('id,user_id,clock_in_time,clock_out_time,location_type,site_name,detection_method,user_override_reason');
+    if(scope==='own') logsQ=logsQ.eq('user_id',_sbUser.id);
+    const{data:rawData}=await logsQ
+      .gte('clock_in_time',new Date(Date.now()-days*864e5).toISOString())
+      .order('clock_in_time',{ascending:false}).limit(200);
+    const{data:profiles2}=await _sb.from('aiq_profiles').select('user_id,full_name,department');
+    const profileMap2=new Map((profiles2||[]).map(p=>[p.user_id,p]));
+    let data=rawData||[];
+    if(scope==='team'){const tids=new Set(_allMembers.map(m=>m.user_id));data=data.filter(r=>tids.has(r.user_id));}
+    if(!data.length){wrap.innerHTML='<div class="empty-state" style="padding:24px"><div class="empty-icon">📊</div><div class="empty-sub">No records in this period</div></div>';updateAdminKPIs([]);return;}
+    // Seed today's attendance into employee state — always overwrite (no skip)
+    const todayActive = data.filter(r=>r.clock_in_time.startsWith(today)&&!r.clock_out_time);
+    todayActive.forEach(r=>{
+      let emp=_employeeState.get(r.user_id)||{};
+      emp.attendance={clocked_in:true,clock_in_time:r.clock_in_time,clock_out_time:null,location_type:r.location_type,site_name:r.site_name};
+      _employeeState.set(r.user_id,emp);
+    });
+    updateAdminKPIs(data);
+    wrap.innerHTML=`<div class="tbl-wrap"><table>
+      <thead><tr><th>Name</th><th>Date</th><th>In</th><th>Out</th><th>Duration</th><th>Type</th><th>Site</th><th>Method</th></tr></thead>
+      <tbody>${data.map(r=>{
+        const prof2=profileMap2.get(r.user_id);const name=prof2?.full_name||r.user_id.slice(0,8)+'…';
+        const dur=r.clock_out_time?calcDuration(r.clock_in_time,r.clock_out_time):'<span style="color:var(--success);font-weight:600">Ongoing</span>';
+        return`<tr>
+          <td><div style="font-weight:600;color:var(--heading)">${escHtml(name)}</div><div style="font-size:10.5px;color:var(--muted)">${escHtml(prof2?.department||'')}</div></td>
+          <td>${fmtDate(r.clock_in_time)}</td><td>${fmtTime(r.clock_in_time)}</td>
+          <td>${r.clock_out_time?fmtTime(r.clock_out_time):'<span style="color:var(--success)">Ongoing</span>'}</td>
+          <td>${dur}</td>
+          <td><span class="loc-badge ${locClass(r.location_type)}">${locIcon(r.location_type)} ${r.location_type||'—'}</span></td>
+          <td>${r.site_name?`<span class="badge badge-teal" style="font-size:10px">🏢 ${escHtml(r.site_name)}</span>`:'—'}</td>
+          <td><span class="detect-badge">${r.detection_method||'—'}</span></td>
+        </tr>`;
+      }).join('')}</tbody></table></div>`;
+  }catch(e){wrap.innerHTML=`<div class="empty-state" style="padding:24px"><div class="empty-sub">${e.message}</div></div>`;}
+}
+
+function updateAdminKPIs(data){
+  const todayStr=new Date().toISOString().split('T')[0];
+  const todayRecords=data.filter(r=>r.clock_in_time.startsWith(todayStr));
+  const activeToday=todayRecords.filter(r=>!r.clock_out_time);
+  const onsite=activeToday.filter(r=>r.location_type==='Onsite').length;
+  const home=activeToday.filter(r=>r.location_type==='Home').length;
+  const uniqueClocked=new Set(activeToday.map(r=>r.user_id)).size;
+  setText('kpiTeamOnsite',onsite);
+  setText('kpiTeamHome',home);
+  setText('kpiClockedIn',uniqueClocked);
+  setText('kpiTeamOut',Math.max(0,_allMembers.length-uniqueClocked));
+  // Presence KPIs come from updatePresenceKPIs()
+  updatePresenceKPIs();
+}
+
+async function exportTeamCSV(){
+  if(!_sb||!_sbUser||!_canViewTeam()){showToast('Export access required','warn');return;}
+  const days = parseInt($id('adminRangeFilter')?.value)||7;
+  const scope = _exportScope(); // 'all' | 'team' | 'own'
+  const sinceDate = new Date(Date.now()-days*864e5).toISOString();
+
+  try{
+    // Step 1: Fetch attendance_logs WITHOUT the broken FK join
+    let logsQuery = _sb.from('aiq_attendance_logs')
+      .select('id,user_id,clock_in_time,clock_out_time,location_type,site_name,detection_method,user_override_reason')
+      .gte('clock_in_time', sinceDate)
+      .order('clock_in_time',{ascending:false});
+
+    // Scope filtering: non-admin managers see only their team members
+    if(scope === 'own'){
+      logsQuery = logsQuery.eq('user_id', _sbUser.id);
+    }
+    // 'team' scope: filter by members in _allMembers (loaded team)
+    // 'all' scope: no filter
+
+    const{data:logs, error:logsErr} = await logsQuery;
+    if(logsErr) throw logsErr;
+    if(!logs?.length){showToast('No records to export','info');return;}
+
+    // Step 2: Fetch profiles separately and build lookup map
+    const{data:profiles} = await _sb.from('aiq_profiles')
+      .select('user_id,full_name,department,role');
+    const profileMap = new Map((profiles||[]).map(p=>[p.user_id, p]));
+
+    // Step 3: For 'team' scope, filter logs to only this manager's team members
+    let filteredLogs = logs;
+    if(scope === 'team'){
+      const teamIds = new Set(_allMembers.map(m=>m.user_id));
+      filteredLogs = logs.filter(r=>teamIds.has(r.user_id));
+    }
+
+    if(!filteredLogs.length){showToast('No records in your scope to export','info');return;}
+
+    // Step 4: Build CSV with name/dept from profile map
+    const hdr = ['Name','Role','Department','Date','Clock In','Clock Out','Duration (h:m)','Location Type','Site','Detection Method','Override Reason'];
+    const rows = filteredLogs.map(r=>{
+      const prof = profileMap.get(r.user_id);
+      return [
+        prof?.full_name  || r.user_id,
+        prof?.role       || '',
+        prof?.department || '',
+        fmtDate(r.clock_in_time),
+        fmtTime(r.clock_in_time),
+        r.clock_out_time ? fmtTime(r.clock_out_time) : 'Ongoing',
+        r.clock_out_time ? calcDuration(r.clock_in_time,r.clock_out_time) : '',
+        r.location_type  || '',
+        r.site_name      || '',
+        r.detection_method || '',
+        r.user_override_reason || '',
+      ];
+    });
+
+    const scopeLabel = scope==='all'?'all_team':(scope==='team'?'my_team':'own');
+    const fname = `attendance_${scopeLabel}_${new Date().toISOString().split('T')[0]}.csv`;
+    downloadCSV(buildCSV(hdr,rows), fname);
+    showToast(`✅ Exported ${filteredLogs.length} records — check your Downloads folder`,'success',4000);
+
+  }catch(e){
+    showToast('Export failed: '+e.message,'error');
+    console.error('exportTeamCSV:',e);
+  }
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+
+// Send offline beacon on page unload (best-effort)
+window.addEventListener('beforeunload',()=>{
+  // sendBeacon is blocked on file:// — skip it
+  const isFile = location.protocol === 'file:';
+  if(_sbUser&&_sb&&!isFile){
+    // Try graceful async logout
+    if(_presenceMgr){try{_presenceMgr._stopHeartbeat();}catch(e){}}
+    // Beacon fallback
+    try{
+      const body = JSON.stringify([{user_id:_sbUser.id,status:'offline',connection_state:'disconnected',last_seen:new Date().toISOString(),updated_at:new Date().toISOString()}]);
+      navigator.sendBeacon&&navigator.sendBeacon(
+        `${SUPABASE_URL}/rest/v1/aiq_presence?user_id=eq.${_sbUser.id}`,
+        new Blob([body],{type:'application/json'})
+      );
+    }catch(e){}
+  } else if(_presenceMgr){
+    // file:// fallback — just stop the heartbeat; presence will timeout naturally
+    try{_presenceMgr._stopHeartbeat();}catch(e){}
+  }
+});
+
+(async function init(){
+  initSB();
+  if(!_sb){
+    setAuthMsg('⚠ Backend unavailable. Check your connection.','error');
+    enterLocalMode();
+    return;
+  }
+  try{
+    const{data:{session}}=await _sb.auth.getSession();
+    if(session?.user){await onAuthSuccess(session.user);}
+  }catch(e){
+    console.warn('init session check:',e);
+    // If network is blocked at startup (e.g. Mimecast proxy), show auth screen
+    // but don't auto-enter local mode — let user decide via the button
+    const msg=(e.message||'').toLowerCase();
+    if(msg.includes('failed to fetch')||msg.includes('network')||msg.includes('cors')){
+      setAuthMsg('⚠ Network blocked — corporate proxy may be intercepting Supabase connections. Try a personal hotspot, or use local mode.','error');
+      const btn=$id('localModeBtn');
+      if(btn){btn.style.color='var(--warning)';btn.style.fontWeight='700';btn.textContent='→ Continue in local mode (no clock-in)';}
+    }
+  }
+  _sb.auth.onAuthStateChange(async(event,session)=>{
+    if(event==='SIGNED_IN'&&session?.user&&!_sbUser&&!_authInProgress)await onAuthSuccess(session.user);
+    if(event==='SIGNED_OUT'){
+      _sbUser=null;_sbProfile={};_employeeState.clear();_authInProgress=false;_localMode=false;
+      if(_presenceMgr){try{_presenceMgr.destroy();}catch(e){}_presenceMgr=null;}
+      $id('authOverlay').classList.remove('hidden');
+      setSyncBadge('','Offline');
+      setLiveIndicator('offline');
+      setConnStateBar('');
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AttendanceIQ · Smart Time Tracking</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<style>
+:root{
+  --bg:#EEF2F0;
+  --sidebar:#2D4739;
+  --sidebar2:#243C30;
+  --sidebar-border:rgba(255,255,255,.08);
+  --surface:#FFFFFF;
+  --surface2:#F4F7F5;
+  --border:#DDE5E1;
+  --accent:#C8A84B;
+  --accent2:#E8C06A;
+  --green:#3A7D5C;
+  --green-light:#4E9E74;
+  --amber:#C8A84B;
+  --red:#D05B5B;
+  --purple:#7C6FA0;
+  --pink:#C07090;
+  --text:#1A2B24;
+  --muted:#7A9488;
+  --muted-light:#A8BDB6;
+  --radius:14px;
+  --radius-sm:10px;
+  --font:'Inter',system-ui,sans-serif;
+  --shadow:0 2px 12px rgba(0,0,0,.07);
+  --shadow-md:0 6px 28px rgba(0,0,0,.11);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-family:var(--font);background:var(--bg);color:var(--text);height:100%}
+body{min-height:100%;display:flex;flex-direction:column}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:260px;background:var(--sidebar);display:flex;flex-direction:column;flex-shrink:0;transition:transform .3s;position:relative;overflow:hidden}
+.sidebar::before{content:'';position:absolute;bottom:-70px;right:-70px;width:200px;height:200px;background:rgba(200,168,75,.1);border-radius:50%;pointer-events:none}
+.sidebar::after{content:'';position:absolute;top:-50px;left:-50px;width:130px;height:130px;background:rgba(255,255,255,.04);border-radius:50%;pointer-events:none}
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column;background:var(--bg)}
+.sidebar-profile{padding:30px 22px 22px;text-align:center;position:relative;z-index:1;border-bottom:1px solid var(--sidebar-border)}
+.sidebar-avatar-ring{width:74px;height:74px;border-radius:50%;border:2.5px solid var(--accent);padding:3px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px}
+.sidebar-avatar-inner{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font-size:22px;font-weight:800;color:#fff}
+.sidebar-username{font-size:14.5px;font-weight:700;color:#fff;margin-bottom:2px}
+.sidebar-useremail{font-size:11px;color:rgba(255,255,255,.45)}
+.sidebar-role-chip{display:inline-flex;align-items:center;gap:4px;margin-top:9px;padding:4px 12px;border-radius:999px;background:rgba(200,168,75,.18);border:1px solid rgba(200,168,75,.3);font-size:11px;font-weight:700;color:var(--accent)}
+.sidebar-nav{padding:8px 12px;flex:1;overflow-y:auto}
+.nav-section{font-size:9px;font-weight:700;color:rgba(255,255,255,.28);letter-spacing:.14em;text-transform:uppercase;padding:2px 10px;margin-top:14px;margin-bottom:5px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:500;color:rgba(255,255,255,.52);transition:all .18s;user-select:none;margin-bottom:2px}
+.nav-item:hover{background:rgba(255,255,255,.08);color:rgba(255,255,255,.9)}
+.nav-item.active{background:var(--accent);color:var(--sidebar);font-weight:700;box-shadow:0 4px 16px rgba(200,168,75,.35)}
+.nav-item .ni{width:18px;text-align:center;font-size:15px;flex-shrink:0}
+.sidebar-footer{padding:12px;border-top:1px solid var(--sidebar-border);position:relative;z-index:1}
+.logout-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;cursor:pointer;transition:background .15s;color:rgba(255,255,255,.4);font-size:13px;font-weight:500}
+.logout-row:hover{background:rgba(208,91,91,.15);color:#ef9999}
+.logout-row .ni{font-size:15px}
+.topbar{padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;backdrop-filter:blur(14px);background:rgba(238,242,240,.88);border-bottom:1px solid var(--border)}
+.topbar h2{font-size:18px;font-weight:800;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.live-clock{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;font-weight:500}
+.status-pill{display:flex;align-items:center;gap:5px;padding:5px 13px;border-radius:999px;font-size:11.5px;font-weight:700}
+.content{padding:24px 28px;flex:1}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.clock-hero{background:linear-gradient(135deg,var(--sidebar) 0%,var(--sidebar2) 100%);border-radius:20px;padding:30px 34px;display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:20px;position:relative;overflow:hidden;box-shadow:0 8px 36px rgba(45,71,57,.28)}
+.clock-hero::before{content:'';position:absolute;top:-50px;right:-50px;width:210px;height:210px;background:rgba(200,168,75,.1);border-radius:50%;pointer-events:none}
+.clock-hero::after{content:'';position:absolute;bottom:-60px;left:38%;width:170px;height:170px;background:rgba(255,255,255,.04);border-radius:50%;pointer-events:none}
+.clock-left{flex:1;position:relative;z-index:1}
+.clock-status-label{font-size:10.5px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px}
+.clock-status-text{font-size:28px;font-weight:800;color:#fff;letter-spacing:-.5px;margin-bottom:4px}
+.clock-sub{font-size:13px;color:rgba(255,255,255,.55)}
+.clock-right{display:flex;flex-direction:column;align-items:center;gap:14px;position:relative;z-index:1}
+.clock-display{font-size:46px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.5px;line-height:1;color:#fff}
+.clock-date{font-size:11.5px;color:rgba(255,255,255,.48);text-align:center;margin-top:2px}
+.pulse-wrapper{position:relative;display:grid;place-items:center}
+.pulse-ring{position:absolute;width:76px;height:76px;border-radius:50%;border:2px solid var(--green-light);opacity:0;animation:pulse-out 2s ease-out infinite}
+.pulse-ring:nth-child(2){animation-delay:.6s}
+.pulse-ring:nth-child(3){animation-delay:1.2s}
+@keyframes pulse-out{0%{transform:scale(.9);opacity:.6}100%{transform:scale(1.6);opacity:0}}
+.pulse-wrapper.paused .pulse-ring{animation-play-state:paused;opacity:0}
+.clock-btn{width:64px;height:64px;border-radius:50%;border:none;cursor:pointer;font-size:20px;font-weight:700;display:grid;place-items:center;transition:all .2s;position:relative;z-index:1}
+.clock-btn:hover{transform:scale(1.07)}
+.clock-btn:active{transform:scale(.96)}
+.clock-btn.in{background:var(--accent);color:var(--sidebar);box-shadow:0 4px 20px rgba(200,168,75,.5)}
+.clock-btn.out{background:var(--red);color:#fff;box-shadow:0 4px 20px rgba(208,91,91,.4)}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.stat-icon{font-size:20px;margin-bottom:8px}
+.stat-label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.stat-value{font-size:26px;font-weight:800;letter-spacing:-.5px;line-height:1;color:var(--text)}
+.stat-sub{font-size:11.5px;color:var(--muted);margin-top:4px}
+.loc-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.loc-badge.office,.loc-badge.onsite{background:rgba(58,125,92,.12);color:var(--green)}
+.loc-badge.home{background:rgba(200,168,75,.15);color:#9A7A20}
+.loc-badge.outside,.loc-badge.unknown{background:rgba(208,91,91,.12);color:var(--red)}
+.detect-badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:5px;font-size:10px;font-weight:600;background:rgba(58,125,92,.1);color:var(--green)}
+.role-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.role-badge.admin{background:rgba(208,91,91,.12);color:var(--red)}
+.role-badge.manager{background:rgba(124,111,160,.14);color:var(--purple)}
+.role-badge.employee{background:rgba(58,125,92,.12);color:var(--green)}
+.role-badge.hr{background:rgba(192,112,144,.14);color:var(--pink)}
+.status-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:600}
+.status-badge.active{background:rgba(58,125,92,.12);color:var(--green)}
+.status-badge.inactive{background:rgba(120,148,136,.1);color:var(--muted)}
+.status-badge.pending{background:rgba(200,168,75,.14);color:#9A7A20}
+.site-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:8px;font-size:11.5px;font-weight:600;background:rgba(45,71,57,.1);color:var(--sidebar)}
+.table-wrap{overflow-x:auto;border-radius:var(--radius-sm);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{background:var(--surface2);padding:10px 16px;text-align:left;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
+tbody tr{border-top:1px solid var(--border);transition:background .1s}
+tbody tr:hover{background:rgba(58,125,92,.04)}
+tbody td{padding:12px 16px;vertical-align:middle;color:var(--text)}
+.td-time{font-variant-numeric:tabular-nums;font-size:12px}
+.td-duration{font-weight:700;color:var(--green)}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:10px;flex-wrap:wrap}
+.section-title{font-size:15px;font-weight:800;color:var(--text)}
+.section-sub{font-size:12px;color:var(--muted)}
+.auth-screen{display:flex;height:100vh;align-items:center;justify-content:center;background:var(--bg);padding:20px;position:relative;overflow:hidden}
+.auth-screen::before{content:'';position:absolute;top:-90px;left:-90px;width:320px;height:320px;background:rgba(200,168,75,.16);border-radius:50%;pointer-events:none}
+.auth-screen::after{content:'';position:absolute;bottom:-70px;right:-70px;width:240px;height:240px;background:rgba(58,125,92,.12);border-radius:50%;pointer-events:none}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:36px;width:100%;max-width:420px;box-shadow:var(--shadow-md);position:relative;z-index:1}
+.auth-logo{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.auth-logo .logo{width:44px;height:44px;background:var(--sidebar);border-radius:12px;display:grid;place-items:center;font-size:21px}
+.auth-logo h1{font-size:18px;font-weight:800;color:var(--text)}
+.auth-title{font-size:22px;font-weight:800;margin-bottom:5px;color:var(--text)}
+.auth-sub{font-size:13px;color:var(--muted);margin-bottom:22px}
+label{display:block;font-size:11.5px;font-weight:600;color:var(--muted);margin-bottom:5px;margin-top:14px}
+input[type=text],input[type=email],input[type=password],input[type=number],select,textarea{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text);font-family:var(--font);outline:none;transition:all .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(58,125,92,.08)}
+textarea{resize:vertical;min-height:68px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);transition:all .18s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:var(--sidebar)}
+.btn-primary:hover{background:var(--accent2);transform:translateY(-1px);box-shadow:0 4px 18px rgba(200,168,75,.4)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1.5px solid var(--border)}
+.btn-secondary:hover{background:var(--border)}
+.btn-danger{background:rgba(208,91,91,.1);color:var(--red);border:1.5px solid rgba(208,91,91,.25)}
+.btn-danger:hover{background:rgba(208,91,91,.18)}
+.btn-success{background:rgba(58,125,92,.12);color:var(--green);border:1.5px solid rgba(58,125,92,.28)}
+.btn-full{width:100%;justify-content:center}
+.btn-sm{padding:5px 12px;font-size:11.5px;border-radius:8px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.modal-backdrop{position:fixed;inset:0;background:rgba(26,43,36,.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(6px)}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:18px;width:100%;max-width:480px;padding:28px;position:relative;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-md)}
+.modal-xl{max-width:720px}
+.modal-lg{max-width:580px}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:4px;color:var(--text)}
+.modal-sub{font-size:12.5px;color:var(--muted);margin-bottom:18px}
+.modal-close{position:absolute;top:16px;right:16px;background:var(--surface2);border:none;color:var(--muted);width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:15px;display:grid;place-items:center;transition:all .15s}
+.modal-close:hover{color:var(--red);background:rgba(208,91,91,.1)}
+.modal-footer{display:flex;gap:10px;margin-top:20px}
+.modal-footer .btn{flex:1;justify-content:center}
+.detect-steps{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.detect-step{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:var(--surface2);font-size:12.5px;color:var(--text)}
+.detect-step.done{opacity:.5}
+.detect-step.active{border:1.5px solid var(--green);background:rgba(58,125,92,.06)}
+.detect-step.failed{opacity:.38}
+.step-status{margin-left:auto;font-size:10.5px;font-weight:600}
+.step-status.ok{color:var(--green)}.step-status.fail{color:var(--red)}.step-status.running{color:var(--accent)}
+.detected-loc{background:var(--surface2);border:1.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.toast-area{position:fixed;bottom:24px;right:24px;z-index:200;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;min-width:260px;box-shadow:var(--shadow-md);animation:slide-in .22s ease;color:var(--text)}
+@keyframes slide-in{from{transform:translateX(110%);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.success{border-left:3px solid var(--green)}
+.toast.error{border-left:3px solid var(--red)}
+.toast.info{border-left:3px solid var(--accent)}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.toggle{width:40px;height:22px;border-radius:999px;background:var(--border);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0}
+.toggle.on{background:var(--green)}
+.toggle::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.18)}
+.toggle.on::after{transform:translateX(18px)}
+.tabs{display:flex;gap:2px;background:var(--surface2);border-radius:11px;padding:3px;width:fit-content;border:1px solid var(--border)}
+.tab{padding:7px 16px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--muted);transition:all .15s}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 6px rgba(0,0,0,.1)}
+.tab:hover:not(.active){color:var(--text)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.form-grid label{margin-top:13px}
+.form-grid .span2{grid-column:1/-1}
+.info-box{background:rgba(58,125,92,.07);border:1.5px solid rgba(58,125,92,.2);border-radius:10px;padding:11px 14px;font-size:12px;color:var(--green);margin-bottom:14px}
+.warn-box{background:rgba(200,168,75,.07);border:1.5px solid rgba(200,168,75,.2);border-radius:10px;padding:11px 14px;font-size:12px;color:#9A7A20;margin-bottom:14px}
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2)}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--green);background:rgba(58,125,92,.04)}
+.upload-zone .uz-icon{font-size:38px;margin-bottom:10px}
+.upload-zone .uz-title{font-size:14px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.upload-zone .uz-sub{font-size:12px;color:var(--muted)}
+#csvFileInput{display:none}
+.preview-wrap{max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;margin-top:14px}
+.preview-wrap table thead th{position:sticky;top:0;z-index:1}
+.progress-bar-wrap{background:var(--surface2);border-radius:999px;height:8px;overflow:hidden;margin:10px 0;border:1px solid var(--border)}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--green),var(--accent));border-radius:999px;transition:width .3s}
+.site-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px;transition:all .2s}
+.site-card:hover{border-color:var(--green);box-shadow:0 4px 16px rgba(58,125,92,.1)}
+.site-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.site-name{font-size:14px;font-weight:800;color:var(--text)}
+.site-meta{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.search-bar{display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:8px 14px}
+.search-bar input{background:none;border:none;outline:none;font-size:12.5px;color:var(--text);width:100%;font-family:var(--font)}
+.search-bar:focus-within{border-color:var(--green)}
+.avatar{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:800;flex-shrink:0;color:#fff}
+.online-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 2px rgba(58,125,92,.25);display:inline-block}
+.offline-dot{width:8px;height:8px;border-radius:50%;background:var(--border);display:inline-block}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:6px;font-size:10.5px;font-weight:600;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.divider{border:none;border-top:1.5px solid var(--border);margin:18px 0}
+.text-muted{color:var(--muted)}.text-sm{font-size:12px}.text-xs{font-size:11px}
+.mt-4{margin-top:16px}.mt-2{margin-top:8px}.mb-4{margin-bottom:16px}.mb-2{margin-bottom:8px}
+.flex{display:flex}.items-center{align-items:center}.gap-2{gap:8px}.gap-3{gap:12px}
+.justify-between{justify-content:space-between}.ml-auto{margin-left:auto}.flex-wrap{flex-wrap:wrap}
+.hidden{display:none!important}
+.empty-state{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-state .ei{font-size:36px;margin-bottom:10px}
+.empty-state p{font-size:13px}
+.err-msg{color:var(--red);font-size:12px;margin-top:5px}
+@media(max-width:768px){
+  .sidebar{position:fixed;left:0;top:0;height:100%;z-index:50;transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .grid-4,.grid-3{grid-template-columns:1fr 1fr}
+  .clock-hero{flex-direction:column;text-align:center}
+  .content{padding:16px}
+  .form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="toast-area" id="toastArea"></div>
+
+<!-- =========== AUTH =========== -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo">⏱</div>
+      <div><h1>AttendanceIQ</h1><span style="font-size:10.5px;color:var(--muted)">Smart Time Tracking</span></div>
+    </div>
+
+    <!-- LOGIN — Employee ID or Email -->
+    <div id="loginForm">
+      <div class="auth-title">Welcome back</div>
+      <div class="auth-sub">Sign in with your Employee ID or email</div>
+      <div class="tabs" style="margin-bottom:16px">
+        <div class="tab active" id="tabEmpId" onclick="switchLoginTab('empid')">Employee ID</div>
+        <div class="tab" id="tabEmail" onclick="switchLoginTab('email')">Email</div>
+      </div>
+      <!-- Employee ID login -->
+      <div id="loginByEmpId">
+        <label>Employee ID</label>
+        <input type="text" id="loginEmpId" placeholder="e.g. EMP-0001" style="text-transform:uppercase" onkeydown="if(event.key==='Enter')doLoginEmpId()"/>
+        <label>Password</label>
+        <input type="password" id="loginPassEmpId" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLoginEmpId()"/>
+        <div class="err-msg hidden" id="loginEmpIdErr"></div>
+        <button class="btn btn-primary btn-full mt-4" id="loginEmpIdBtn" onclick="doLoginEmpId()">Sign In</button>
+      </div>
+      <!-- Email login -->
+      <div id="loginByEmail" class="hidden">
+        <label>Email Address</label>
+        <input type="email" id="loginEmail" placeholder="you@company.com" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+        <div class="err-msg hidden" id="loginErr"></div>
+        <button class="btn btn-primary btn-full mt-4" id="loginBtn" onclick="doLogin()">Sign In</button>
+      </div>
+      <hr class="divider"/>
+      <div class="flex gap-2" style="flex-direction:column">
+        <button class="btn btn-secondary btn-full" onclick="showMagicLink()">🔗 Sign in with Magic Link</button>
+        <button class="btn btn-secondary btn-full" onclick="showRegister()">✏️ Create New Account</button>
+      </div>
+    </div>
+
+    <!-- SELF-REGISTRATION -->
+    <div id="registerForm" class="hidden">
+      <div class="auth-title">Create Account</div>
+      <div class="auth-sub">Register yourself — an admin will assign your role and department after sign-up</div>
+      <div class="info-box" style="margin-top:0;margin-bottom:14px">
+        ℹ️ Your account will be set to <strong>Employee</strong> by default. Contact your admin to update your role, department, and site assignment.
+      </div>
+      <label>Full Name *</label>
+      <input type="text" id="regName" placeholder="Juan dela Cruz" onkeydown="if(event.key==='Enter')doRegister()"/>
+      <label>Email Address *</label>
+      <input type="email" id="regEmail" placeholder="you@company.com" onkeydown="if(event.key==='Enter')doRegister()"/>
+      <label>Password * <span style="font-weight:400;color:var(--muted)">(min 8 characters)</span></label>
+      <input type="password" id="regPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()"/>
+      <label>Employee ID <span style="font-weight:400;color:var(--muted)">(optional — admin can set later)</span></label>
+      <input type="text" id="regEmpId" placeholder="e.g. EMP-0001" style="text-transform:uppercase"/>
+      <label>Department <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+      <input type="text" id="regDept" placeholder="e.g. PMO, Operations"/>
+      <div class="err-msg hidden" id="regErr"></div>
+      <button class="btn btn-primary btn-full mt-4" id="regBtn" onclick="doRegister()">Create Account</button>
+      <div style="text-align:center;margin-top:13px;font-size:12.5px;color:var(--muted)">
+        Already have an account? <span style="color:var(--green);cursor:pointer;font-weight:600" onclick="showLoginForm()">Sign in →</span>
+      </div>
+    </div>
+
+    <!-- MAGIC LINK -->
+    <div id="magicForm" class="hidden">
+      <div class="auth-title">Magic Link</div>
+      <div class="auth-sub">We'll email you a passwordless sign-in link</div>
+      <label>Email Address</label>
+      <input type="email" id="magicEmail" placeholder="you@company.com"/>
+      <div class="err-msg hidden" id="magicErr"></div>
+      <button class="btn btn-primary btn-full mt-4" onclick="doMagicLink()">Send Magic Link</button>
+      <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--muted)">
+        <span style="color:var(--green);cursor:pointer;font-weight:600" onclick="showLoginForm()">← Back to sign in</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =========== MAIN APP =========== -->
+<div class="app hidden" id="mainApp">
+  <aside class="sidebar" id="sidebar">
+    <!-- Profile block at top — reference design style -->
+    <div class="sidebar-profile">
+      <div class="sidebar-avatar-ring">
+        <div class="sidebar-avatar-inner" id="sidebarAvatar" style="background:linear-gradient(135deg,#3A7D5C,#2D4739)">?</div>
+      </div>
+      <div class="sidebar-username" id="sidebarName">Loading…</div>
+      <div class="sidebar-useremail" id="sidebarEmail"></div>
+      <div class="sidebar-role-chip" id="sidebarRoleChip">Employee</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Workspace</div>
+      <div class="nav-item active" onclick="showPage('dashboard')" id="nav-dashboard"><span class="ni">🏠</span>Dashboard</div>
+      <div class="nav-item" onclick="showPage('history')" id="nav-history"><span class="ni">📋</span>My Attendance</div>
+      <div class="nav-item" onclick="showPage('profile')" id="nav-profile"><span class="ni">👤</span>My Profile</div>
+      <div class="nav-section hidden admin-only">Administration</div>
+      <div class="nav-item hidden admin-only" onclick="showPage('employees')" id="nav-employees"><span class="ni">👥</span>Employees</div>
+      <div class="nav-item hidden admin-only" onclick="showPage('sites')" id="nav-sites"><span class="ni">🏢</span>Office Sites</div>
+      <div class="nav-item hidden admin-only" onclick="showPage('team')" id="nav-team"><span class="ni">📊</span>Team Overview</div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="logout-row" onclick="doLogout()">
+        <span class="ni">⎋</span> Sign Out
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="flex items-center gap-3">
+        <button class="btn btn-secondary btn-sm hidden" id="menuToggle" onclick="toggleSidebar()">☰</button>
+        <h2 id="pageTitle">Dashboard</h2>
+      </div>
+      <div class="topbar-right">
+        <div class="live-clock" id="liveClock">00:00:00</div>
+        <div class="status-pill" id="topbarStatus" style="background:rgba(148,163,184,.1);color:var(--muted)">⬤ Not Clocked In</div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- ===== DASHBOARD ===== -->
+      <div id="page-dashboard">
+        <div class="clock-hero">
+          <div class="clock-left">
+            <div class="clock-status-label">Current Status</div>
+            <div class="clock-status-text" id="heroStatus">Not Clocked In</div>
+            <div class="clock-sub" id="heroSub">Press Clock In to start your day</div>
+            <div style="margin-top:10px;display:flex;gap:7px;flex-wrap:wrap" id="heroBadges"></div>
+          </div>
+          <div class="clock-right">
+            <div><div class="clock-display" id="clockFace">--:--</div><div class="clock-date" id="clockDateLine"></div></div>
+            <div class="pulse-wrapper paused" id="pulseWrapper">
+              <div class="pulse-ring"></div><div class="pulse-ring"></div><div class="pulse-ring"></div>
+              <button class="clock-btn in" id="mainClockBtn" onclick="initiateClockAction()">▶</button>
+            </div>
+            <div style="font-size:10.5px;color:var(--muted);text-align:center" id="btnLabel">Clock In</div>
+          </div>
+        </div>
+        <div class="grid-4 mb-4">
+          <div class="stat-card"><div class="stat-icon">🕐</div><div class="stat-label">Clock In</div><div class="stat-value" id="stat-in">—</div><div class="stat-sub">Today</div></div>
+          <div class="stat-card"><div class="stat-icon">🕕</div><div class="stat-label">Clock Out</div><div class="stat-value" id="stat-out">—</div><div class="stat-sub">Today</div></div>
+          <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-label">Hours Worked</div><div class="stat-value" id="stat-hours">0h 0m</div><div class="stat-sub">Today</div></div>
+          <div class="stat-card"><div class="stat-icon">📍</div><div class="stat-label">Location</div><div class="stat-value" id="stat-loc" style="font-size:15px">—</div><div class="stat-sub" id="stat-detect">Not detected</div></div>
+        </div>
+        <div class="card">
+          <div class="section-head">
+            <div><div class="section-title">Recent Attendance</div><div class="section-sub">Last 7 days</div></div>
+            <button class="btn btn-secondary btn-sm" onclick="showPage('history')">View All →</button>
+          </div>
+          <div id="recentLogsWrap"><div class="empty-state"><div class="ei">📭</div><p>No records yet</p></div></div>
+        </div>
+      </div>
+
+      <!-- ===== HISTORY ===== -->
+      <div id="page-history" class="hidden">
+        <div class="card">
+          <div class="section-head">
+            <div><div class="section-title">My Attendance History</div></div>
+            <div class="flex gap-2 flex-wrap">
+              <input type="date" id="filterDate" style="padding:6px 10px;font-size:12px;width:138px" onchange="loadHistory()"/>
+              <select id="filterLoc" style="padding:6px 10px;font-size:12px;width:130px" onchange="loadHistory()">
+                <option value="">All Locations</option>
+                <option value="Onsite">Onsite</option>
+                <option value="Home">Home</option>
+                <option value="Outside">Outside</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" onclick="exportCSV('historyBody',['Date','Clock In','Clock Out','Duration','Location','Site','Method','Notes'])">⬇ Export</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Duration</th><th>Type</th><th>Site / Location</th><th>Method</th><th>Notes</th></tr></thead>
+              <tbody id="historyBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PROFILE ===== -->
+      <div id="page-profile" class="hidden">
+        <div class="grid-2">
+          <div class="card">
+            <div class="section-title mb-4">Personal Information</div>
+            <label>Full Name</label><input type="text" id="profileName"/>
+            <label>Email Address</label><input type="email" id="profileEmail" disabled style="opacity:.55"/>
+            <label>Employee ID</label><input type="text" id="profileEmpId" disabled style="opacity:.55"/>
+            <label>Department</label><input type="text" id="profileDept" disabled style="opacity:.55"/>
+            <label>Position</label><input type="text" id="profilePosition" disabled style="opacity:.55"/>
+            <label>Role</label><input type="text" id="profileRoleDisplay" disabled style="opacity:.55"/>
+            <p class="text-xs text-muted mt-2">Department, ID, Position, and Role are managed by your administrator.</p>
+            <button class="btn btn-primary mt-4" onclick="saveProfile()">Save Name</button>
+          </div>
+          <div class="card">
+            <div class="section-title mb-4">Assigned Office Site</div>
+            <div id="profileSiteInfo"><div class="empty-state"><div class="ei">🏢</div><p>No site assigned</p></div></div>
+            <hr class="divider"/>
+            <div class="section-title mb-4">Home Address</div>
+            <div id="profileHomeInfo" class="text-sm text-muted mb-4">Not set</div>
+            <button class="btn btn-secondary btn-full" onclick="captureHomeGPS()">📍 Set Home Location (GPS)</button>
+            <div class="text-sm text-muted mt-2" id="homeGPSStatus"></div>
+            <hr class="divider"/>
+            <div class="section-title mb-4">Detection Preferences</div>
+            <div class="settings-row">
+              <div><div style="font-size:13px;font-weight:600">GPS Detection</div><div class="text-sm text-muted">Use geolocation API</div></div>
+              <div class="toggle on" id="toggle-gps" onclick="this.classList.toggle('on')"></div>
+            </div>
+            <div class="settings-row">
+              <div><div style="font-size:13px;font-weight:600">IP Detection</div><div class="text-sm text-muted">Use IP as fallback</div></div>
+              <div class="toggle on" id="toggle-ip" onclick="this.classList.toggle('on')"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== OFFICE SITES (ADMIN) ===== -->
+      <div id="page-sites" class="hidden">
+        <div class="section-head mb-4">
+          <div><div class="section-title">Office Sites</div><div class="section-sub">Manage company locations used for geofencing</div></div>
+          <button class="btn btn-primary" onclick="openAddSite()">+ Add Site</button>
+        </div>
+        <div class="grid-3" id="sitesGrid">
+          <div class="empty-state" style="grid-column:1/-1"><div class="ei">🏢</div><p>No sites yet</p></div>
+        </div>
+      </div>
+
+      <!-- ===== EMPLOYEES (ADMIN) ===== -->
+      <div id="page-employees" class="hidden">
+        <div class="section-head mb-4" style="gap:14px">
+          <div class="tabs" id="empTabs">
+            <div class="tab active" onclick="switchEmpTab('list',this)">👥 Employee List</div>
+            <div class="tab" onclick="switchEmpTab('create',this)">➕ Add Employee</div>
+            <div class="tab" onclick="switchEmpTab('bulk',this)">📤 Bulk Upload</div>
+          </div>
+          <div class="flex gap-2 flex-wrap">
+            <div class="search-bar" style="width:200px"><span>🔍</span><input id="empSearch" placeholder="Name, ID, email…" oninput="filterEmployees()"/></div>
+            <select id="empRoleFilter" style="padding:6px 10px;font-size:12px;width:115px" onchange="filterEmployees()">
+              <option value="">All Roles</option>
+              <option value="admin">Admin</option><option value="hr">HR</option>
+              <option value="manager">Manager</option><option value="employee">Employee</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- LIST -->
+        <div id="empTabList">
+          <div class="card">
+            <div class="section-head">
+              <div><div class="section-title">All Employees</div><div class="section-sub" id="empCount">Loading…</div></div>
+              <div class="flex gap-2">
+                <button class="btn btn-secondary btn-sm" onclick="loadEmployees()">↻ Refresh</button>
+                <button class="btn btn-secondary btn-sm" onclick="exportCSV('employeesBody',['Name','Email','Dept','EmpID','Role','Status','Site','Joined'])">⬇ Export</button>
+              </div>
+            </div>
+            <!-- Pending registrations banner -->
+            <div id="pendingBanner" class="hidden" style="background:rgba(200,168,75,.1);border:1.5px solid rgba(200,168,75,.3);border-radius:10px;padding:10px 16px;font-size:12.5px;font-weight:600;color:#9A7A20;margin-bottom:14px"></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Employee</th><th>Email / ID</th><th>Dept</th><th>Role</th><th>Site</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+                <tbody id="employeesBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ADD SINGLE -->
+        <div id="empTabCreate" class="hidden">
+          <div class="card" style="max-width:640px">
+            <div class="section-title mb-2">Create Employee Account</div>
+            <p class="text-sm text-muted mb-4">Employee will log in using their Employee ID and the temporary password you set.</p>
+            <div class="form-grid">
+              <div><label>Full Name *</label><input type="text" id="newEmpName" placeholder="Juan dela Cruz"/></div>
+              <div><label>Employee ID *</label><input type="text" id="newEmpId" placeholder="EMP-0001" style="text-transform:uppercase"/></div>
+              <div><label>Email Address *</label><input type="email" id="newEmpEmail" placeholder="juan@company.com"/></div>
+              <div><label>Temporary Password *</label><input type="text" id="newEmpPass" placeholder="Min 8 characters"/></div>
+              <div><label>Department</label><input type="text" id="newEmpDept" placeholder="e.g. PMO"/></div>
+              <div><label>Position / Title</label><input type="text" id="newEmpPosition" placeholder="e.g. Senior Analyst"/></div>
+              <div><label>Role *</label>
+                <select id="newEmpRole">
+                  <option value="employee">Employee</option><option value="manager">Manager</option>
+                  <option value="hr">HR</option><option value="admin">Admin</option>
+                </select>
+              </div>
+              <div><label>Employment Type</label>
+                <select id="newEmpType">
+                  <option value="full-time">Full-Time</option><option value="part-time">Part-Time</option>
+                  <option value="contractual">Contractual</option><option value="probationary">Probationary</option>
+                </select>
+              </div>
+              <div><label>Assigned Office Site</label>
+                <select id="newEmpSite"><option value="">— None —</option></select>
+              </div>
+              <div class="span2">
+                <label>Home Address</label>
+                <div style="display:flex;gap:8px">
+                  <input type="text" id="newEmpHomeAddr" placeholder="Full home address e.g. 123 Main St, Quezon City" style="flex:1"/>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="geocodeEmpHome('new')" style="flex-shrink:0;margin-top:0">🔍 Geocode</button>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+                  <div><label style="margin-top:0">Home Latitude</label><input type="number" id="newEmpHomeLat" placeholder="14.6760" step="0.00001"/></div>
+                  <div><label style="margin-top:0">Home Longitude</label><input type="number" id="newEmpHomeLng" placeholder="121.0437" step="0.00001"/></div>
+                </div>
+                <div id="newEmpGeoStatus" class="text-xs mt-2" style="color:var(--muted)"></div>
+              </div>
+            </div>
+            <div class="err-msg hidden" id="createEmpErr" style="white-space:pre-wrap;font-family:monospace;font-size:11px;line-height:1.5;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:10px;max-height:160px;overflow-y:auto"></div>
+            <div style="display:flex;gap:10px;margin-top:16px">
+              <button class="btn btn-secondary" onclick="switchEmpTab('list',null)">Cancel</button>
+              <button class="btn btn-primary" id="createEmpBtn" onclick="createEmployee()">Create Account</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BULK UPLOAD -->
+        <div id="empTabBulk" class="hidden">
+          <div class="card" style="max-width:760px">
+            <div class="section-title mb-2">Bulk Upload Employee Roster</div>
+            <p class="text-sm text-muted mb-4">Upload a CSV file to create multiple employee accounts at once. Employees log in with their Employee ID.</p>
+
+            <div class="info-box">
+              📋 Required columns: <strong>employee_id, full_name, email, password, role</strong><br/>
+              Optional: department, position, employment_type, site_name, home_address, home_lat, home_lng, office_site_lat, office_site_lng, office_site_radius
+            </div>
+
+            <button class="btn btn-secondary btn-sm mb-4" onclick="downloadTemplate()">⬇ Download CSV Template</button>
+
+            <div class="upload-zone" id="uploadZone" onclick="el('csvFileInput').click()"
+              ondragover="event.preventDefault();this.classList.add('drag')"
+              ondragleave="this.classList.remove('drag')"
+              ondrop="handleDrop(event)">
+              <div class="uz-icon">📂</div>
+              <div class="uz-title">Drop CSV file here or click to browse</div>
+              <div class="uz-sub">Supports .csv files up to 1,000 rows</div>
+            </div>
+            <input type="file" id="csvFileInput" accept=".csv" onchange="handleCSVFile(this.files[0])"/>
+
+            <!-- PREVIEW -->
+            <div id="csvPreviewSection" class="hidden">
+              <div class="section-head mt-4">
+                <div><div class="section-title" id="csvPreviewTitle">Preview</div><div class="section-sub" id="csvPreviewSub"></div></div>
+                <div class="flex gap-2">
+                  <button class="btn btn-danger btn-sm" onclick="clearCSV()">✕ Clear</button>
+                  <button class="btn btn-primary btn-sm" id="uploadBtn" onclick="processBulkUpload()">⬆ Upload All</button>
+                </div>
+              </div>
+              <div class="err-msg hidden" id="bulkErr"></div>
+
+              <!-- PROGRESS -->
+              <div class="hidden" id="bulkProgressWrap">
+                <div class="flex justify-between text-sm mb-2">
+                  <span id="bulkProgressLabel">Uploading…</span>
+                  <span id="bulkProgressCount">0 / 0</span>
+                </div>
+                <div class="progress-bar-wrap"><div class="progress-bar" id="bulkProgressBar" style="width:0%"></div></div>
+                <div id="bulkErrors" style="margin-top:10px;font-size:12px;color:var(--red);max-height:80px;overflow-y:auto"></div>
+              </div>
+
+              <div class="preview-wrap">
+                <table>
+                  <thead id="csvPreviewHead"></thead>
+                  <tbody id="csvPreviewBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== TEAM OVERVIEW (ADMIN) ===== -->
+      <div id="page-team" class="hidden">
+        <div class="grid-4 mb-4">
+          <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-label">Active Today</div><div class="stat-value" id="admin-active">—</div></div>
+          <div class="stat-card"><div class="stat-icon">🏢</div><div class="stat-label">Onsite</div><div class="stat-value" id="admin-office" style="color:var(--green)">—</div></div>
+          <div class="stat-card"><div class="stat-icon">🏠</div><div class="stat-label">Work From Home</div><div class="stat-value" id="admin-home" style="color:var(--amber)">—</div></div>
+          <div class="stat-card"><div class="stat-icon">⚠️</div><div class="stat-label">Outside / Unknown</div><div class="stat-value" id="admin-outside" style="color:var(--red)">—</div></div>
+        </div>
+        <div class="card">
+          <div class="section-head">
+            <div><div class="section-title">Team Attendance</div><div class="section-sub" id="teamDateLabel"></div></div>
+            <div class="flex gap-2 flex-wrap">
+              <input type="date" id="teamDateFilter" style="padding:6px 10px;font-size:12px;width:138px" onchange="loadTeamData()"/>
+              <select id="teamSiteFilter" style="padding:6px 10px;font-size:12px;width:130px" onchange="loadTeamData()">
+                <option value="">All Sites</option>
+              </select>
+              <button class="btn btn-secondary btn-sm" onclick="loadTeamData()">↻</button>
+              <button class="btn btn-secondary btn-sm" onclick="exportCSV('adminBody',['Employee','Role','Dept','Site','Status','In','Out','Location','Hours'])">⬇ Export</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Employee</th><th>Role</th><th>Dept</th><th>Assigned Site</th><th>Status</th><th>Clock In</th><th>Clock Out</th><th>Location Type</th><th>Hours</th></tr></thead>
+              <tbody id="adminBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- ===== LOCATION MODAL ===== -->
+<div class="modal-backdrop hidden" id="locationModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeLocationModal()">✕</button>
+    <div class="modal-title" id="modalTitle">Detecting Location…</div>
+    <div class="modal-sub" id="modalSub">Running smart location detection</div>
+    <div class="detect-steps" id="detectSteps">
+      <div class="detect-step" id="step-home"><span>🏠</span><span>Home Address Check</span><span class="step-status" id="step-home-status">Waiting</span></div>
+      <div class="detect-step" id="step-site"><span>🏢</span><span>Office Site Geofence</span><span class="step-status" id="step-site-status">Waiting</span></div>
+      <div class="detect-step" id="step-gps"><span>🛰</span><span>GPS Coordinates</span><span class="step-status running" id="step-gps-status">Requesting…</span></div>
+      <div class="detect-step" id="step-ip"><span>🌐</span><span>IP Address Fallback</span><span class="step-status" id="step-ip-status">Waiting</span></div>
+    </div>
+    <!-- GPS warning shown when IP is used as fallback -->
+    <div id="gpsWarningBox" class="hidden" style="background:rgba(200,168,75,.08);border:1.5px solid rgba(200,168,75,.25);border-radius:10px;padding:11px 14px;font-size:12px;color:#9A7A20;margin-bottom:12px">
+      ⚠️ <strong>GPS unavailable</strong> — your location was estimated using your network IP address, which is less accurate.
+      For precise detection, open this app on <strong>https://</strong> (not file://) or allow location access in your browser.
+    </div>
+    <div class="hidden" id="detectResult">
+      <div class="detected-loc">
+        <div>
+          <div style="font-size:10.5px;color:var(--muted);margin-bottom:3px">Detected Location</div>
+          <div style="font-size:19px;font-weight:800" id="resultLocText">—</div>
+          <div style="margin-top:5px;display:flex;gap:6px;flex-wrap:wrap">
+            <span class="detect-badge" id="resultMethodBadge">—</span>
+            <span class="chip" id="resultSiteBadge" style="display:none">—</span>
+          </div>
+        </div>
+        <div style="font-size:34px" id="resultEmoji">📍</div>
+      </div>
+      <div class="hidden" id="overrideSection">
+        <label>Override Reason *</label>
+        <textarea id="overrideReason" placeholder="Why are you changing the detected location?"></textarea>
+      </div>
+      <!-- Lock notice when Onsite is GPS-blocked -->
+      <div id="onsiteBlockedNotice" class="hidden" style="margin-top:10px;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:10px 12px;font-size:11.5px;color:var(--red)"></div>
+      <div class="flex gap-2 mt-2">
+        <select id="locationOverride" style="flex:1" onchange="handleOverrideChange()">
+          <option value="auto">Use Detected Location</option>
+          <option value="Onsite">Override → Onsite 🏢</option>
+          <option value="Home">Override → Home 🏠</option>
+          <option value="Outside">Override → Outside ⚠️</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeLocationModal()">Cancel</button>
+        <button class="btn btn-primary" id="confirmClockBtn" onclick="confirmClock()"><span id="confirmClockLabel">Confirm</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EDIT EMPLOYEE MODAL ===== -->
+<div class="modal-backdrop hidden" id="editEmpModal">
+  <div class="modal modal-lg">
+    <button class="modal-close" onclick="closeEditModal()">✕</button>
+    <div class="modal-title">Edit Employee</div>
+    <div class="modal-sub" id="editEmpSubtitle"></div>
+    <input type="hidden" id="editEmpRowId"/>
+    <div class="form-grid">
+      <div><label>Full Name</label><input type="text" id="editEmpName"/></div>
+      <div><label>Employee ID</label><input type="text" id="editEmpEmpId"/></div>
+      <div><label>Email</label><input type="email" id="editEmpEmail" disabled style="opacity:.55"/></div>
+      <div><label>Department</label><input type="text" id="editEmpDept"/></div>
+      <div><label>Position</label><input type="text" id="editEmpPosition"/></div>
+      <div><label>Role *</label>
+        <select id="editEmpRole">
+          <option value="employee">Employee</option><option value="manager">Manager</option>
+          <option value="hr">HR</option><option value="admin">Admin</option>
+        </select>
+      </div>
+      <div><label>Employment Type</label>
+        <select id="editEmpType">
+          <option value="full-time">Full-Time</option><option value="part-time">Part-Time</option>
+          <option value="contractual">Contractual</option><option value="probationary">Probationary</option>
+        </select>
+      </div>
+      <div><label>Account Status</label>
+        <select id="editEmpStatus">
+          <option value="active">Active</option><option value="inactive">Inactive</option><option value="pending">Pending</option>
+        </select>
+      </div>
+      <div><label>Assigned Office Site</label>
+        <select id="editEmpSite"><option value="">— None —</option></select>
+      </div>
+      <div class="span2">
+        <label>Home Address</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="editEmpHomeAddr" placeholder="Full home address" style="flex:1"/>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="geocodeEmpHome('edit')" style="flex-shrink:0;margin-top:0">🔍 Geocode</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <div><label style="margin-top:0">Home Latitude</label><input type="number" id="editEmpHomeLat" placeholder="14.6760" step="0.00001"/></div>
+          <div><label style="margin-top:0">Home Longitude</label><input type="number" id="editEmpHomeLng" placeholder="121.0437" step="0.00001"/></div>
+        </div>
+        <div id="editEmpGeoStatus" class="text-xs mt-2" style="color:var(--muted)"></div>
+      </div>
+    </div>
+    <div class="err-msg hidden" id="editEmpErr"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+      <button class="btn btn-primary" id="saveEmpBtn" onclick="saveEmployee()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ADD/EDIT SITE MODAL ===== -->
+<div class="modal-backdrop hidden" id="siteModal">
+  <div class="modal">
+    <button class="modal-close" onclick="clearTimeout(geocodeTimer);hide('siteModal')">✕</button>
+    <div class="modal-title" id="siteModalTitle">Add Office Site</div>
+    <div class="modal-sub">Type the address and coordinates will be auto-filled</div>
+    <input type="hidden" id="siteRowId"/>
+    <label>Site Name *</label>
+    <input type="text" id="siteName" placeholder="e.g. Zeta Tower, Bridgetowne"/>
+
+    <label>Address *</label>
+    <div style="display:flex;gap:8px;align-items:flex-start">
+      <input type="text" id="siteAddress" placeholder="Full address — e.g. Zeta Tower, E. Rodriguez Jr. Ave, QC"
+        style="flex:1" oninput="clearGeocodedFlag()" onkeydown="if(event.key==='Enter'){event.preventDefault();geocodeAddress()}else if(event.key==='Tab'){clearTimeout(geocodeTimer);}"/>
+      <button class="btn btn-secondary btn-sm" id="geocodeBtn" onclick="geocodeAddress()" style="white-space:nowrap;margin-top:0;flex-shrink:0">
+        🔍 Find Coordinates
+      </button>
+    </div>
+    <div id="geocodeStatus" style="font-size:11.5px;margin-top:5px;color:var(--muted)"></div>
+
+    <!-- Map preview -->
+    <div id="siteMapPreview" class="hidden" style="margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--border);height:160px;background:var(--surface2);display:flex;align-items:center;justify-content:center">
+      <iframe id="siteMapFrame" style="width:100%;height:100%;border:none" loading="lazy"></iframe>
+    </div>
+
+    <!-- Manual paste helper — shown when auto-geocoding fails -->
+    <div id="manualCoordsHint" class="hidden" style="margin-top:10px;background:rgba(56,189,248,.06);border:1px solid rgba(56,189,248,.2);border-radius:8px;padding:12px">
+      <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:8px">📋 Paste coordinates from GPS-Coordinates.net or Google Maps</div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="pasteCoordInput" placeholder='e.g. 14.594024, 121.080622' style="flex:1;font-size:12px;padding:7px 10px"/>
+        <button type="button" class="btn btn-primary btn-sm" onclick="pasteCoords()" style="flex-shrink:0">Apply</button>
+      </div>
+      <div style="font-size:10.5px;color:var(--muted);margin-top:5px">Accepts: <code>14.5940, 121.0806</code> or <code>14°35'38"N 121°04'50"E</code></div>
+    </div>
+
+    <div class="form-grid">
+      <div>
+        <label>Latitude *</label>
+        <input type="number" id="siteLat" placeholder="14.6500" step="0.00001" oninput="updateMapPreview()"/>
+      </div>
+      <div>
+        <label>Longitude *</label>
+        <input type="number" id="siteLng" placeholder="121.0510" step="0.00001" oninput="updateMapPreview()"/>
+      </div>
+    </div>
+
+    <label>Geofence Radius (meters) *</label>
+    <input type="number" id="siteRadius" placeholder="200" min="50" max="5000" value="200"/>
+    <p class="text-xs text-muted mt-2" style="margin-bottom:8px">
+      💡 Recommended: 100–200m for a single building, 300–500m for a campus/complex
+    </p>
+
+    <label>Notes</label>
+    <textarea id="siteNotes" placeholder="Optional notes about this site…" style="min-height:50px"></textarea>
+    <div class="err-msg hidden" id="siteErr"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="hide('siteModal')">Cancel</button>
+      <button class="btn btn-primary" id="saveSiteBtn" onclick="saveSite()">Save Site</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== VIEW ATTENDANCE MODAL ===== -->
+<div class="modal-backdrop hidden" id="viewAttModal">
+  <div class="modal modal-xl">
+    <button class="modal-close" onclick="hide('viewAttModal')">✕</button>
+    <div class="modal-title" id="viewAttName">Employee Attendance</div>
+    <div class="modal-sub">Recent 30 days</div>
+    <div id="viewAttContent"><div class="empty-state"><div class="ei">📋</div><p>Loading…</p></div></div>
+  </div>
+</div>
+
+<script>
+// ========================
+// CONFIG
+// ========================
+const CFG = {
+  supabaseUrl: 'https://qvqgolyuvyqsbqzlblqf.supabase.co',
+  supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2cWdvbHl1dnlxc2JxemxibHFmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNjY3NzYsImV4cCI6MjA5Nzc0Mjc3Nn0.4w83XpsHKUimPho_kYjN_8bGHNEJjqq623MIIHdC0xQ',
+  adminEmails: ['rio.decz317@gmail.com','ricky.delatorre@sagility.com'],
+};
+const ROLES = {admin:'Admin',hr:'HR',manager:'Manager',employee:'Employee'};
+const ROLE_COLORS = {admin:'#D05B5B',hr:'#C07090',manager:'#7C6FA0',employee:'#3A7D5C'};
+const sb = window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseKey);
+
+// ========================
+// ACCESS CONTROL — reads from user_access_control table (written by AccessIQ)
+//
+// Source of truth priority:
+//   1. user_access_control Supabase table (cross-origin safe)
+//   2. user_metadata.accessiq mirror (anon-key fallback)
+//   3. Open access (no record = legacy user)
+// ========================
+async function checkAccessIQPermissions(user) {
+  // 1. Query Supabase table directly (works across file:// origins, GitHub Pages, localhost)
+  try {
+    const res = await fetch(
+      `${CFG.supabaseUrl}/rest/v1/user_access_control?user_id=eq.${user.id}&select=status,tools&limit=1`,
+      { headers: { 'apikey': CFG.supabaseKey, 'Authorization': 'Bearer ' + CFG.supabaseKey } }
+    );
+    if (res.ok) {
+      const rows = await res.json();
+      if (rows && rows.length > 0) {
+        const rec = rows[0];
+        const suspended = rec.status === 'suspended';
+        const tools = rec.tools || {};
+        // Must be explicitly true — if tools has keys but attendance is missing, treat as OFF
+        const hasToolKeys = Object.keys(tools).length > 0;
+        const attOn = tools.attendance === true;
+        const toolAllowed = hasToolKeys ? attOn : true; // empty tools = open (legacy)
+        return { allowed: toolAllowed && !suspended, suspended };
+      }
+    }
+  } catch(e) { /* fall through to metadata mirror */ }
+
+  // 2. Fall back to user_metadata.accessiq mirror (written by AccessIQ on save)
+  const meta   = user.user_metadata || {};
+  const appMeta = user.app_metadata || {};
+  const accessiq = appMeta.accessiq || meta.accessiq || null;
+  if (!accessiq) return { allowed: true, suspended: false };  // 3. No record = open access
+
+  const suspended = accessiq.status === 'suspended';
+  const tools = accessiq.tools || {};
+  const hasToolKeys = Object.keys(tools).length > 0;
+  const attOn = tools.attendance === true;
+  const toolAllowed = hasToolKeys ? attOn : true;
+  return { allowed: toolAllowed && !suspended, suspended };
+}
+
+async function enforceAccess(user) {
+  const { allowed, suspended } = await checkAccessIQPermissions(user);
+  if (!allowed) {
+    await sb.auth.signOut();
+    const msg = suspended
+      ? 'Your account has been suspended. Contact your administrator.'
+      : 'You do not have access to AttendanceIQ. Contact your administrator to request access.';
+    // Show a blocking screen instead of the app
+    document.body.innerHTML = `
+      <div style="display:flex;height:100vh;align-items:center;justify-content:center;background:#EEF2F0;font-family:'Inter',sans-serif;">
+        <div style="background:#fff;border:1px solid #DDE5E1;border-radius:18px;padding:40px 36px;max-width:400px;text-align:center;box-shadow:0 6px 28px rgba(0,0,0,.1)">
+          <div style="font-size:42px;margin-bottom:14px">${suspended ? '🚫' : '🔒'}</div>
+          <div style="font-size:18px;font-weight:800;color:#1A2B24;margin-bottom:8px">${suspended ? 'Account Suspended' : 'Access Restricted'}</div>
+          <div style="font-size:13px;color:#7A9488;margin-bottom:22px">${msg}</div>
+          <button onclick="location.reload()" style="background:#C8A84B;color:#2D4739;border:none;padding:10px 22px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">Back to Login</button>
+        </div>
+      </div>`;
+    return false;
+  }
+  return true;
+}
+
+// ========================
+// STATE
+// ========================
+let currentUser=null, currentProfile={}, todayLog=null;
+let clockedIn=false, worktimer=null, workStartTime=null, realtimeSub=null;
+let allEmployees=[], allSites=[], csvRows=[];
+let detectedLocation=null, detectedMethod=null, detectedSiteName=null, clockAction='in';
+let gpsVerified=false; // true when GPS successfully ran — restricts Onsite override
+
+// ========================
+// INIT
+// ========================
+let appBooted = false; // prevent re-boot on session token refresh
+let currentPage = 'dashboard';
+
+window.addEventListener('DOMContentLoaded', async () => {
+  startLiveClock(); updateDateLine();
+  el('teamDateFilter').value = new Date().toISOString().split('T')[0];
+  const {data:{session}} = await sb.auth.getSession();
+  if (session) { currentUser=session.user; await bootApp(); }
+  sb.auth.onAuthStateChange(async(event,session)=>{
+    if (event==='SIGNED_IN' && session) {
+      // TOKEN_REFRESHED also fires SIGNED_IN — only boot once
+      if (!appBooted) { currentUser=session.user; await bootApp(); }
+      else { currentUser=session.user; } // silently update user ref
+    } else if(event==='SIGNED_OUT') {
+      appBooted=false; currentUser=null; showAuth();
+    }
+  });
+});
+
+async function bootApp(){
+  if(appBooted) return; // guard against duplicate calls
+  appBooted=true;
+
+  // ── AccessIQ gate ──────────────────────────────────────
+  const accessOk = await enforceAccess(currentUser);
+  if (!accessOk) return; // blocked — enforceAccess already replaced body
+  // ───────────────────────────────────────────────────────
+
+  showApp();
+  await loadProfile();
+  await loadSites();
+  await loadTodayLog();
+  subscribeRealtime();
+  await loadRecentLogs();
+  showPage('dashboard'); // only navigate to dashboard on first boot
+}
+
+// ========================
+// AUTH — Employee ID Login
+// ========================
+function switchLoginTab(tab){
+  if(tab==='empid'){
+    show('loginByEmpId');hide('loginByEmail');
+    el('tabEmpId').classList.add('active');el('tabEmail').classList.remove('active');
+  } else {
+    hide('loginByEmpId');show('loginByEmail');
+    el('tabEmail').classList.add('active');el('tabEmpId').classList.remove('active');
+  }
+}
+function showLoginForm(){hide('magicForm');hide('registerForm');show('loginForm');}
+function showMagicLink(){hide('loginForm');hide('registerForm');show('magicForm');}
+function showRegister(){hide('loginForm');hide('magicForm');show('registerForm');}
+
+async function doRegister(){
+  const name=val('regName'),email=val('regEmail'),pass=val('regPass');
+  const empId=val('regEmpId').toUpperCase(),dept=val('regDept');
+  if(!name||!email||!pass){showErr('regErr','Full name, email and password are required');return;}
+  if(pass.length<8){showErr('regErr','Password must be at least 8 characters');return;}
+  setBtnLoad('regBtn',true,'Creating…');
+  try{
+    const{data,error}=await sb.auth.signUp({
+      email,password:pass,
+      options:{data:{full_name:name,role:'employee',employee_id:empId,department:dept}}
+    });
+    if(error)throw error;
+    const userId=data?.user?.id;
+    // Create a pending employee profile so admin can see and activate them
+    if(userId){
+      await sb.from('employee_profiles').insert({
+        user_id:userId,full_name:name,email,
+        employee_id:empId||null,department:dept||null,
+        role:'employee',status:'pending',
+      }).then(()=>{}).catch(()=>{}); // non-fatal if it fails — admin can add via SQL
+    }
+    showToast('✅ Account created! You can now sign in. An admin will assign your role and department.','success',8000);
+    showLoginForm();
+    // Pre-fill login email tab for convenience
+    el('loginEmail').value=email;
+    switchLoginTab('email');
+    el('tabEmail').click();
+  }catch(e){
+    const msg=e.message||'';
+    if(msg.toLowerCase().includes('already registered')||e.status===422){
+      showErr('regErr','This email is already registered. Try signing in instead.');
+    } else {
+      showErr('regErr',msg);
+    }
+  }
+  setBtnLoad('regBtn',false,'Create Account');
+}
+
+async function doLoginEmpId(){
+  const empId = el('loginEmpId').value.trim().toUpperCase();
+  const pass  = el('loginPassEmpId').value;
+  if(!empId||!pass){showErr('loginEmpIdErr','Enter Employee ID and password');return;}
+  setBtnLoad('loginEmpIdBtn',true,'Signing in…');
+  try {
+    // maybeSingle() returns null instead of 406 when no row found
+    const {data,error} = await sb.from('employee_profiles')
+      .select('email')
+      .eq('employee_id', empId)
+      .maybeSingle();
+    if(error) throw new Error('Could not look up Employee ID: ' + error.message);
+    if(!data || !data.email) throw new Error('Employee ID not found. Check your ID or contact your admin.');
+    const {error:authErr} = await sb.auth.signInWithPassword({email:data.email, password:pass});
+    if(authErr){
+      if(authErr.message?.toLowerCase().includes('invalid')){
+        throw new Error('Incorrect password. Please try again.');
+      }
+      throw new Error(authErr.message);
+    }
+  } catch(e){
+    showErr('loginEmpIdErr', e.message);
+    setBtnLoad('loginEmpIdBtn', false, 'Sign In');
+  }
+}
+async function doLogin(){
+  const email=val('loginEmail'),pass=val('loginPass');
+  if(!email||!pass){showErr('loginErr','Enter email and password');return;}
+  setBtnLoad('loginBtn',true,'Sign In');
+  const{error}=await sb.auth.signInWithPassword({email,password:pass});
+  setBtnLoad('loginBtn',false,'Sign In');
+  if(error)showErr('loginErr',error.message);
+}
+async function doMagicLink(){
+  const email=val('magicEmail');
+  if(!email){showErr('magicErr','Enter email');return;}
+  const{error}=await sb.auth.signInWithOtp({email});
+  if(error){showErr('magicErr',error.message);return;}
+  showToast('📧 Magic link sent!','success');
+}
+async function doLogout(){
+  if(realtimeSub){sb.removeChannel(realtimeSub);realtimeSub=null;}
+  clearInterval(worktimer);
+  await sb.auth.signOut();
+}
+
+// ========================
+// PROFILE
+// ========================
+async function loadProfile(){
+  let dbP=null;
+  try{const{data}=await sb.from('employee_profiles').select('*').eq('user_id',currentUser.id).maybeSingle();dbP=data;}catch(e){}
+  const meta=currentUser.user_metadata||{};
+  // AccessIQ role override: Supabase table > app_metadata > employee_profiles.role
+  // Already fetched during enforceAccess — re-query with select=role for efficiency
+  let aiqRole = null;
+  try {
+    const r = await fetch(
+      `${CFG.supabaseUrl}/rest/v1/user_access_control?user_id=eq.${currentUser.id}&select=role&limit=1`,
+      { headers: { 'apikey': CFG.supabaseKey, 'Authorization': 'Bearer ' + CFG.supabaseKey } }
+    );
+    if (r.ok) { const rows = await r.json(); aiqRole = rows?.[0]?.role || null; }
+  } catch(e) {}
+  aiqRole = aiqRole || (currentUser.app_metadata?.role) || (meta.accessiq?.role) || null;
+  const effectiveRole = aiqRole || dbP?.role || 'employee';
+  const isAdmin=CFG.adminEmails.includes(currentUser.email)||effectiveRole==='admin';
+  const isHR=effectiveRole==='hr';
+  const isManager=effectiveRole==='manager';
+  currentProfile={
+    name:dbP?.full_name||meta.full_name||currentUser.email.split('@')[0],
+    email:currentUser.email,
+    dept:dbP?.department||meta.department||'',
+    empId:dbP?.employee_id||meta.employee_id||'',
+    position:dbP?.position||'',
+    role:effectiveRole,
+    status:(currentUser.app_metadata?.status) || dbP?.status||'active',
+    empType:dbP?.employment_type||'full-time',
+    siteId:dbP?.site_id||null,
+    homeLat:dbP?.home_lat||null,
+    homeLng:dbP?.home_lng||null,
+    homeAddr:dbP?.home_address||'',
+    isAdmin, isHR, isManager,
+    canManage:isAdmin||isHR,
+    canViewTeam:isAdmin||isHR||isManager,
+    profileId:dbP?.id||null,
+  };
+  const initials=currentProfile.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const roleColors={admin:'#D05B5B',hr:'#C07090',manager:'#7C6FA0',employee:'#3A7D5C'};
+  el('sidebarAvatar').textContent=initials;
+  el('sidebarAvatar').style.background=`linear-gradient(135deg,${roleColors[currentProfile.role]||'#3A7D5C'},#2D4739)`;
+  el('sidebarName').textContent=currentProfile.name;
+  if(el('sidebarEmail'))el('sidebarEmail').textContent=currentProfile.email;
+  if(el('sidebarRoleChip'))el('sidebarRoleChip').textContent=ROLES[currentProfile.role]||'Employee';
+  el('profileName').value=currentProfile.name;
+  el('profileEmail').value=currentProfile.email;
+  el('profileEmpId').value=currentProfile.empId;
+  el('profileDept').value=currentProfile.dept;
+  el('profilePosition').value=currentProfile.position;
+  el('profileRoleDisplay').value=ROLES[currentProfile.role]||'Employee';
+  // Site info
+  renderProfileSiteInfo(dbP);
+  if(currentProfile.homeAddr)el('profileHomeInfo').textContent=currentProfile.homeAddr;
+  if(currentProfile.canViewTeam)document.querySelectorAll('.admin-only').forEach(e=>e.classList.remove('hidden'));
+  if(!currentProfile.canManage){el('nav-employees')?.classList.add('hidden');el('nav-sites')?.classList.add('hidden');}
+}
+
+function renderProfileSiteInfo(dbP){
+  const site=allSites.find(s=>s.id===dbP?.site_id);
+  const wrap=el('profileSiteInfo');
+  if(!site){wrap.innerHTML='<div class="empty-state" style="padding:12px"><div class="ei" style="font-size:22px">🏢</div><p>No site assigned</p></div>';return;}
+  wrap.innerHTML=`<div class="site-badge">🏢 ${site.name}</div>
+    <div class="text-sm text-muted mt-2">${site.address||''}</div>
+    <div class="text-xs text-muted mt-1">📍 ${site.lat}, ${site.lng} · Radius: ${site.radius_meters}m</div>`;
+}
+
+async function saveProfile(){
+  const name=val('profileName');
+  if(!name){showToast('Name cannot be empty','error');return;}
+  try{
+    await sb.auth.updateUser({data:{full_name:name}});
+    await sb.from('employee_profiles').update({full_name:name,updated_at:new Date().toISOString()}).eq('user_id',currentUser.id);
+    currentProfile.name=name;el('sidebarName').textContent=name;
+    showToast('✅ Profile saved','success');
+  }catch(e){showToast('❌ '+e.message,'error');}
+}
+
+async function captureHomeGPS(){
+  el('homeGPSStatus').textContent='📡 Getting location…';
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude;
+    await sb.from('employee_profiles').update({home_lat:lat,home_lng:lng}).eq('user_id',currentUser.id);
+    currentProfile.homeLat=lat;currentProfile.homeLng=lng;
+    el('homeGPSStatus').textContent=`✅ Saved: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  },err=>{el('homeGPSStatus').textContent='❌ '+err.message;});
+}
+
+// ========================
+// OFFICE SITES
+// ========================
+async function loadSites(){
+  try{
+    const{data,error}=await sb.from('office_sites').select('*').order('name');
+    if(error)throw error;
+    allSites=data||[];
+    renderSitesGrid();
+    populateSiteSelects();
+    populateTeamSiteFilter();
+  }catch(e){console.warn('loadSites:',e.message);}
+}
+
+function renderSitesGrid(){
+  const grid=el('sitesGrid');
+  if(!grid)return;
+  if(!allSites.length){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="ei">🏢</div><p>No office sites yet. Add one to enable geofencing.</p></div>';return;}
+  grid.innerHTML=allSites.map(s=>`
+    <div class="site-card">
+      <div class="site-card-header">
+        <div class="site-name">🏢 ${s.name}</div>
+        <div class="flex gap-2">
+          <button class="btn btn-secondary btn-sm" onclick="openEditSite('${s.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSite('${s.id}')">🗑</button>
+        </div>
+      </div>
+      <div class="site-meta">
+        <span>📍 ${s.address||'No address'}</span>
+        <span>🌐 ${s.lat}, ${s.lng}</span>
+        <span>📏 Radius: ${s.radius_meters}m</span>
+        ${s.notes?`<span class="text-xs">${s.notes}</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function populateSiteSelects(){
+  const opts=`<option value="">— None —</option>`+allSites.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  ['newEmpSite','editEmpSite'].forEach(id=>{if(el(id))el(id).innerHTML=opts;});
+}
+
+function populateTeamSiteFilter(){
+  const sel=el('teamSiteFilter');
+  if(!sel)return;
+  sel.innerHTML=`<option value="">All Sites</option>`+allSites.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+}
+
+function openAddSite(){
+  el('siteRowId').value='';el('siteModalTitle').textContent='Add Office Site';
+  ['siteName','siteAddress','siteLat','siteLng','siteNotes'].forEach(id=>el(id).value='');
+  el('siteRadius').value='200';
+  clearTimeout(geocodeTimer); // cancel any pending auto-geocode
+  el('geocodeStatus').textContent='';el('geocodeStatus').style.color='var(--muted)';
+  hide('siteErr');hide('siteMapPreview');hide('manualCoordsHint');show('siteModal');
+}
+function openEditSite(id){
+  const s=allSites.find(x=>x.id===id);if(!s)return;
+  el('siteRowId').value=id;el('siteModalTitle').textContent='Edit Office Site';
+  el('siteName').value=s.name||'';el('siteAddress').value=s.address||'';
+  el('siteLat').value=s.lat||'';el('siteLng').value=s.lng||'';
+  el('siteRadius').value=s.radius_meters||200;el('siteNotes').value=s.notes||'';
+  el('geocodeStatus').textContent='';hide('siteErr');
+  if(s.lat&&s.lng)showMapPreview(s.lat,s.lng);
+  else hide('siteMapPreview');
+  show('siteModal');
+}
+
+// ========================
+// GEOCODING — multi-source, Philippines-optimised
+// Source 1: Nominatim (OSM)
+// Source 2: Photon/Komoot (better PH building/POI names)
+// Fallback: GPS-Coordinates.net link + manual paste helper
+// ========================
+let geocodeTimer=null;
+
+function clearGeocodedFlag(){
+  el('geocodeStatus').textContent='';
+  el('geocodeStatus').style.color='var(--muted)';
+  clearTimeout(geocodeTimer);
+  const addr=val('siteAddress');
+  if(addr.length>8){
+    el('geocodeStatus').textContent='⏳ Auto-searching in a moment…';
+    geocodeTimer=setTimeout(geocodeAddress,900);
+  }
+}
+
+async function geocodeAddress(){
+  clearTimeout(geocodeTimer);
+  const addr=val('siteAddress');
+  if(!addr){showErr('siteErr','Enter an address first');return;}
+  const btn=el('geocodeBtn');
+  btn.disabled=true;btn.textContent='Searching…';
+  el('geocodeStatus').textContent='🔍 Searching across multiple sources…';
+  el('geocodeStatus').style.color='var(--accent)';
+
+  let result=null;
+
+  // Source 1: Nominatim
+  try{
+    const q=encodeURIComponent(addr+', Philippines');
+    const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=3&countrycodes=ph&accept-language=en`,
+      {headers:{'User-Agent':'AttendanceIQ/1.0'}});
+    const data=await res.json();
+    if(data&&data.length>0)
+      result={lat:parseFloat(data[0].lat),lng:parseFloat(data[0].lon),label:data[0].display_name,src:'OpenStreetMap'};
+  }catch(e){console.warn('Nominatim:',e.message);}
+
+  // Source 2: Photon (better at building/mall names in PH)
+  if(!result){
+    try{
+      const q=encodeURIComponent(addr+' Philippines');
+      const res=await fetch(`https://photon.komoot.io/api/?q=${q}&limit=5&lang=en&bbox=116,4,128,22`);
+      const data=await res.json();
+      const ph=data?.features?.find(f=>f.properties?.country==='Philippines')||data?.features?.[0];
+      if(ph){
+        const p=ph.properties;
+        result={
+          lat:ph.geometry.coordinates[1],lng:ph.geometry.coordinates[0],
+          label:[p.name,p.city||p.county,p.state].filter(Boolean).join(', '),
+          src:'Photon/OSM'
+        };
+      }
+    }catch(e){console.warn('Photon:',e.message);}
+  }
+
+  btn.disabled=false;btn.textContent='🔍 Find Coordinates';
+
+  if(result){
+    el('siteLat').value=result.lat.toFixed(6);
+    el('siteLng').value=result.lng.toFixed(6);
+    el('geocodeStatus').innerHTML=`✅ <strong>${result.src}</strong>: ${result.label.split(',').slice(0,3).join(',')}`;
+    el('geocodeStatus').style.color='var(--green)';
+    showMapPreview(result.lat,result.lng);
+    hide('manualCoordsHint');
+  } else {
+    const gpsLink=`https://www.gps-coordinates.net/?q=${encodeURIComponent(addr+' Philippines')}`;
+    const gmLink=`https://www.google.com/maps/search/${encodeURIComponent(addr+' Philippines')}`;
+    el('geocodeStatus').innerHTML=
+      `❌ Not found automatically. Try these:<br>
+       <a href="${gpsLink}" target="_blank" style="color:var(--accent)">🔗 GPS-Coordinates.net</a> &nbsp;|&nbsp;
+       <a href="${gmLink}" target="_blank" style="color:var(--accent)">🗺 Google Maps</a><br>
+       <span style="color:var(--muted);font-size:10.5px">Find the location, copy the coordinates, then paste below ↓</span>`;
+    el('geocodeStatus').style.color='var(--red)';
+    show('manualCoordsHint');
+  }
+}
+
+function showMapPreview(lat,lng){
+  const lt=parseFloat(lat),ln=parseFloat(lng);
+  el('siteMapFrame').src=`https://www.openstreetmap.org/export/embed.html?bbox=${ln-0.003},${lt-0.003},${ln+0.003},${lt+0.003}&layer=mapnik&marker=${lt},${ln}`;
+  show('siteMapPreview');el('siteMapPreview').style.display='block';
+}
+
+function updateMapPreview(){
+  const lat=el('siteLat').value,lng=el('siteLng').value;
+  if(lat&&lng&&!isNaN(lat)&&!isNaN(lng))showMapPreview(lat,lng);
+}
+
+// Paste "lat, lng" copied from GPS sites
+function pasteCoords(){
+  const raw=val('pasteCoordInput');
+  if(!raw)return;
+  const parts=raw.replace(/[°NSEWnsew]/g,'').split(/[\s,]+/).map(s=>parseFloat(s.trim())).filter(n=>!isNaN(n));
+  if(parts.length>=2){
+    el('siteLat').value=parts[0].toFixed(6);
+    el('siteLng').value=parts[1].toFixed(6);
+    el('pasteCoordInput').value='';
+    hide('manualCoordsHint');
+    el('geocodeStatus').innerHTML=`✅ Coordinates set: ${parts[0].toFixed(6)}, ${parts[1].toFixed(6)}`;
+    el('geocodeStatus').style.color='var(--green)';
+    showMapPreview(parts[0],parts[1]);
+  } else {
+    el('geocodeStatus').textContent='❌ Could not parse. Use format: 14.5490, 121.0510';
+    el('geocodeStatus').style.color='var(--red)';
+  }
+}
+
+// Employee home address geocoding
+async function geocodeEmpHome(mode){
+  const p=mode==='new'?'new':'edit';
+  const addr=val(p+'EmpHomeAddr');
+  const stat=el(p+'EmpGeoStatus');
+  if(!addr){stat.textContent='Enter a home address first';stat.style.color='var(--red)';return;}
+  stat.textContent='🔍 Looking up coordinates…';stat.style.color='var(--accent)';
+  let result=null;
+  try{
+    const q=encodeURIComponent(addr+', Philippines');
+    const res=await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=ph`,
+      {headers:{'User-Agent':'AttendanceIQ/1.0'}});
+    const data=await res.json();
+    if(data?.length)result={lat:parseFloat(data[0].lat),lng:parseFloat(data[0].lon)};
+  }catch(e){}
+  if(!result){
+    try{
+      const q=encodeURIComponent(addr+' Philippines');
+      const res=await fetch(`https://photon.komoot.io/api/?q=${q}&limit=3&lang=en&bbox=116,4,128,22`);
+      const data=await res.json();
+      const ph=data?.features?.find(f=>f.properties?.country==='Philippines')||data?.features?.[0];
+      if(ph)result={lat:ph.geometry.coordinates[1],lng:ph.geometry.coordinates[0]};
+    }catch(e){}
+  }
+  if(result){
+    el(p+'EmpHomeLat').value=result.lat.toFixed(6);
+    el(p+'EmpHomeLng').value=result.lng.toFixed(6);
+    stat.textContent=`✅ ${result.lat.toFixed(5)}, ${result.lng.toFixed(5)}`;
+    stat.style.color='var(--green)';
+  } else {
+    stat.innerHTML=`❌ Not found. <a href="https://www.gps-coordinates.net/?q=${encodeURIComponent(addr+' Philippines')}" target="_blank" style="color:var(--accent)">Search manually →</a> then fill lat/lng below`;
+    stat.style.color='var(--red)';
+  }
+}
+async function saveSite(){
+  const id=val('siteRowId');
+  const name=val('siteName'),address=val('siteAddress');
+  const lat=parseFloat(el('siteLat').value),lng=parseFloat(el('siteLng').value),radius=parseInt(el('siteRadius').value)||200;
+  const notes=val('siteNotes');
+  if(!name||isNaN(lat)||isNaN(lng)){showErr('siteErr','Site Name, Latitude and Longitude are required');return;}
+  setBtnLoad('saveSiteBtn',true,'Save Site');
+  try{
+    const payload={name,address,lat,lng,radius_meters:radius,notes};
+    const{error}=id
+      ? await sb.from('office_sites').update(payload).eq('id',id)
+      : await sb.from('office_sites').insert(payload);
+    if(error)throw error;
+    showToast(`✅ Site ${id?'updated':'created'}!`,'success');
+    hide('siteModal');await loadSites();
+  }catch(e){showErr('siteErr',e.message);}
+  setBtnLoad('saveSiteBtn',false,'Save Site');
+}
+async function deleteSite(id){
+  if(!confirm('Delete this site? Employees assigned to it will lose their site assignment.'))return;
+  const{error}=await sb.from('office_sites').delete().eq('id',id);
+  if(error){showToast('❌ '+error.message,'error');return;}
+  showToast('🗑 Site deleted','info');await loadSites();
+}
+
+// ========================
+// LOCATION DETECTION (multi-site aware)
+// ========================
+async function runDetection(){
+  setStep('gps','active','Requesting…');
+  const gps=await detectGPS();
+
+  if(gps.success){
+    gpsVerified=true; // GPS confirmed — employee location is known
+    setStep('gps','done','Got coordinates',true);
+    setStep('site','active','Checking sites…');
+    const siteMatch=findMatchingSite(gps.lat,gps.lng);
+    setStep('home','active','Checking home…');
+    const homeMatch=isNearHome(gps.lat,gps.lng);
+
+    if(siteMatch){
+      setStep('site','done',siteMatch.name,true);
+      setStep('home','done',homeMatch?'Also near home':'Not home');
+      detectedLocation='Onsite';detectedMethod='GPS';detectedSiteName=siteMatch.name;
+    } else if(homeMatch){
+      setStep('site','done','Not at any registered site');
+      setStep('home','done','Home match',true);
+      detectedLocation='Home';detectedMethod='GPS';detectedSiteName=null;
+    } else {
+      setStep('site','done','Not at any registered site');
+      setStep('home','done','Not home');
+      detectedLocation='Outside';detectedMethod='GPS';detectedSiteName=null;
+    }
+    showDetectionResult();
+    return;
+  }
+  // GPS unavailable — cannot verify location
+  gpsVerified=false;
+  setStep('gps','failed',gps.error||'Unavailable');
+
+  // IP fallback
+  setStep('ip','active','Checking…');
+  const ip=await detectByIP();
+  setStep('site','done','GPS needed for site check');
+  setStep('home','done','GPS needed for home check');
+  if(ip.success){
+    setStep('ip','done','IP resolved',true);
+    detectedLocation='Outside';detectedMethod='IP';detectedSiteName=null;
+  } else {
+    setStep('ip','failed','Unavailable');
+    detectedLocation='Outside';detectedMethod='Manual';detectedSiteName=null;
+  }
+  showDetectionResult(detectedMethod==='Manual');
+}
+
+function findMatchingSite(lat,lng){
+  // Check employee's assigned site first, then all sites
+  const assignedSite=allSites.find(s=>s.id===currentProfile.siteId);
+  const orderedSites=assignedSite
+    ? [assignedSite,...allSites.filter(s=>s.id!==currentProfile.siteId)]
+    : allSites;
+  return orderedSites.find(s=>haversine(lat,lng,s.lat,s.lng)<=s.radius_meters)||null;
+}
+
+function isNearHome(lat,lng){
+  if(!currentProfile.homeLat||!currentProfile.homeLng)return false;
+  return haversine(lat,lng,currentProfile.homeLat,currentProfile.homeLng)<=150;
+}
+
+async function detectGPS(){
+  return new Promise(resolve=>{
+    if(!navigator.geolocation||!el('toggle-gps').classList.contains('on')){resolve({success:false,error:'Disabled'});return;}
+    navigator.geolocation.getCurrentPosition(
+      pos=>resolve({success:true,lat:pos.coords.latitude,lng:pos.coords.longitude}),
+      err=>resolve({success:false,error:err.message}),
+      {timeout:9000,maximumAge:30000}
+    );
+  });
+}
+async function detectByIP(){
+  if(!el('toggle-ip').classList.contains('on'))return{success:false};
+  try{const r=await fetch('https://api.ipify.org?format=json');const d=await r.json();return{success:true,ip:d.ip};}
+  catch(e){return{success:false};}
+}
+
+// ========================
+// CLOCK FLOW
+// ========================
+async function initiateClockAction(){
+  clockAction=clockedIn?'out':'in';
+  el('modalTitle').textContent=`Clock ${clockAction==='in'?'In':'Out'} — Detecting Location`;
+  el('modalSub').textContent='Running smart location detection…';
+  show('locationModal');hide('detectResult');show('detectSteps');
+  ['home','site','gps','ip'].forEach(s=>{
+    el(`step-${s}`).className='detect-step';
+    el(`step-${s}-status`).textContent='Waiting';
+    el(`step-${s}-status`).className='step-status';
+  });
+  detectedLocation=null;detectedMethod=null;detectedSiteName=null;gpsVerified=false;
+  await runDetection();
+}
+
+function setStep(name,state,statusText,ok){
+  el(`step-${name}`).className=`detect-step ${state}`;
+  const st=el(`step-${name}-status`);
+  st.textContent=statusText;
+  st.className='step-status'+(state==='done'&&ok?' ok':state==='failed'?' fail':' running');
+}
+
+function showDetectionResult(isManual){
+  hide('detectSteps');show('detectResult');
+  // Show GPS warning if we fell back to IP or Manual
+  if(detectedMethod==='IP'||detectedMethod==='Manual'){
+    show('gpsWarningBox');
+  } else {
+    hide('gpsWarningBox');
+  }
+  el('locationOverride').value='auto';hide('overrideSection');
+  el('modalTitle').textContent=isManual?'Confirm Work Location':'Location Detected';
+  el('modalSub').textContent=isManual?"Couldn't auto-detect. Please select your location.":'Review and confirm to proceed.';
+  el('resultLocText').textContent=detectedLocation+(detectedSiteName?` — ${detectedSiteName}`:'');
+  const icons={Onsite:'🏢',Home:'🏠',Outside:'⚠️'};
+  el('resultEmoji').textContent=icons[detectedLocation]||'📍';
+  el('resultMethodBadge').textContent=detectedMethod;
+  if(detectedSiteName){el('resultSiteBadge').textContent='🏢 '+detectedSiteName;el('resultSiteBadge').style.display='';}
+  else el('resultSiteBadge').style.display='none';
+  el('confirmClockLabel').textContent=clockAction==='in'?'Confirm Clock In':'Confirm Clock Out';
+
+  // ── OVERRIDE RESTRICTIONS ──────────────────────────────────────────
+  // Rule: If GPS confirmed the employee is NOT at any registered site,
+  //       the "Onsite" override option is BLOCKED.
+  // Rule: If GPS confirmed Onsite, "Home" and "Outside" are still
+  //       available (edge cases like lobby/parking confusion).
+  // Rule: If GPS unavailable (IP/Manual), all options are available
+  //       since we can't prove or disprove location.
+  const overrideEl=el('locationOverride');
+  // Rebuild options fresh each time
+  const onsiteBlocked = gpsVerified && detectedLocation !== 'Onsite';
+  overrideEl.innerHTML=`
+    <option value="auto">✅ Use Detected: ${detectedLocation}${detectedSiteName?' @ '+detectedSiteName:''}</option>
+    ${onsiteBlocked
+      ? `<option value="onsite-blocked" disabled style="color:var(--muted)">🚫 Onsite — not available (GPS shows you're off-site)</option>`
+      : `<option value="Onsite">Override → Onsite 🏢</option>`
+    }
+    <option value="Home">Override → Home 🏠</option>
+    <option value="Outside">Override → Outside ⚠️</option>`;
+
+  // Show lock notice when Onsite is blocked
+  const lockNotice=el('onsiteBlockedNotice');
+  if(onsiteBlocked){
+    lockNotice.textContent='🔒 Onsite option locked — GPS confirms you are not within any registered office location.';
+    lockNotice.classList.remove('hidden');
+  } else {
+    lockNotice.classList.add('hidden');
+  }
+
+  if(isManual){
+    // Force to Outside as default for manual, show override section immediately
+    overrideEl.value='Outside';
+    show('overrideSection');
+    el('overrideReason').value='';
+    el('overrideReason').placeholder='Describe your work location today…';
+  }
+}
+
+function handleOverrideChange(){
+  const v=el('locationOverride').value;
+  if(v==='onsite-blocked'){
+    // Revert to auto if someone somehow selects the disabled option
+    el('locationOverride').value='auto';
+    hide('overrideSection');
+    return;
+  }
+  if(v!=='auto'){show('overrideSection');}
+  else{hide('overrideSection');el('overrideReason').value='';}
+}
+
+async function confirmClock(){
+  const override=el('locationOverride').value;
+  // Double-check server-side restriction: block Onsite if GPS confirmed off-site
+  if(override==='Onsite' && gpsVerified && detectedLocation!=='Onsite'){
+    showToast('🚫 Cannot override to Onsite — GPS confirms you are not at a registered office location.','error',6000);
+    return;
+  }
+  const reason=val('overrideReason');
+  const finalLoc=override==='auto'?detectedLocation:override;
+  if(override!=='auto'&&!reason.trim()){showToast('Please provide a reason for the override','error');return;}
+  el('confirmClockBtn').disabled=true;el('confirmClockLabel').textContent='Saving…';
+  clockAction==='in'?await doClockIn(finalLoc,override!=='auto',reason):await doClockOut();
+  el('confirmClockBtn').disabled=false;
+  closeLocationModal();
+}
+
+async function doClockIn(loc,isOverride,reason){
+  const site=detectedSiteName?allSites.find(s=>s.name===detectedSiteName):null;
+  try{
+    const{data,error}=await sb.from('attendance_logs').insert({
+      user_id:currentUser.id,
+      clock_in_time:new Date().toISOString(),
+      location_type:loc,
+      site_id:site?.id||null,
+      site_name:detectedSiteName||null,
+      detection_method:isOverride?'Manual':detectedMethod,
+      confirmed_by_user:true,
+      user_override_reason:isOverride?reason:null,
+    }).select().single();
+    if(error)throw error;
+    todayLog=data;setStatus('working',data);
+    showToast(`✅ Clocked In — ${loc}${detectedSiteName?' @ '+detectedSiteName:''}`,'success');
+    loadRecentLogs();
+  }catch(e){showToast('❌ Clock In failed: '+e.message,'error');}
+}
+
+async function doClockOut(){
+  if(!todayLog)return;
+  try{
+    const{data,error}=await sb.from('attendance_logs')
+      .update({clock_out_time:new Date().toISOString()})
+      .eq('id',todayLog.id).select().single();
+    if(error)throw error;
+    todayLog=data;setStatus('clocked-out',data);
+    showToast('✅ Clocked Out — Have a great day!','success');
+    loadRecentLogs();
+  }catch(e){showToast('❌ Clock Out failed: '+e.message,'error');}
+}
+
+function closeLocationModal(){hide('locationModal');hide('gpsWarningBox');}
+
+// ========================
+// STATUS DISPLAY
+// ========================
+function setStatus(state,log){
+  const btn=el('mainClockBtn'),pulse=el('pulseWrapper');
+  const heroStatus=el('heroStatus'),heroSub=el('heroSub'),heroBadges=el('heroBadges'),topStatus=el('topbarStatus');
+  heroBadges.innerHTML='';
+  if(state==='not-clocked-in'){
+    clockedIn=false;clearInterval(worktimer);
+    btn.className='clock-btn in';btn.textContent='▶';pulse.classList.add('paused');
+    heroStatus.textContent='Not Clocked In';heroSub.textContent='Press Clock In to start your day';
+    topStatus.style.cssText='background:rgba(148,163,184,.1);color:var(--muted)';topStatus.textContent='⬤ Not Clocked In';
+    el('btnLabel').textContent='Clock In';
+    el('stat-in').textContent='—';el('stat-out').textContent='—';el('stat-hours').textContent='0h 0m';
+    el('stat-loc').textContent='—';el('stat-detect').textContent='Not detected';
+  } else if(state==='working'){
+    clockedIn=true;workStartTime=new Date(log.clock_in_time);
+    btn.className='clock-btn out';btn.textContent='⏹';pulse.classList.remove('paused');
+    heroStatus.textContent='Currently Working';heroSub.textContent='Clocked in at '+fmtTime(log.clock_in_time);
+    topStatus.style.cssText='background:rgba(16,185,129,.12);color:var(--green)';topStatus.textContent='⬤ Working';
+    el('btnLabel').textContent='Clock Out';
+    el('stat-in').textContent=fmtTime(log.clock_in_time);el('stat-out').textContent='—';
+    el('stat-loc').textContent=locLabel(log.location_type);el('stat-detect').textContent=log.detection_method||'';
+    heroBadges.innerHTML=`<span class="loc-badge ${locClass(log.location_type)}">${locIcon(log.location_type)} ${log.location_type||'Unknown'}</span>
+      ${log.site_name?`<span class="site-badge">🏢 ${log.site_name}</span>`:''}
+      <span class="detect-badge">${log.detection_method||'Manual'}</span>`;
+    startWorktimer();
+  } else if(state==='clocked-out'){
+    clockedIn=false;clearInterval(worktimer);
+    btn.className='clock-btn in';btn.textContent='▶';pulse.classList.add('paused');
+    heroStatus.textContent='Clocked Out';heroSub.textContent='Great work today! See you tomorrow.';
+    topStatus.style.cssText='background:rgba(239,68,68,.1);color:var(--red)';topStatus.textContent='⬤ Clocked Out';
+    el('btnLabel').textContent='New Session';
+    el('stat-in').textContent=fmtTime(log.clock_in_time);el('stat-out').textContent=fmtTime(log.clock_out_time);
+    el('stat-hours').textContent=calcDuration(log.clock_in_time,log.clock_out_time);
+    el('stat-loc').textContent=locLabel(log.location_type);el('stat-detect').textContent=log.detection_method||'';
+    heroBadges.innerHTML=`<span class="loc-badge ${locClass(log.location_type)}">${locIcon(log.location_type)} ${log.location_type||'Unknown'}</span>
+      ${log.site_name?`<span class="site-badge">🏢 ${log.site_name}</span>`:''}`;
+  }
+}
+
+function startWorktimer(){
+  clearInterval(worktimer);
+  worktimer=setInterval(()=>{if(workStartTime)el('stat-hours').textContent=msToDur(Date.now()-workStartTime.getTime());},10000);
+  if(workStartTime)el('stat-hours').textContent=msToDur(Date.now()-workStartTime.getTime());
+}
+
+// ========================
+// TODAY LOG
+// ========================
+async function loadTodayLog(){
+  if(!currentUser)return;
+  const today=new Date().toISOString().split('T')[0];
+  try{
+    const{data,error}=await sb.from('attendance_logs').select('*').eq('user_id',currentUser.id)
+      .gte('clock_in_time',today+'T00:00:00').lte('clock_in_time',today+'T23:59:59')
+      .order('clock_in_time',{ascending:false}).limit(1);
+    if(error)throw error;
+    todayLog=data?.length>0?data[0]:null;
+    updateDashboardState();
+  }catch(e){console.warn(e.message);}
+}
+function updateDashboardState(){
+  if(!todayLog)setStatus('not-clocked-in');
+  else if(!todayLog.clock_out_time)setStatus('working',todayLog);
+  else setStatus('clocked-out',todayLog);
+}
+
+// ========================
+// RECENT LOGS
+// ========================
+async function loadRecentLogs(){
+  if(!currentUser)return;
+  try{
+    const{data,error}=await sb.from('attendance_logs').select('*').eq('user_id',currentUser.id)
+      .gte('clock_in_time',new Date(Date.now()-7*864e5).toISOString())
+      .order('clock_in_time',{ascending:false}).limit(5);
+    if(error)throw error;
+    renderRecentLogs(data||[]);
+  }catch(e){console.warn(e.message);}
+}
+
+function renderRecentLogs(rows){
+  const wrap=el('recentLogsWrap');
+  if(!rows.length){wrap.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>No records in the last 7 days</p></div>';return;}
+  wrap.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Duration</th><th>Type</th><th>Site</th><th>Method</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td class="td-time">${fmtDate(r.clock_in_time)}</td>
+      <td class="td-time">${fmtTime(r.clock_in_time)}</td>
+      <td class="td-time">${r.clock_out_time?fmtTime(r.clock_out_time):'<span style="color:var(--green)">Ongoing</span>'}</td>
+      <td class="td-duration">${r.clock_out_time?calcDuration(r.clock_in_time,r.clock_out_time):'—'}</td>
+      <td><span class="loc-badge ${locClass(r.location_type)}">${locIcon(r.location_type)} ${r.location_type||'—'}</span></td>
+      <td class="text-sm">${r.site_name?`<span class="site-badge" style="font-size:10.5px;padding:2px 7px">🏢 ${r.site_name}</span>`:'—'}</td>
+      <td><span class="detect-badge">${r.detection_method||'—'}</span></td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+
+// ========================
+// HISTORY
+// ========================
+async function loadHistory(){
+  if(!currentUser)return;
+  const dateF=val('filterDate'),locF=val('filterLoc');
+  try{
+    let q=sb.from('attendance_logs').select('*').eq('user_id',currentUser.id);
+    if(dateF)q=q.gte('clock_in_time',dateF+'T00:00:00').lte('clock_in_time',dateF+'T23:59:59');
+    if(locF)q=q.eq('location_type',locF);
+    q=q.order('clock_in_time',{ascending:false}).limit(200);
+    const{data,error}=await q;
+    if(error)throw error;
+    renderHistory(data||[]);
+  }catch(e){showToast('❌ '+e.message,'error');}
+}
+
+function renderHistory(rows){
+  const tbody=el('historyBody');
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="8"><div class="empty-state"><div class="ei">📭</div><p>No records found</p></div></td></tr>';return;}
+  tbody.innerHTML=rows.map(r=>`<tr>
+    <td class="td-time">${fmtDate(r.clock_in_time)}</td>
+    <td class="td-time">${fmtTime(r.clock_in_time)}</td>
+    <td class="td-time">${r.clock_out_time?fmtTime(r.clock_out_time):'<span style="color:var(--green)">Ongoing</span>'}</td>
+    <td class="td-duration">${r.clock_out_time?calcDuration(r.clock_in_time,r.clock_out_time):'—'}</td>
+    <td><span class="loc-badge ${locClass(r.location_type)}">${locIcon(r.location_type)} ${r.location_type||'—'}</span></td>
+    <td class="text-sm">${r.site_name||'—'}</td>
+    <td><span class="detect-badge">${r.detection_method||'—'}</span></td>
+    <td class="text-sm text-muted">${r.user_override_reason||''}</td>
+  </tr>`).join('');
+}
+
+// ========================
+// EMPLOYEE MANAGEMENT
+// ========================
+async function loadEmployees(){
+  if(!currentProfile.canManage)return;
+  el('employeesBody').innerHTML='<tr><td colspan="8"><div class="empty-state"><div class="ei">⏳</div><p>Loading…</p></div></td></tr>';
+  try{
+    const{data,error}=await sb.from('employee_profiles').select('*').order('full_name');
+    if(error)throw error;
+    allEmployees=data||[];
+    el('empCount').textContent=`${allEmployees.length} employee${allEmployees.length!==1?'s':''}`;
+    renderEmployees(allEmployees);
+  }catch(e){showToast('❌ '+e.message,'error');}
+}
+
+function filterEmployees(){
+  const q=val('empSearch').toLowerCase(),role=val('empRoleFilter');
+  renderEmployees(allEmployees.filter(e=>
+    (!q||(e.full_name||'').toLowerCase().includes(q)||(e.employee_id||'').toLowerCase().includes(q)||(e.email||'').toLowerCase().includes(q))&&
+    (!role||e.role===role)
+  ));
+}
+
+function renderEmployees(rows){
+  const tbody=el('employeesBody');
+  if(!rows.length){tbody.innerHTML='<tr><td colspan="8"><div class="empty-state"><div class="ei">👥</div><p>No employees found</p></div></td></tr>';return;}
+
+  // Show pending banner if any pending users exist
+  const pendingCount=rows.filter(e=>e.status==='pending').length;
+  const banner=el('pendingBanner');
+  if(pendingCount>0){
+    banner.textContent=`⏳ ${pendingCount} self-registered user${pendingCount>1?'s':''} awaiting confirmation`;
+    banner.classList.remove('hidden');
+  } else {
+    banner.classList.add('hidden');
+  }
+
+  tbody.innerHTML=rows.map(e=>{
+    const initials=(e.full_name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const color=ROLE_COLORS[e.role]||'#3A7D5C';
+    const site=allSites.find(s=>s.id===e.site_id);
+    const isPending=e.status==='pending';
+    return`<tr style="${isPending?'background:rgba(200,168,75,.04);':''}">
+      <td><div class="flex items-center gap-2">
+        <div class="avatar" style="width:30px;height:30px;font-size:11px;background:linear-gradient(135deg,${color},#2D4739)">${initials}</div>
+        <div>
+          <div style="font-weight:600;font-size:12.5px">${e.full_name||'—'}</div>
+          <div class="text-xs text-muted">${e.position||'Self-registered'}</div>
+        </div>
+      </div></td>
+      <td class="text-sm"><div>${e.email||'—'}</div>
+        <div class="text-xs" style="color:${isPending?'var(--amber)':'var(--muted)'}">
+          ${isPending?'⚠️ PENDING':''}${!isPending&&e.employee_id?e.employee_id:''}
+        </div>
+      </td>
+      <td class="text-sm">${e.department||'—'}</td>
+      <td><span class="role-badge ${e.role||'employee'}">${ROLES[e.role]||'Employee'}</span></td>
+      <td class="text-sm">${site?`<span class="site-badge" style="font-size:10.5px;padding:2px 7px">🏢 ${site.name}</span>`:'<span class="text-muted">—</span>'}</td>
+      <td><span class="status-badge ${e.status||'active'}">${capitalize(e.status||'active')}</span></td>
+      <td class="text-xs text-muted">${e.created_at?fmtDate(e.created_at):'—'}</td>
+      <td><div class="flex gap-2">
+        ${isPending
+          ? `<button class="btn btn-sm" style="background:var(--accent);color:var(--sidebar);font-weight:700" onclick="openConfirmModal('${e.id}')">✅ Confirm</button>`
+          : `<button class="btn btn-secondary btn-sm" onclick="openEditModal('${e.id}')">✏️ Edit</button>`
+        }
+        <button class="btn btn-secondary btn-sm" onclick="viewEmployeeAttendance('${e.user_id}','${(e.full_name||'').replace(/'/g,"\\'")}')">📋</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+async function createEmployee(){
+  const name=val('newEmpName'),empId=val('newEmpId').toUpperCase(),email=val('newEmpEmail'),pass=val('newEmpPass');
+  const dept=val('newEmpDept'),position=val('newEmpPosition');
+  const role=el('newEmpRole').value,empType=el('newEmpType').value,siteId=el('newEmpSite').value||null;
+  const homeAddr=val('newEmpHomeAddr');
+  const homeLat=el('newEmpHomeLat').value?parseFloat(el('newEmpHomeLat').value):null;
+  const homeLng=el('newEmpHomeLng').value?parseFloat(el('newEmpHomeLng').value):null;
+
+  if(!name||!empId||!email||!pass){showErr('createEmpErr','Name, Employee ID, Email and Password are required');return;}
+  if(pass.length<8){showErr('createEmpErr','Password must be at least 8 characters');return;}
+
+  // Check if employee_id already taken
+  const dupEmpId=allEmployees.find(e=>e.employee_id===empId);
+  if(dupEmpId){showErr('createEmpErr',`Employee ID "${empId}" is already assigned to ${dupEmpId.full_name}`);return;}
+
+  // Check if email already has a profile
+  const dupEmail=allEmployees.find(e=>(e.email||'').toLowerCase()===email.toLowerCase());
+  if(dupEmail){showErr('createEmpErr',`Email "${email}" already has an account (${dupEmail.full_name}). Use Edit to update their profile.`);return;}
+
+  setBtnLoad('createEmpBtn',true,'Creating…');
+
+  const profilePayload={
+    full_name:name,email,employee_id:empId,department:dept,position,
+    role,employment_type:empType,status:'active',site_id:siteId||null,
+    home_address:homeAddr,home_lat:homeLat,home_lng:homeLng,
+  };
+
+  try{
+    // Step 1: Create auth user via signUp
+    const{data:authData,error:authErr}=await sb.auth.signUp({
+      email,password:pass,
+      options:{
+        data:{full_name:name,role,employee_id:empId,department:dept},
+        // Skip email confirmation so account is immediately usable
+        emailRedirectTo: undefined,
+      }
+    });
+
+    let userId=authData?.user?.id;
+
+    if(authErr){
+      if(authErr.status===422||authErr.message?.toLowerCase().includes('already registered')){
+        showErr('createEmpErr',
+          `⚠️ "${email}" already exists in authentication but has no employee profile.\n\n`+
+          `Run this in Supabase SQL Editor:\n\n`+
+          `INSERT INTO employee_profiles (user_id, full_name, email, employee_id, role, status)\n`+
+          `SELECT id, '${name}', email, '${empId}', '${role}', 'active'\n`+
+          `FROM auth.users WHERE email='${email}'\n`+
+          `ON CONFLICT (user_id) DO UPDATE SET role='${role}', status='active';`
+        );
+        showToast('⚠️ Email already in auth — see error box for SQL fix','error',8000);
+      } else {
+        throw authErr;
+      }
+      setBtnLoad('createEmpBtn',false,'Create Account');
+      return;
+    }
+
+    // Step 2: userId must exist — Supabase returns it even before confirmation
+    if(!userId){
+      throw new Error(
+        'Supabase did not return a user ID. This usually means email confirmation is required.\n'+
+        'Go to Supabase Dashboard → Authentication → Providers → Email → disable "Confirm email" to allow instant account creation.'
+      );
+    }
+
+    // Step 3: Insert profile using the SERVICE-LEVEL insert trick —
+    // we pass the new user's ID directly; RLS allows this because
+    // admin email is in the policy's allowed list
+    const insertPayload={user_id:userId,...profilePayload};
+    const{error:profErr}=await sb.from('employee_profiles').insert(insertPayload);
+
+    if(profErr){
+      if(profErr.code==='23505'){
+        // Profile already exists — update it instead
+        const{error:upsertErr}=await sb.from('employee_profiles')
+          .upsert(insertPayload,{onConflict:'user_id'});
+        if(upsertErr)throw upsertErr;
+      } else if(profErr.code==='42501'||profErr.message?.includes('violates row-level security')){
+        // RLS blocked the insert — show SQL fallback
+        showErr('createEmpErr',
+          `✅ Auth account created for ${name} but profile insert was blocked by RLS.\n\n`+
+          `Run this SQL to create their profile:\n\n`+
+          `INSERT INTO employee_profiles (user_id, full_name, email, employee_id, department, position, role, employment_type, status)\n`+
+          `VALUES ('${userId}', '${name}', '${email}', '${empId}', '${dept||''}', '${position||''}', '${role}', '${empType}', 'active')\n`+
+          `ON CONFLICT (user_id) DO UPDATE SET role='${role}', status='active';`
+        );
+        showToast(`⚠️ Auth created — run SQL to finish profile setup`,'error',8000);
+        setBtnLoad('createEmpBtn',false,'Create Account');
+        return;
+      } else {
+        throw profErr;
+      }
+    }
+
+    // Step 4: Verify the profile actually appears (catches silent RLS failures)
+    const{data:verify}=await sb.from('employee_profiles').select('id').eq('user_id',userId).maybeSingle();
+    if(!verify){
+      showErr('createEmpErr',
+        `⚠️ Account created but profile may not be visible due to RLS.\n`+
+        `Run the RLS fix SQL provided earlier, then refresh the employee list.`
+      );
+      showToast(`⚠️ Profile created — may need RLS fix to appear`,'error',6000);
+      setBtnLoad('createEmpBtn',false,'Create Account');
+      return;
+    }
+
+    // All good
+    showToast(`✅ Account created for ${name}. They can log in immediately with their Employee ID.`,'success',6000);
+    ['newEmpName','newEmpId','newEmpEmail','newEmpPass','newEmpDept','newEmpPosition',
+     'newEmpHomeAddr','newEmpHomeLat','newEmpHomeLng'].forEach(id=>el(id).value='');
+    el('newEmpGeoStatus').textContent='';
+    el('newEmpRole').value='employee';el('newEmpType').value='full-time';el('newEmpSite').value='';
+    hide('createEmpErr');
+    switchEmpTab('list',document.querySelector('#empTabs .tab'));
+    await loadEmployees();
+
+  }catch(e){
+    showErr('createEmpErr',e.message||JSON.stringify(e));
+  }
+  setBtnLoad('createEmpBtn',false,'Create Account');
+}
+
+function openEditModal(profileId){
+  const emp=allEmployees.find(e=>e.id===profileId);if(!emp)return;
+  el('editEmpRowId').value=profileId;
+  el('editEmpSubtitle').textContent=`Editing ${emp.full_name||'employee'}`;
+  el('editEmpName').value=emp.full_name||'';el('editEmpEmpId').value=emp.employee_id||'';
+  el('editEmpEmail').value=emp.email||'';el('editEmpDept').value=emp.department||'';
+  el('editEmpPosition').value=emp.position||'';el('editEmpType').value=emp.employment_type||'full-time';
+  el('editEmpRole').value=emp.role||'employee';el('editEmpStatus').value=emp.status||'active';
+  el('editEmpSite').value=emp.site_id||'';
+  el('editEmpHomeAddr').value=emp.home_address||'';
+  el('editEmpHomeLat').value=emp.home_lat||'';
+  el('editEmpHomeLng').value=emp.home_lng||'';
+  el('editEmpGeoStatus').textContent='';
+  hide('editEmpErr');show('editEmpModal');
+}
+
+async function saveEmployee(){
+  const profileId=val('editEmpRowId');
+  const homeLat=el('editEmpHomeLat').value?parseFloat(el('editEmpHomeLat').value):null;
+  const homeLng=el('editEmpHomeLng').value?parseFloat(el('editEmpHomeLng').value):null;
+  const payload={
+    full_name:val('editEmpName'),employee_id:val('editEmpEmpId').toUpperCase(),
+    department:val('editEmpDept'),position:val('editEmpPosition'),
+    employment_type:el('editEmpType').value,role:el('editEmpRole').value,
+    status:el('editEmpStatus').value,site_id:el('editEmpSite').value||null,
+    home_address:val('editEmpHomeAddr'),home_lat:homeLat,home_lng:homeLng,
+    updated_at:new Date().toISOString(),
+  };
+  if(!payload.full_name){showErr('editEmpErr','Name is required');return;}
+  setBtnLoad('saveEmpBtn',true,'Save Changes');
+  try{
+    const{error}=await sb.from('employee_profiles').update(payload).eq('id',profileId);
+    if(error)throw error;
+    showToast('✅ Employee updated','success');closeEditModal();await loadEmployees();
+  }catch(e){showErr('editEmpErr',e.message);}
+  setBtnLoad('saveEmpBtn',false,'Save Changes');
+}
+function closeEditModal(){hide('editEmpModal');}
+
+// ========================
+// BULK UPLOAD
+// ========================
+const CSV_TEMPLATE_HEADERS=[
+  'employee_id','full_name','email','password','role','department','position',
+  'employment_type','site_name','home_address','home_lat','home_lng'
+];
+const CSV_TEMPLATE_SAMPLE=[
+  'EMP-0001','Juan dela Cruz','juan@company.com','Password123','employee','PMO','Senior Analyst','full-time','BGC Main Office','123 Main St QC','14.6760','121.0437',
+];
+
+function downloadTemplate(){
+  const csv=[CSV_TEMPLATE_HEADERS.join(','),CSV_TEMPLATE_SAMPLE.join(',')].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='employee-roster-template.csv';a.click();
+}
+
+function handleDrop(e){
+  e.preventDefault();el('uploadZone').classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(file&&file.name.endsWith('.csv'))handleCSVFile(file);
+  else showToast('Please drop a .csv file','error');
+}
+
+function handleCSVFile(file){
+  if(!file)return;
+  Papa.parse(file,{
+    header:true,skipEmptyLines:true,
+    complete(results){
+      csvRows=results.data;
+      renderCSVPreview(results.data,results.meta.fields);
+    },
+    error(e){showToast('❌ CSV parse error: '+e.message,'error');}
+  });
+}
+
+function renderCSVPreview(rows,fields){
+  if(!rows.length){showToast('CSV is empty','error');return;}
+  el('csvPreviewTitle').textContent=`Preview — ${rows.length} row${rows.length!==1?'s':''}`;
+  el('csvPreviewSub').textContent=`Columns: ${fields.join(', ')}`;
+  // Check required fields
+  const missing=CSV_TEMPLATE_HEADERS.slice(0,4).filter(h=>!fields.includes(h));
+  if(missing.length){
+    el('bulkErr').textContent=`Missing required columns: ${missing.join(', ')}`;
+    el('bulkErr').classList.remove('hidden');
+  } else {
+    el('bulkErr').classList.add('hidden');
+    el('uploadBtn').disabled=false;
+  }
+  el('csvPreviewHead').innerHTML=`<tr>${fields.map(f=>`<th>${f}</th>`).join('')}</tr>`;
+  el('csvPreviewBody').innerHTML=rows.slice(0,10).map(r=>`<tr>${fields.map(f=>`<td class="text-sm">${r[f]||''}</td>`).join('')}</tr>`).join('');
+  if(rows.length>10)el('csvPreviewBody').innerHTML+=`<tr><td colspan="${fields.length}" style="text-align:center;padding:8px;color:var(--muted);font-size:11px">…and ${rows.length-10} more rows</td></tr>`;
+  show('csvPreviewSection');
+}
+
+function clearCSV(){csvRows=[];hide('csvPreviewSection');el('csvFileInput').value='';}
+
+async function processBulkUpload(){
+  if(!csvRows.length){showToast('No data to upload','error');return;}
+  el('uploadBtn').disabled=true;
+  show('bulkProgressWrap');el('bulkErrors').innerHTML='';
+  const total=csvRows.length;let done=0,errors=[];
+  el('bulkProgressCount').textContent=`0 / ${total}`;
+
+  for(const row of csvRows){
+    const empId=(row.employee_id||'').trim().toUpperCase();
+    const name=(row.full_name||'').trim();
+    const email=(row.email||'').trim().toLowerCase();
+    const pass=(row.password||'').trim();
+    const role=(row.role||'employee').trim().toLowerCase();
+    const dept=(row.department||'').trim();
+    const position=(row.position||'').trim();
+    const empType=(row.employment_type||'full-time').trim();
+    const siteName=(row.site_name||'').trim();
+    const homeAddr=(row.home_address||'').trim();
+    const homeLat=row.home_lat?parseFloat(row.home_lat):null;
+    const homeLng=row.home_lng?parseFloat(row.home_lng):null;
+
+    if(!empId||!name||!email||!pass){
+      errors.push(`Row ${done+1}: Missing required field (${[!empId&&'employee_id',!name&&'full_name',!email&&'email',!pass&&'password'].filter(Boolean).join(', ')})`);
+      done++;updateProgress(done,total);continue;
+    }
+
+    // Resolve site name → site_id
+    const site=allSites.find(s=>s.name.toLowerCase()===siteName.toLowerCase());
+
+    try{
+      // Skip if email already has a profile in this system
+      const existingProf=allEmployees.find(e=>(e.email||'').toLowerCase()===email||
+        (e.employee_id||'').toUpperCase()===empId);
+      if(existingProf){
+        errors.push(`${name||empId}: Skipped — already exists (${existingProf.full_name}, ${existingProf.employee_id})`);
+        done++;updateProgress(done,total);continue;
+      }
+
+      const{data:authData,error:authErr}=await sb.auth.signUp({
+        email,password:pass,options:{data:{full_name:name,role,employee_id:empId,department:dept}}
+      });
+
+      // 422 = already exists in auth.users but no profile — skip with clear message
+      if(authErr){
+        if(authErr.status===422||authErr.message?.toLowerCase().includes('already registered')){
+          errors.push(`${name||empId}: Email "${email}" already in auth system — profile not created. Add manually via SQL.`);
+        } else {
+          throw new Error(authErr.message);
+        }
+        done++;updateProgress(done,total);continue;
+      }
+
+      const userId=authData.user?.id;
+      if(!userId)throw new Error('No user ID returned from Supabase');
+
+      const{error:profErr}=await sb.from('employee_profiles').insert({
+        user_id:userId,full_name:name,email,employee_id:empId,
+        department:dept,position,role,employment_type:empType,
+        status:'active',site_id:site?.id||null,
+        home_address:homeAddr,home_lat:homeLat,home_lng:homeLng,
+      });
+      if(profErr)throw new Error(profErr.message);
+    }catch(e){
+      errors.push(`${name||empId}: ${e.message}`);
+    }
+    done++;updateProgress(done,total);
+    await sleep(300); // rate-limit auth calls
+  }
+
+  const succeeded=done-errors.length;
+  el('bulkProgressLabel').textContent=`Done — ${succeeded} created, ${errors.length} failed`;
+  if(errors.length){el('bulkErrors').innerHTML=errors.map(e=>`<div>⚠️ ${e}</div>`).join('');}
+  if(succeeded>0){showToast(`✅ ${succeeded} employee${succeeded!==1?'s':''} created`,'success',6000);await loadEmployees();}
+  el('uploadBtn').disabled=false;
+}
+
+function updateProgress(done,total){
+  const pct=Math.round((done/total)*100);
+  el('bulkProgressBar').style.width=pct+'%';
+  el('bulkProgressCount').textContent=`${done} / ${total}`;
+  el('bulkProgressLabel').textContent=`Uploading… ${pct}%`;
+}
+
+// ========================
+// TEAM OVERVIEW
+// ========================
+async function loadTeamData(){
+  if(!currentProfile.canViewTeam)return;
+  const dateVal=el('teamDateFilter').value||new Date().toISOString().split('T')[0];
+  const siteFilter=el('teamSiteFilter').value;
+  el('teamDateLabel').textContent='Date: '+new Date(dateVal+'T12:00:00').toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+  try{
+    const{data:logs,error}=await sb.from('attendance_logs').select('*')
+      .gte('clock_in_time',dateVal+'T00:00:00').lte('clock_in_time',dateVal+'T23:59:59')
+      .order('clock_in_time',{ascending:false});
+    if(error)throw error;
+    const{data:profiles}=await sb.from('employee_profiles').select('user_id,full_name,role,department,employee_id,site_id');
+    const profileMap={};(profiles||[]).forEach(p=>profileMap[p.user_id]=p);
+    const filteredLogs=siteFilter?logs.filter(r=>{
+      const p=profileMap[r.user_id];return p&&p.site_id===siteFilter;
+    }):logs;
+    el('admin-active').textContent=filteredLogs.filter(r=>!r.clock_out_time).length;
+    el('admin-office').textContent=filteredLogs.filter(r=>r.location_type==='Onsite').length;
+    el('admin-home').textContent=filteredLogs.filter(r=>r.location_type==='Home').length;
+    el('admin-outside').textContent=filteredLogs.filter(r=>r.location_type==='Outside'||r.location_type==='Unknown').length;
+    renderTeamTable(filteredLogs,profileMap);
+  }catch(e){showToast('❌ '+e.message,'error');}
+}
+
+function renderTeamTable(logs,profileMap){
+  const tbody=el('adminBody');
+  if(!logs.length){tbody.innerHTML='<tr><td colspan="9"><div class="empty-state"><div class="ei">📭</div><p>No attendance for this date/filter</p></div></td></tr>';return;}
+  tbody.innerHTML=logs.map(r=>{
+    const p=profileMap[r.user_id]||{};
+    const active=!r.clock_out_time;
+    const site=allSites.find(s=>s.id===p.site_id);
+    return`<tr>
+      <td><div class="flex items-center gap-2">
+        <span class="${active?'online-dot':'offline-dot'}"></span>
+        <span style="font-weight:600">${p.full_name||r.user_id.slice(0,8)+'…'}</span>
+      </div></td>
+      <td><span class="role-badge ${p.role||'employee'}">${ROLES[p.role]||'Employee'}</span></td>
+      <td class="text-sm text-muted">${p.department||'—'}</td>
+      <td class="text-sm">${site?`<span class="site-badge" style="font-size:10.5px;padding:2px 7px">🏢 ${site.name}</span>`:'—'}</td>
+      <td><span style="background:${active?'rgba(16,185,129,.12)':'rgba(148,163,184,.08)'};color:${active?'var(--green)':'var(--muted)'};font-size:10.5px;padding:3px 9px;border-radius:999px;font-weight:600">${active?'⬤ Working':'⬤ Done'}</span></td>
+      <td class="td-time">${fmtTime(r.clock_in_time)}</td>
+      <td class="td-time">${r.clock_out_time?fmtTime(r.clock_out_time):'—'}</td>
+      <td><span class="loc-badge ${locClass(r.location_type)}">${locIcon(r.location_type)} ${r.location_type||'—'}</span>${r.site_name?` <span class="chip">${r.site_name}</span>`:''}</td>
+      <td class="td-duration">${r.clock_out_time?calcDuration(r.clock_in_time,r.clock_out_time):'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function viewEmployeeAttendance(userId,name){
+  el('viewAttName').textContent=`${name} — Attendance`;
+  show('viewAttModal');
+  el('viewAttContent').innerHTML='<div class="empty-state"><div class="ei">⏳</div><p>Loading…</p></div>';
+  try{
+    const{data,error}=await sb.from('attendance_logs').select('*').eq('user_id',userId)
+      .gte('clock_in_time',new Date(Date.now()-30*864e5).toISOString())
+      .order('clock_in_time',{ascending:false});
+    if(error)throw error;
+    if(!data?.length){el('viewAttContent').innerHTML='<div class="empty-state"><div class="ei">📭</div><p>No records in the last 30 days</p></div>';return;}
+    el('viewAttContent').innerHTML=`<div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Clock In</th><th>Clock Out</th><th>Duration</th><th>Type</th><th>Site</th><th>Method</th></tr></thead>
+      <tbody>${data.map(r=>`<tr>
+        <td class="td-time">${fmtDate(r.clock_in_time)}</td>
+        <td class="td-time">${fmtTime(r.clock_in_time)}</td>
+        <td class="td-time">${r.clock_out_time?fmtTime(r.clock_out_time):'<span style="color:var(--green)">Ongoing</span>'}</td>
+        <td class="td-duration">${r.clock_out_time?calcDuration(r.clock_in_time,r.clock_out_time):'—'}</td>
+        <td><span class="loc-badge ${locClass(r.location_type)}">${locIcon(r.location_type)} ${r.location_type||'—'}</span></td>
+        <td class="text-sm">${r.site_name||'—'}</td>
+        <td><span class="detect-badge">${r.detection_method||'—'}</span></td>
+      </tr>`).join('')}</tbody></table></div>`;
+  }catch(e){el('viewAttContent').innerHTML=`<div class="empty-state"><div class="ei">❌</div><p>${e.message}</p></div>`;}
+}
+
+// ========================
+// REALTIME
+// ========================
+function subscribeRealtime(){
+  if(!currentUser)return;
+  // Remove any existing channel first to prevent duplicate subscription errors
+  if(realtimeSub){
+    try{sb.removeChannel(realtimeSub);}catch(e){}
+    realtimeSub=null;
+  }
+  const channelName='att-rt-'+currentUser.id.slice(0,8);
+  realtimeSub=sb.channel(channelName)
+    .on('postgres_changes',{event:'*',schema:'public',table:'attendance_logs',filter:`user_id=eq.${currentUser.id}`},
+      ()=>{loadTodayLog();loadRecentLogs();})
+    .subscribe((status)=>{
+      if(status==='CHANNEL_ERROR')console.warn('Realtime channel error — will use manual refresh');
+    });
+}
+
+// ========================
+// NAVIGATION
+// ========================
+function showPage(page){
+  currentPage=page; // always track where user is
+  ['dashboard','history','profile','employees','sites','team'].forEach(p=>{
+    el(`page-${p}`)?.classList.add('hidden');
+    el(`nav-${p}`)?.classList.remove('active');
+  });
+  el(`page-${page}`)?.classList.remove('hidden');
+  el(`nav-${page}`)?.classList.add('active');
+  const titles={dashboard:'Dashboard',history:'My Attendance',profile:'My Profile',employees:'Employees',sites:'Office Sites',team:'Team Overview'};
+  el('pageTitle').textContent=titles[page]||page;
+  if(page==='history')loadHistory();
+  if(page==='team')loadTeamData();
+  if(page==='employees')loadEmployees();
+  if(page==='sites')loadSites();
+  if(window.innerWidth<=768)el('sidebar').classList.remove('open');
+}
+
+function switchEmpTab(tab,tabEl){
+  ['list','create','bulk'].forEach(t=>el(`empTab${capitalize(t)}`)?.classList.add('hidden'));
+  el(`empTab${capitalize(tab)}`)?.classList.remove('hidden');
+  document.querySelectorAll('#empTabs .tab').forEach(t=>t.classList.remove('active'));
+  tabEl?.classList.add('active');
+}
+
+function toggleSidebar(){el('sidebar').classList.toggle('open');}
+
+// ========================
+// CLOCK DISPLAY
+// ========================
+function startLiveClock(){
+  const update=()=>{
+    const now=new Date();
+    el('liveClock').textContent=now.toLocaleTimeString('en-PH',{hour12:false});
+    el('clockFace').textContent=now.toLocaleTimeString('en-PH',{hour12:true,hour:'2-digit',minute:'2-digit'});
+  };
+  update();setInterval(update,1000);
+}
+function updateDateLine(){
+  el('clockDateLine').textContent=new Date().toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+}
+function showApp(){hide('authScreen');show('mainApp');el('menuToggle').classList.toggle('hidden',window.innerWidth>768);}
+function showAuth(){hide('mainApp');show('authScreen');showLoginForm();}
+
+// ========================
+// HELPERS
+// ========================
+function exportCSV(tbodyId,headers){
+  const rows=el(tbodyId).querySelectorAll('tr');
+  if(!rows.length)return;
+  const csv=[headers.join(','),...[...rows].map(r=>[...r.querySelectorAll('td')].map(c=>`"${c.textContent.trim()}"`).join(','))].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`export-${new Date().toISOString().split('T')[0]}.csv`;a.click();
+}
+function showToast(msg,type='info',duration=4000){
+  const t=document.createElement('div');t.className=`toast ${type}`;t.innerHTML=`<span>${msg}</span>`;
+  el('toastArea').appendChild(t);
+  setTimeout(()=>{t.style.cssText='opacity:0;transition:opacity .3s';setTimeout(()=>t.remove(),300);},duration);
+}
+function el(id){return document.getElementById(id);}
+function val(id){return(el(id)?.value||'').trim();}
+function show(id){el(id)?.classList.remove('hidden');}
+function hide(id){el(id)?.classList.add('hidden');}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function capitalize(s){return s?s[0].toUpperCase()+s.slice(1):s;}
+function showErr(id,msg){const e=el(id);if(!e)return;e.textContent=msg;e.classList.remove('hidden');setTimeout(()=>e.classList.add('hidden'),6000);}
+function setBtnLoad(id,loading,label){const b=el(id);if(!b)return;b.disabled=loading;b.textContent=loading?'Please wait…':label;}
+function fmtTime(iso){if(!iso)return'—';return new Date(iso).toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit',hour12:true});}
+function fmtDate(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});}
+function calcDuration(s,e){if(!s||!e)return'—';return msToDur(new Date(e)-new Date(s));}
+function msToDur(ms){if(ms<0)return'—';return`${Math.floor(ms/3600000)}h ${Math.floor((ms%3600000)/60000)}m`;}
+function haversine(lat1,lon1,lat2,lon2){
+  const R=6371000,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function locClass(t){const m={Onsite:'onsite',Home:'home',Outside:'outside'};return m[t]||'unknown';}
+function locIcon(t){const m={Onsite:'🏢',Home:'🏠',Outside:'⚠️'};return m[t]||'📍';}
+function locLabel(t){return t||'Unknown';}
+window.addEventListener('resize',()=>el('menuToggle')?.classList.toggle('hidden',window.innerWidth>768));
+</script>
+
+<!--
+=======================================================
+  SQL MIGRATION — Run in Supabase SQL Editor
+=======================================================
+
+-- 1. OFFICE SITES TABLE (NEW)
+CREATE TABLE IF NOT EXISTS public.office_sites (
+  id            UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name          TEXT NOT NULL,
+  address       TEXT,
+  lat           NUMERIC NOT NULL,
+  lng           NUMERIC NOT NULL,
+  radius_meters INTEGER DEFAULT 200,
+  notes         TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2. EMPLOYEE PROFILES (add new columns if table already exists)
+ALTER TABLE employee_profiles
+  ADD COLUMN IF NOT EXISTS site_id       UUID REFERENCES office_sites(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS home_address  TEXT,
+  ADD COLUMN IF NOT EXISTS home_lat      NUMERIC,
+  ADD COLUMN IF NOT EXISTS home_lng      NUMERIC;
+
+-- 3. ATTENDANCE LOGS (add site columns)
+ALTER TABLE attendance_logs
+  ADD COLUMN IF NOT EXISTS site_id   UUID REFERENCES office_sites(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS site_name TEXT;
+
+-- 4. Change location_type to support new values
+ALTER TABLE attendance_logs
+  DROP CONSTRAINT IF EXISTS attendance_logs_location_type_check;
+ALTER TABLE attendance_logs
+  ADD CONSTRAINT attendance_logs_location_type_check
+  CHECK (location_type IN ('Home','Onsite','Outside','Unknown'));
+
+-- 5. RLS for office_sites
+ALTER TABLE office_sites ENABLE ROW LEVEL SECURITY;
+
+-- Everyone can read sites (needed for geofencing)
+CREATE POLICY "sites_select_all" ON office_sites FOR SELECT USING (true);
+
+-- Only admins can insert/update/delete
+CREATE POLICY "sites_admin_write" ON office_sites FOR ALL USING (
+  auth.email() IN ('rio.decz317@gmail.com','ricky.delatorre@sagility.com')
+);
+
+-- 6. Seed your first office site (update coordinates to match your office)
+INSERT INTO office_sites (name, address, lat, lng, radius_meters)
+VALUES ('BGC Main Office', '30th St, Bonifacio Global City, Taguig', 14.5490, 121.0510, 200)
+ON CONFLICT DO NOTHING;
+
+-- 7. Seed admin profile
+INSERT INTO employee_profiles (user_id, full_name, email, employee_id, department, position, role, status)
+SELECT id,'Ricky Dela Torre',email,'EMP-0001','PMO','PMO Team Member','admin','active'
+FROM auth.users WHERE email='rio.decz317@gmail.com'
+ON CONFLICT (user_id) DO UPDATE SET role='admin',status='active',full_name='Ricky Dela Torre';
+
+=======================================================
+-->
+
+<!-- ===== CONFIRM REGISTRATION MODAL ===== -->
+<div class="modal-backdrop hidden" id="confirmRegModal">
+  <div class="modal modal-lg">
+    <button class="modal-close" onclick="hide('confirmRegModal')">✕</button>
+    <div class="modal-title">✅ Confirm Registration</div>
+    <div class="modal-sub" id="confirmRegSubtitle">Review and activate this self-registered employee</div>
+    <input type="hidden" id="confirmRegProfileId"/>
+    <div style="background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px">
+      <div class="text-xs text-muted" style="margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.06em">Submitted by employee</div>
+      <div style="font-size:14px;font-weight:700" id="confirmRegName">—</div>
+      <div class="text-sm text-muted mt-2" id="confirmRegEmail">—</div>
+      <div class="text-sm text-muted" id="confirmRegDeptInfo">—</div>
+    </div>
+    <div class="form-grid">
+      <div>
+        <label>Employee ID * <span style="font-weight:400;color:var(--muted)">(assign now)</span></label>
+        <input type="text" id="confirmEmpId" placeholder="e.g. EMP-0010" style="text-transform:uppercase"/>
+      </div>
+      <div>
+        <label>Role *</label>
+        <select id="confirmRole">
+          <option value="employee">Employee</option>
+          <option value="manager">Manager</option>
+          <option value="hr">HR</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div>
+        <label>Department</label>
+        <input type="text" id="confirmDept" placeholder="e.g. PMO"/>
+      </div>
+      <div>
+        <label>Position / Title</label>
+        <input type="text" id="confirmPosition" placeholder="e.g. Senior Analyst"/>
+      </div>
+      <div>
+        <label>Employment Type</label>
+        <select id="confirmEmpType">
+          <option value="full-time">Full-Time</option>
+          <option value="part-time">Part-Time</option>
+          <option value="contractual">Contractual</option>
+          <option value="probationary">Probationary</option>
+        </select>
+      </div>
+      <div>
+        <label>Assigned Office Site</label>
+        <select id="confirmSite"><option value="">— None —</option></select>
+      </div>
+    </div>
+    <div class="err-msg hidden" id="confirmRegErr" style="white-space:pre-wrap"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="rejectRegistration()">✕ Reject</button>
+      <button class="btn btn-secondary" onclick="hide('confirmRegModal')">Cancel</button>
+      <button class="btn btn-primary" id="confirmRegBtn" onclick="approveRegistration()">✅ Activate Account</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ========================
+// CONFIRM / REJECT SELF-REGISTRATION
+// ========================
+function openConfirmModal(profileId){
+  const emp=allEmployees.find(e=>e.id===profileId);if(!emp)return;
+  el('confirmRegProfileId').value=profileId;
+  el('confirmRegSubtitle').textContent=`Activating account for ${emp.full_name||emp.email}`;
+  el('confirmRegName').textContent=emp.full_name||'—';
+  el('confirmRegEmail').textContent=emp.email||'—';
+  el('confirmRegDeptInfo').textContent=emp.department?`Dept: ${emp.department}`:'No department submitted';
+  el('confirmEmpId').value=(emp.employee_id&&emp.employee_id!=='PENDING')?emp.employee_id:'';
+  el('confirmDept').value=emp.department||'';
+  el('confirmPosition').value=emp.position||'';
+  el('confirmRole').value=emp.role||'employee';
+  el('confirmEmpType').value=emp.employment_type||'full-time';
+  el('confirmSite').innerHTML=`<option value="">— None —</option>`+
+    allSites.map(s=>`<option value="${s.id}"${emp.site_id===s.id?' selected':''}>${s.name}</option>`).join('');
+  el('confirmSite').value=emp.site_id||'';
+  hide('confirmRegErr');
+  show('confirmRegModal');
+}
+
+async function approveRegistration(){
+  const profileId=val('confirmRegProfileId');
+  const empId=val('confirmEmpId').toUpperCase();
+  if(!empId){showErr('confirmRegErr','Employee ID is required to activate the account');return;}
+  // Check for duplicate Employee ID
+  const dup=allEmployees.find(e=>e.id!==profileId&&(e.employee_id||'').toUpperCase()===empId);
+  if(dup){showErr('confirmRegErr',`Employee ID "${empId}" is already taken by ${dup.full_name}. Choose a different one.`);return;}
+  setBtnLoad('confirmRegBtn',true,'Activating…');
+  try{
+    const updates={
+      employee_id:empId,
+      role:el('confirmRole').value,
+      department:val('confirmDept')||null,
+      position:val('confirmPosition')||null,
+      employment_type:el('confirmEmpType').value,
+      site_id:el('confirmSite').value||null,
+      status:'active',
+      updated_at:new Date().toISOString(),
+    };
+    const{error}=await sb.from('employee_profiles').update(updates).eq('id',profileId);
+    if(error)throw error;
+    hide('confirmRegModal');
+    showToast('✅ Account activated! Employee can now log in with their Employee ID.','success',6000);
+    await loadEmployees();
+  }catch(e){showErr('confirmRegErr',e.message);}
+  setBtnLoad('confirmRegBtn',false,'✅ Activate Account');
+}
+
+async function rejectRegistration(){
+  const profileId=val('confirmRegProfileId');
+  const emp=allEmployees.find(e=>e.id===profileId);
+  if(!confirm(`Reject registration for ${emp?.full_name||emp?.email}?\n\nThis will delete their employee profile. Their auth account will remain but they won't be able to use the system.`))return;
+  try{
+    const{error}=await sb.from('employee_profiles').delete().eq('id',profileId);
+    if(error)throw error;
+    hide('confirmRegModal');
+    showToast('🗑 Registration rejected and removed from list','info');
+    await loadEmployees();
+  }catch(e){showToast('❌ '+e.message,'error');}
+}
+</script>
+</body>
+</html>

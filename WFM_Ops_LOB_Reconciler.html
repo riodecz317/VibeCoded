@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WFM · Ops · LOB Governance Platform v3</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#0A1628;--panel:#101C30;--card:#152035;--card2:#1A2845;
+    --border:#1E3050;--border2:#253860;
+    --accent:#3B82F6;--accent2:#2563EB;--accent-glow:rgba(59,130,246,0.12);
+    --success:#10B981;--success-dim:rgba(16,185,129,0.12);
+    --warning:#F59E0B;--warning-dim:rgba(245,158,11,0.12);
+    --danger:#EF4444;--danger-dim:rgba(239,68,68,0.12);
+    --purple:#8B5CF6;--purple-dim:rgba(139,92,246,0.12);
+    --teal:#06B6D4;--teal-dim:rgba(6,182,212,0.12);
+    --pink:#EC4899;--pink-dim:rgba(236,72,153,0.12);
+    --orange:#F97316;--orange-dim:rgba(249,115,22,0.12);
+    --text:#E2E8F0;--text2:#94A3B8;--text3:#64748B;--text4:#475569;
+    --mono:'JetBrains Mono','Cascadia Code','Consolas',monospace;
+    --sans:'Inter',-apple-system,sans-serif;
+    --r:8px;--r2:12px;--r3:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:var(--sans);background:var(--navy);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;overflow-x:hidden;}
+  /* HEADER */
+  .hdr{background:var(--panel);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:12px;height:52px;position:sticky;top:0;z-index:200;}
+  .hdr-logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;letter-spacing:-.3px;white-space:nowrap;}
+  .hdr-ver{font-size:9px;font-family:var(--mono);background:var(--accent-glow);color:var(--accent);border:1px solid rgba(59,130,246,.25);padding:2px 7px;border-radius:20px;letter-spacing:.5px;}
+  .hdr-sp{flex:1;}
+  .hdr-stat{font-size:11px;color:var(--text3);font-family:var(--mono);}
+  .hdr-notif{position:relative;width:28px;height:28px;border:1px solid var(--border2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);}
+  .hdr-notif:hover{border-color:var(--accent);color:var(--accent);}
+  .notif-dot{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--danger);}
+  .notif-panel{display:none;position:fixed;top:56px;right:12px;width:300px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r2);z-index:300;padding:0;box-shadow:0 8px 32px rgba(0,0,0,.4);}
+  .notif-panel.open{display:block;}
+  .notif-hdr{padding:10px 14px;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;}
+  .notif-item{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;}
+  .notif-item:last-child{border-bottom:none;}
+  .notif-item .ni-title{font-weight:500;color:var(--text);margin-bottom:2px;}
+  .notif-item .ni-sub{color:var(--text3);font-size:11px;}
+  /* LAYOUT */
+  .layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 52px);}
+  .sidebar{background:var(--panel);border-right:1px solid var(--border);padding:16px 0;overflow-y:auto;position:sticky;top:52px;height:calc(100vh - 52px);}
+  .main{overflow:auto;background:var(--navy);}
+  /* SIDEBAR */
+  .sb-sect{margin-bottom:20px;}
+  .sb-lbl{font-size:9px;font-family:var(--mono);color:var(--text4);text-transform:uppercase;letter-spacing:1.2px;padding:0 14px;margin-bottom:4px;}
+  .sb-item{display:flex;align-items:center;gap:8px;padding:7px 14px;cursor:pointer;transition:all .12s;font-size:12px;color:var(--text2);border-left:2px solid transparent;white-space:nowrap;}
+  .sb-item:hover{background:rgba(255,255,255,.04);color:var(--text);}
+  .sb-item.active{background:var(--accent-glow);color:var(--accent);border-left-color:var(--accent);font-weight:500;}
+  .sb-item .si{width:14px;height:14px;opacity:.75;flex-shrink:0;}
+  .sb-badge{margin-left:auto;font-size:9px;font-family:var(--mono);padding:1px 5px;border-radius:8px;border:1px solid var(--border2);color:var(--text3);background:var(--card);}
+  .sb-badge.r{background:var(--danger-dim);border-color:rgba(239,68,68,.3);color:var(--danger);}
+  .sb-badge.y{background:var(--warning-dim);border-color:rgba(245,158,11,.3);color:var(--warning);}
+  .sb-badge.g{background:var(--success-dim);border-color:rgba(16,185,129,.3);color:var(--success);}
+  .sb-badge.b{background:var(--accent-glow);border-color:rgba(59,130,246,.3);color:var(--accent);}
+  .sb-badge.p{background:var(--purple-dim);border-color:rgba(139,92,246,.3);color:var(--purple);}
+  .sb-badge.t{background:var(--teal-dim);border-color:rgba(6,182,212,.3);color:var(--teal);}
+  /* PAGES */
+  .pg{display:none;padding:24px;}
+  .pg.active{display:block;}
+  /* PAGE HEADER */
+  .pg-hdr{margin-bottom:20px;}
+  .pg-title{font-size:17px;font-weight:700;letter-spacing:-.4px;margin-bottom:3px;display:flex;align-items:center;gap:10px;}
+  .pg-sub{font-size:12px;color:var(--text2);}
+  /* UPLOAD ZONE */
+  .up-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:860px;}
+  .up-zone{background:var(--card);border:2px dashed var(--border2);border-radius:var(--r2);padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;position:relative;}
+  .up-zone:hover,.up-zone.dragover{border-color:var(--accent);background:var(--accent-glow);}
+  .up-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  .up-zone .uz-ic{width:32px;height:32px;margin:0 auto 10px;background:var(--panel);border-radius:var(--r);display:flex;align-items:center;justify-content:center;color:var(--accent);}
+  .up-zone .uz-t{font-weight:600;font-size:12px;margin-bottom:3px;}
+  .up-zone .uz-s{font-size:11px;color:var(--text2);}
+  .up-zone .uz-tag{display:inline-block;margin-top:8px;font-size:9px;font-family:var(--mono);padding:2px 7px;border-radius:10px;border:1px solid var(--border);color:var(--text3);}
+  .up-zone.done{border-color:rgba(16,185,129,.4);background:var(--success-dim);}
+  .up-zone.done .uz-ic{color:var(--success);}
+  .lob-zone{grid-column:1/-1;}
+  .fp{display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:3px 7px;margin-top:3px;font-size:10px;font-family:var(--mono);color:var(--text2);}
+  .fp-dot{width:5px;height:5px;border-radius:50%;background:var(--success);flex-shrink:0;}
+  /* PROCESS BAR */
+  .proc-bar{max-width:860px;margin-top:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  .btn-run{background:var(--accent);color:#fff;border:none;padding:9px 24px;border-radius:var(--r);font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px;font-family:var(--sans);}
+  .btn-run:hover{background:var(--accent2);transform:translateY(-1px);}
+  .btn-run:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+  .btn-sec{background:transparent;color:var(--text2);border:1px solid var(--border2);padding:9px 16px;border-radius:var(--r);font-size:12px;cursor:pointer;transition:all .2s;font-family:var(--sans);}
+  .btn-sec:hover{border-color:var(--accent);color:var(--accent);}
+  /* PROGRESS */
+  .prog-wrap{max-width:860px;margin-top:14px;display:none;}
+  .prog-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:6px;}
+  .prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--purple));border-radius:2px;transition:width .3s ease;width:0;}
+  .prog-lbl{font-size:11px;font-family:var(--mono);color:var(--text3);}
+  /* LOG */
+  .log-box{max-width:860px;margin-top:14px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;display:none;}
+  .log-hdr{padding:8px 14px;border-bottom:1px solid var(--border);font-size:10px;font-family:var(--mono);color:var(--text3);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:7px;}
+  .log-dot{width:5px;height:5px;border-radius:50%;background:var(--success);animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+  .log-body{padding:10px 14px;max-height:180px;overflow-y:auto;font-size:11px;font-family:var(--mono);line-height:1.7;}
+  .ll{color:var(--text2);}
+  .ll.ok::before{content:'✓  ';color:var(--success);}
+  .ll.err::before{content:'✗  ';color:var(--danger);}
+  .ll.info::before{content:'›  ';color:var(--accent);}
+  .ll.warn::before{content:'⚠  ';color:var(--warning);}
+  .ll.dbg::before{content:'·  ';color:var(--text3);}
+  /* KPI GRID */
+  .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:22px;}
+  .kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;cursor:pointer;transition:border-color .15s;}
+  .kpi:hover{border-color:var(--border2);}
+  .kpi-lbl{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+  .kpi-val{font-size:24px;font-weight:700;font-family:var(--mono);letter-spacing:-1px;line-height:1;}
+  .kpi-val.acc{color:var(--accent);}
+  .kpi-val.suc{color:var(--success);}
+  .kpi-val.war{color:var(--warning);}
+  .kpi-val.dan{color:var(--danger);}
+  .kpi-val.pur{color:var(--purple);}
+  .kpi-val.tea{color:var(--teal);}
+  .kpi-val.pin{color:var(--pink);}
+  .kpi-val.ora{color:var(--orange);}
+  .kpi-det{font-size:10px;color:var(--text3);margin-top:3px;font-family:var(--mono);}
+  .kpi-trend{font-size:10px;margin-top:2px;}
+  .kpi-trend.up{color:var(--success);}
+  .kpi-trend.down{color:var(--danger);}
+  /* CHARTS */
+  .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px;}
+  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:16px;}
+  .chart-title{font-size:11px;font-weight:600;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px;}
+  .chart-wrap{position:relative;height:180px;}
+  /* QUALITY SCORE */
+  .qs-wrap{display:grid;grid-template-columns:200px 1fr;gap:20px;margin-bottom:22px;}
+  .qs-ring{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .qs-ring-wrap{position:relative;width:120px;height:120px;margin-bottom:12px;}
+  .qs-ring-wrap svg{transform:rotate(-90deg);}
+  .qs-ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .qs-score{font-size:28px;font-weight:700;font-family:var(--mono);}
+  .qs-grade{font-size:14px;font-family:var(--mono);font-weight:700;margin-top:2px;}
+  .qs-metrics{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:16px;}
+  /* TABLES */
+  .tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:20px;}
+  .tbl-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--panel);flex-wrap:wrap;}
+  .tbl-title{font-size:11px;font-weight:600;color:var(--text2);font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;}
+  .srch{background:var(--navy);border:1px solid var(--border);border-radius:var(--r);padding:4px 9px;color:var(--text);font-size:11px;font-family:var(--mono);width:180px;outline:none;transition:border-color .2s;}
+  .srch:focus{border-color:var(--accent);}
+  .srch::placeholder{color:var(--text3);}
+  .flt{background:var(--navy);border:1px solid var(--border);border-radius:var(--r);padding:4px 7px;color:var(--text);font-size:11px;font-family:var(--mono);outline:none;}
+  .tbl-cnt{margin-left:auto;font-size:10px;font-family:var(--mono);color:var(--text3);background:var(--card2);padding:2px 7px;border-radius:8px;border:1px solid var(--border);}
+  .btn-exp{background:var(--success-dim);color:var(--success);border:1px solid rgba(16,185,129,.25);padding:5px 12px;border-radius:var(--r);font-size:10px;font-family:var(--mono);cursor:pointer;transition:all .2s;}
+  .btn-exp:hover{background:rgba(16,185,129,.2);}
+  .tbl-scroll{max-height:420px;overflow-y:auto;}
+  .dtbl{width:100%;border-collapse:collapse;font-size:11px;font-family:var(--mono);}
+  .dtbl th{background:var(--panel);color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.4px;font-size:9px;padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;position:sticky;top:0;}
+  .dtbl th:hover{color:var(--text);}
+  .dtbl td{padding:7px 10px;border-bottom:1px solid var(--border);color:var(--text2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dtbl tr:last-child td{border-bottom:none;}
+  .dtbl tr:hover td{background:rgba(255,255,255,.02);}
+  .dtbl tr.clickable{cursor:pointer;}
+  /* BADGES */
+  .bdg{display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:10px;font-size:9px;font-family:var(--mono);font-weight:600;letter-spacing:.2px;white-space:nowrap;}
+  .bdg.g{background:var(--success-dim);color:var(--success);border:1px solid rgba(16,185,129,.25);}
+  .bdg.r{background:var(--danger-dim);color:var(--danger);border:1px solid rgba(239,68,68,.25);}
+  .bdg.y{background:var(--warning-dim);color:var(--warning);border:1px solid rgba(245,158,11,.25);}
+  .bdg.b{background:var(--accent-glow);color:var(--accent);border:1px solid rgba(59,130,246,.25);}
+  .bdg.p{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(139,92,246,.25);}
+  .bdg.t{background:var(--teal-dim);color:var(--teal);border:1px solid rgba(6,182,212,.25);}
+  .bdg.n{background:var(--card2);color:var(--text3);border:1px solid var(--border);}
+  /* CONFIDENCE BARS */
+  .conf-wrap{display:flex;align-items:center;gap:6px;}
+  .conf-bar{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+  .conf-fill{height:100%;border-radius:2px;}
+  /* ALERT BOX */
+  .alert{border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-size:11px;font-family:var(--mono);display:flex;align-items:flex-start;gap:9px;line-height:1.5;}
+  .alert.info{background:var(--accent-glow);border:1px solid rgba(59,130,246,.25);color:var(--accent);}
+  .alert.warn{background:var(--warning-dim);border:1px solid rgba(245,158,11,.25);color:var(--warning);}
+  .alert.danger{background:var(--danger-dim);border:1px solid rgba(239,68,68,.25);color:var(--danger);}
+  .alert.suc{background:var(--success-dim);border:1px solid rgba(16,185,129,.25);color:var(--success);}
+  /* SECTION */
+  h2.sec{font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  h2.sec::after{content:'';flex:1;height:1px;background:var(--border);}
+  /* INFO GRID */
+  .ig{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+  .ic{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:14px;}
+  .ic-t{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;}
+  /* SCORE ROWS */
+  .sr{margin-bottom:8px;}
+  .sr-top{display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px;}
+  .sr-lbl{color:var(--text2);}
+  .sr-val{font-family:var(--mono);font-weight:600;}
+  .sr-bar{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+  .sr-fill{height:100%;border-radius:2px;transition:width .4s ease;}
+  /* DOWNLOAD BAR */
+  .dl-bar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;}
+  .btn-dl{background:var(--success-dim);color:var(--success);border:1px solid rgba(16,185,129,.25);padding:7px 14px;border-radius:var(--r);font-size:11px;font-family:var(--mono);cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:5px;}
+  .btn-dl:hover{background:rgba(16,185,129,.2);}
+  /* EMPTY STATE */
+  .empty{text-align:center;padding:50px 20px;color:var(--text3);}
+  .empty svg{margin:0 auto 12px;opacity:.25;}
+  .empty h3{font-size:14px;color:var(--text2);margin-bottom:4px;}
+  .empty p{font-size:12px;}
+  /* MODAL */
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;align-items:center;justify-content:center;}
+  .modal-bg.open{display:flex;}
+  .modal{background:var(--card);border:1px solid var(--border2);border-radius:var(--r3);max-width:820px;width:90%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5);}
+  .modal-hdr{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--card);z-index:10;}
+  .modal-title{font-size:15px;font-weight:700;}
+  .modal-close{cursor:pointer;color:var(--text3);font-size:18px;line-height:1;padding:2px 6px;border-radius:4px;}
+  .modal-close:hover{background:var(--card2);color:var(--text);}
+  .modal-body{padding:20px;}
+  /* EMPLOYEE 360 */
+  .e360-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .e360-section{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px;}
+  .e360-sec-t{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+  .e360-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:11px;}
+  .e360-key{color:var(--text3);font-family:var(--mono);}
+  .e360-val{color:var(--text);font-weight:500;text-align:right;max-width:200px;overflow:hidden;text-overflow:ellipsis;}
+  .src-timeline{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
+  .src-row{display:flex;align-items:center;gap:8px;font-size:11px;}
+  .src-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .src-dot.hit{background:var(--success);}
+  .src-dot.miss{background:var(--border2);}
+  /* EXCEPTION QUEUE */
+  .exc-actions{display:flex;gap:6px;}
+  .btn-xs{padding:3px 8px;border-radius:4px;font-size:9px;font-family:var(--mono);cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text2);transition:all .15s;}
+  .btn-xs:hover{background:var(--card2);}
+  .btn-xs.res{color:var(--success);border-color:rgba(16,185,129,.3);}
+  .btn-xs.ign{color:var(--text3);}
+  .btn-xs.asgn{color:var(--accent);border-color:rgba(59,130,246,.3);}
+  /* SETTINGS */
+  .set-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+  .set-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:16px;}
+  .set-t{font-size:11px;font-weight:600;color:var(--text2);font-family:var(--mono);margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px;}
+  .set-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:11px;}
+  .set-lbl{color:var(--text2);}
+  .set-inp{background:var(--navy);border:1px solid var(--border);border-radius:var(--r);padding:4px 8px;color:var(--text);font-size:11px;font-family:var(--mono);outline:none;width:120px;}
+  .set-inp:focus{border-color:var(--accent);}
+  .set-textarea{background:var(--navy);border:1px solid var(--border);border-radius:var(--r);padding:8px;color:var(--text);font-size:10px;font-family:var(--mono);outline:none;width:100%;min-height:80px;resize:vertical;}
+  .set-textarea:focus{border-color:var(--accent);}
+  /* FILTER PANEL */
+  .flt-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r2);padding:14px;margin-bottom:16px;display:none;}
+  .flt-panel.open{display:block;}
+  .flt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:10px;}
+  .flt-grp{display:flex;flex-direction:column;gap:4px;}
+  .flt-lbl{font-size:10px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.4px;}
+  .flt-inp{background:var(--navy);border:1px solid var(--border);border-radius:var(--r);padding:5px 8px;color:var(--text);font-size:11px;font-family:var(--mono);outline:none;}
+  .flt-inp:focus{border-color:var(--accent);}
+  /* RECOMMENDATION */
+  .rec-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+  .rec-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;display:flex;align-items:flex-start;gap:12px;}
+  .rec-icon{width:28px;height:28px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .rec-icon.crit{background:var(--danger-dim);color:var(--danger);}
+  .rec-icon.high{background:var(--warning-dim);color:var(--warning);}
+  .rec-icon.med{background:var(--accent-glow);color:var(--accent);}
+  .rec-body{flex:1;}
+  .rec-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px;}
+  .rec-desc{font-size:11px;color:var(--text2);}
+  .rec-imp{font-size:10px;color:var(--success);font-family:var(--mono);margin-top:4px;}
+  /* AUDIT */
+  .aud-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);}
+  .aud-item:last-child{border-bottom:none;}
+  .aud-dot{width:6px;height:6px;border-radius:50%;margin-top:5px;flex-shrink:0;}
+  .aud-t{font-size:11px;color:var(--text);margin-bottom:1px;}
+  .aud-s{font-size:10px;color:var(--text3);font-family:var(--mono);}
+  /* GLOBAL SEARCH */
+  .gsrch-wrap{position:relative;}
+  .gsrch{background:var(--card2);border:1px solid var(--border2);border-radius:var(--r);padding:5px 10px;color:var(--text);font-size:11px;font-family:var(--mono);width:200px;outline:none;}
+  .gsrch:focus{border-color:var(--accent);width:260px;}
+  .gsrch::placeholder{color:var(--text3);}
+  /* ROOT CAUSE */
+  .rca-row{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:10px 12px;margin-bottom:6px;}
+  .rca-hdr{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+  .rca-issue{font-size:11px;font-weight:600;color:var(--text);}
+  .rca-cause{font-size:11px;color:var(--text2);margin-bottom:3px;}
+  .rca-action{font-size:10px;color:var(--accent);font-family:var(--mono);}
+  /* RESPONSIVE */
+  @media(max-width:900px){.chart-grid,.ig,.e360-grid,.set-grid{grid-template-columns:1fr;}.layout{grid-template-columns:200px 1fr;}}
+  ::-webkit-scrollbar{width:4px;height:4px;}
+  ::-webkit-scrollbar-track{background:var(--panel);}
+  ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+</style>
+</head>
+<body>
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-logo">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="9" height="9" rx="2" fill="#3B82F6" opacity=".9"/><rect x="13" y="2" width="9" height="9" rx="2" fill="#8B5CF6" opacity=".9"/><rect x="2" y="13" width="9" height="9" rx="2" fill="#10B981" opacity=".9"/><rect x="13" y="13" width="9" height="9" rx="2" fill="#F59E0B" opacity=".9"/></svg>
+    WFM &middot; Ops &middot; LOB Governance
+  </div>
+  <span class="hdr-ver">ENTERPRISE v3</span>
+  <div class="gsrch-wrap" style="margin-left:12px">
+    <input class="gsrch" placeholder="Global search&#8230;" oninput="globalSearch(this.value)" id="gsrch"/>
+  </div>
+  <div class="hdr-sp"></div>
+  <span class="hdr-stat" id="hdr-stat">No data loaded</span>
+  <div class="hdr-notif" onclick="toggleNotif()" id="notif-btn">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a5 5 0 00-5 5v2l-1 2h12l-1-2V7a5 5 0 00-5-5z"/><path d="M6.5 13a1.5 1.5 0 003 0"/></svg>
+    <span class="notif-dot" id="notif-dot" style="display:none"></span>
+  </div>
+  <div class="notif-panel" id="notif-panel">
+    <div class="notif-hdr">Notifications</div>
+    <div id="notif-list"><div style="padding:14px;font-size:11px;color:var(--text3)">No notifications</div></div>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sb-sect">
+    <div class="sb-lbl">Setup</div>
+    <div class="sb-item active" onclick="nav('upload')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 10V4M5 7l3-3 3 3"/><rect x="2" y="11" width="12" height="3" rx="1"/></svg>Upload Files<span class="sb-badge" id="b-up">0 files</span></div>
+  </div>
+  <div class="sb-sect">
+    <div class="sb-lbl">Core Reports</div>
+    <div class="sb-item" onclick="nav('r1')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="12" rx="1.5"/><path d="M4 6h8M4 9h5"/></svg>Master Employee List<span class="sb-badge g" id="b-r1">—</span></div>
+    <div class="sb-item" onclick="nav('r2')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 11v.5"/></svg>Missing Employees<span class="sb-badge r" id="b-r2">—</span></div>
+    <div class="sb-item" onclick="nav('r3')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h8M4 12h8M2 8h12"/></svg>Duplicates<span class="sb-badge y" id="b-r3">—</span></div>
+    <div class="sb-item" onclick="nav('r4')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h10"/><circle cx="14" cy="12" r="2"/></svg>Field Discrepancies<span class="sb-badge r" id="b-r4">—</span></div>
+  </div>
+  <div class="sb-sect">
+    <div class="sb-lbl">Intelligence</div>
+    <div class="sb-item" onclick="nav('rca')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>Root Cause Analysis<span class="sb-badge y" id="b-rca">—</span></div>
+    <div class="sb-item" onclick="nav('r11')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5 8l2 2 4-4"/></svg>Match Confidence<span class="sb-badge t" id="b-r11">—</span></div>
+    <div class="sb-item" onclick="nav('cand')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 8a3 3 0 106 0 3 3 0 00-6 0"/><path d="M2 14c0-2 2.5-3 6-3s6 1 6 3"/></svg>AI Candidates<span class="sb-badge p" id="b-cand">—</span></div>
+  </div>
+  <div class="sb-sect">
+    <div class="sb-lbl">Validation</div>
+    <div class="sb-item" onclick="nav('r5')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v12M4 6l4-4 4 4"/></svg>Hierarchy<span class="sb-badge y" id="b-r5">—</span></div>
+    <div class="sb-item" onclick="nav('r6')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2a4 4 0 014 4c0 3-4 8-4 8S4 9 4 6a4 4 0 014-4z"/><circle cx="8" cy="6" r="1.5"/></svg>Location<span class="sb-badge y" id="b-r6">—</span></div>
+    <div class="sb-item" onclick="nav('r7')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M5.5 8.5L7 10l3.5-4"/></svg>Status<span class="sb-badge" id="b-r7">—</span></div>
+    <div class="sb-item" onclick="nav('r8')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="6" height="8" rx="1"/><rect x="9" y="4" width="6" height="8" rx="1"/></svg>LOB / Program<span class="sb-badge y" id="b-r8">—</span></div>
+    <div class="sb-item" onclick="nav('r9')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L2 14h12L8 2z"/><path d="M8 7v3M8 12v.5"/></svg>Missing Fields<span class="sb-badge r" id="b-r9">—</span></div>
+  </div>
+  <div class="sb-sect">
+    <div class="sb-lbl">Governance</div>
+    <div class="sb-item" onclick="nav('exc')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="1.5"/><path d="M5 8h6M5 5h4M5 11h3"/></svg>Exception Queue<span class="sb-badge r" id="b-exc">—</span></div>
+    <div class="sb-item" onclick="nav('audit')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 2h8l2 3v9H2V5z"/><path d="M4 8h8M4 11h5"/></svg>Audit Trail<span class="sb-badge" id="b-aud">—</span></div>
+  </div>
+  <div class="sb-sect">
+    <div class="sb-lbl">Summary</div>
+    <div class="sb-item" onclick="nav('r10')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="8" width="3" height="6" rx=".5"/><rect x="6" y="5" width="3" height="9" rx=".5"/><rect x="11" y="2" width="3" height="12" rx=".5"/></svg>Executive Dashboard</div>
+    <div class="sb-item" onclick="nav('settings')"><svg class="si" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 2v1.5M8 12.5V14M2 8h1.5M12.5 8H14M3.5 3.5l1 1M11.5 11.5l1 1M3.5 12.5l1-1M11.5 4.5l1-1"/></svg>Settings & Rules</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- UPLOAD PAGE -->
+<div class="pg active" id="pg-upload">
+  <div class="pg-hdr"><div class="pg-title"><svg width="18" height="18" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 10V4M5 7l3-3 3 3"/><rect x="2" y="11" width="12" height="3" rx="1"/></svg>Upload Source Files</div><div class="pg-sub">All processing is local — no data leaves your machine. v3: 6-tier weighted matching, root cause analysis, AI candidate matching, governance workflows.</div></div>
+  <div class="alert info" style="max-width:860px"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0;margin-top:1px"><circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 11v.5"/></svg><span>WFM is the authoritative source. LOB files are treated as partial subsets. The engine builds confidence scores using 6 weighted fields per match.</span></div>
+  <div class="up-grid">
+    <div class="up-zone" id="z-wfm" ondragover="dov(event,'z-wfm')" ondragleave="dlv('z-wfm')" ondrop="drp(event,'wfm')"><input type="file" accept=".xlsx,.xls,.csv" onchange="hf(event,'wfm')" multiple/><div class="uz-ic"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="12" rx="1.5"/><path d="M4 6h8M4 9h5"/></svg></div><div class="uz-t">WFM Team Composition</div><div class="uz-s">Authoritative source — all employees</div><div class="uz-tag">WFM_TeamCompo.xlsx</div><div id="fl-wfm"></div></div>
+    <div class="up-zone" id="z-ops" ondragover="dov(event,'z-ops')" ondragleave="dlv('z-ops')" ondrop="drp(event,'ops')"><input type="file" accept=".xlsx,.xls,.csv" onchange="hf(event,'ops')" multiple/><div class="uz-ic"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="14" height="12" rx="1.5"/><path d="M4 6h8M4 9h5"/></svg></div><div class="uz-t">Ops Team Composition</div><div class="uz-s">Operational roster</div><div class="uz-tag">Ops_TeamCompo.xlsx</div><div id="fl-ops"></div></div>
+    <div class="up-zone lob-zone" id="z-lob" ondragover="dov(event,'z-lob')" ondragleave="dlv('z-lob')" ondrop="drp(event,'lob')"><input type="file" accept=".xlsx,.xls,.csv" onchange="hf(event,'lob')" multiple/><div class="uz-ic"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><rect x="1" y="10" width="6" height="4" rx="1"/><rect x="9" y="10" width="6" height="4" rx="1"/></svg></div><div class="uz-t">LOB Workbooks — unlimited files</div><div class="uz-s">All Ops_LOB files, treated as partial subsets of WFM/Ops</div><div class="uz-tag">Ops_LOB1.xlsx &middot; Ops_LOB2.xlsx &middot; &hellip;</div><div id="fl-lob"></div></div>
+  </div>
+  <div class="proc-bar">
+    <button class="btn-run" id="btn-proc" onclick="processAll()" disabled><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8a6 6 0 1112 0A6 6 0 012 8z"/><path d="M8 5v3l2 2"/></svg>Run Reconciliation</button>
+    <button class="btn-sec" onclick="loadSample()">Load Sample Data</button>
+    <button class="btn-sec" onclick="clearAll()">Clear All</button>
+  </div>
+  <div class="prog-wrap" id="prog-wrap"><div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div><div class="prog-lbl" id="prog-lbl">Initializing...</div></div>
+  <div class="log-box" id="log-box"><div class="log-hdr"><span class="log-dot" id="log-dot"></span>Processing Log</div><div class="log-body" id="log-body"></div></div>
+</div>
+
+<!-- REPORT PAGES -->
+<div class="pg" id="pg-r1"><div class="pg-hdr"><div class="pg-title">Master Employee List</div><div class="pg-sub">Consolidated, deduplicated master. Click any row to open Employee 360° Profile.</div></div><div id="c-r1"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 9h8M8 13h5"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-r2"><div class="pg-hdr"><div class="pg-title">Missing Employees</div><div class="pg-sub">WFM&harr;Ops gaps with severity. LOB-only records shown as Low severity.</div></div><div id="c-r2"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-r3"><div class="pg-hdr"><div class="pg-title">Duplicate Records</div><div class="pg-sub">Smart detection: same employee different IDs, merged identities, re-hires, multiple active records.</div></div><div id="c-r3"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="4" y="4" width="12" height="12" rx="2"/><rect x="8" y="8" width="12" height="12" rx="2"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-r4"><div class="pg-hdr"><div class="pg-title">Field Discrepancies</div><div class="pg-sub">Noise suppressed. LOB/Program uses 90% similarity threshold. Only real value conflicts shown.</div></div><div id="c-r4"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M3 6h18M3 12h12M3 18h15"/><circle cx="20" cy="18" r="3"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-rca"><div class="pg-hdr"><div class="pg-title">Root Cause Analysis</div><div class="pg-sub">Why discrepancies exist — probable cause, confidence, and recommended action for each issue.</div></div><div id="c-rca"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-r11"><div class="pg-hdr"><div class="pg-title">Match Confidence Log</div><div class="pg-sub">T1=GlobalID&middot;T2=OldID&middot;T3=Email&middot;T4=Name-Exact&middot;T5=Weighted(6-field)&middot;T6=AI-Candidate&middot;NEW=unmatched</div></div><div id="c-r11"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-5"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-cand"><div class="pg-hdr"><div class="pg-title">AI Candidate Matches</div><div class="pg-sub">Employees with no exact ID match — review top candidates and accept, review, or reject each match.</div></div><div id="c-cand"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 12m-3 0a3 3 0 106 0 3 3 0 00-6 0"/><path d="M3 20c0-3 3-5 9-5s9 2 9 5"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-r5"><div class="pg-hdr"><div class="pg-title">Hierarchy Validation</div><div class="pg-sub">Manager chains, span of control, circular reporting, missing supervisors.</div></div><div id="c-r5"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="4" r="2"/><path d="M12 6v4"/><circle cx="6" cy="14" r="2"/><circle cx="18" cy="14" r="2"/><path d="M12 10l-6 4M12 10l6 4"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-r6"><div class="pg-hdr"><div class="pg-title">Location Validation</div><div class="pg-sub">Site and WorkSetup conflicts with business rule checking.</div></div><div id="c-r6"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2a7 7 0 017 7c0 5-7 13-7 13S5 14 5 9a7 7 0 017-7z"/><circle cx="12" cy="9" r="2.5"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-r7"><div class="pg-hdr"><div class="pg-title">Status Validation</div><div class="pg-sub">Active/Inactive/Separated conflicts and business rule violations.</div></div><div id="c-r7"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5L10.5 14.5l5-5"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-r8"><div class="pg-hdr"><div class="pg-title">LOB / Program Validation</div><div class="pg-sub">Program, LOB, Subprocess assignments vs. business rules.</div></div><div id="c-r8"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="2" y="5" width="8" height="14" rx="1"/><rect x="14" y="5" width="8" height="14" rx="1"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-r9"><div class="pg-hdr"><div class="pg-title">Missing Critical Fields</div><div class="pg-sub">Records missing required fields — configurable in Settings.</div></div><div id="c-r9"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><path d="M12 2L2 20h20L12 2z"/><path d="M12 9v5M12 17v.5"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-exc"><div class="pg-hdr"><div class="pg-title">Exception Queue</div><div class="pg-sub">Assign, resolve, ignore or export issues. Track by owner, status, and date.</div></div><div id="c-exc"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="2" y="2" width="20" height="20" rx="2"/><path d="M7 12h10M7 8h7M7 16h5"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-audit"><div class="pg-hdr"><div class="pg-title">Audit Trail</div><div class="pg-sub">Full history of file uploads, processing runs, user actions, and data changes.</div></div><div id="c-audit"></div></div>
+<div class="pg" id="pg-r10"><div class="pg-hdr"><div class="pg-title">Executive Dashboard</div><div class="pg-sub">KPI summary, data quality scoring, charts, and actionable recommendations.</div></div><div id="c-r10"><div class="empty"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><rect x="2" y="12" width="5" height="9" rx=".5"/><rect x="9" y="7" width="5" height="14" rx=".5"/><rect x="16" y="3" width="5" height="18" rx=".5"/></svg><h3>No data</h3><p>Upload and process files first.</p></div></div></div>
+<div class="pg" id="pg-settings">
+  <div class="pg-hdr"><div class="pg-title">Settings &amp; Business Rules</div><div class="pg-sub">Configure matching thresholds, validation rules, LOB mappings, and hierarchy limits without modifying code.</div></div>
+  <div class="set-grid">
+    <div class="set-card"><div class="set-t">Matching Engine</div>
+      <div class="set-row"><span class="set-lbl">T5 Min Confidence %</span><input class="set-inp" id="s-t5min" value="70" type="number" min="50" max="99"/></div>
+      <div class="set-row"><span class="set-lbl">T5 Name Weight %</span><input class="set-inp" id="s-wname" value="40" type="number"/></div>
+      <div class="set-row"><span class="set-lbl">T5 Program Weight %</span><input class="set-inp" id="s-wprog" value="15" type="number"/></div>
+      <div class="set-row"><span class="set-lbl">T5 LOB Weight %</span><input class="set-inp" id="s-wlob" value="15" type="number"/></div>
+      <div class="set-row"><span class="set-lbl">T5 Site Weight %</span><input class="set-inp" id="s-wsite" value="10" type="number"/></div>
+      <div class="set-row"><span class="set-lbl">T5 Manager Weight %</span><input class="set-inp" id="s-wmgr" value="10" type="number"/></div>
+      <div class="set-row"><span class="set-lbl">T5 Hire Date Weight %</span><input class="set-inp" id="s-whire" value="10" type="number"/></div>
+    </div>
+    <div class="set-card"><div class="set-t">Hierarchy Limits</div>
+      <div class="set-row"><span class="set-lbl">Max TL Headcount</span><input class="set-inp" id="s-maxtl" value="20" type="number"/></div>
+      <div class="set-row"><span class="set-lbl">Max Manager Span</span><input class="set-inp" id="s-maxmgr" value="10" type="number"/></div>
+      <div class="set-t" style="margin-top:12px">Required Critical Fields</div>
+      <textarea class="set-textarea" id="s-reqfields">GlobalEmployeeID,OldEmployeeID,FullName,LOB,Program,Manager,TeamLeader,Status,HireDate,Site</textarea>
+    </div>
+    <div class="set-card"><div class="set-t">Business Rules (JSON)</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px">IF-THEN rules. Fields: Status, WorkSetup, Program, LOB, Site</div>
+      <textarea class="set-textarea" id="s-rules" style="min-height:120px">[
+  {"if":{"Status":"Separated"},"then":{"ProductionStatus_not":"Active"},"msg":"Separated employee should not be Active in Production"},
+  {"if":{"WorkSetup":"WFH"},"then":{"Site_not":"Office"},"msg":"WFH employees should not be assigned to Office site"},
+  {"if":{"Program":"Claims"},"then":{"LOB_must_contain":"Humana"},"msg":"Claims program must be under Humana LOB"}
+]</textarea>
+    </div>
+    <div class="set-card"><div class="set-t">Status Mapping</div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px">Comma-separated aliases mapped to standard values</div>
+      <div class="set-row" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="set-lbl">Active aliases</span><input class="set-inp" id="s-active" value="ACTIVE,A,YES,1,ACTV" style="width:100%"/></div>
+      <div class="set-row" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px"><span class="set-lbl">Inactive aliases</span><input class="set-inp" id="s-inactive" value="INACTIVE,I,NO,0,DEACTIVATED" style="width:100%"/></div>
+      <div class="set-row" style="flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px"><span class="set-lbl">Separated aliases</span><input class="set-inp" id="s-sep" value="SEPARATED,SEP,RESIGNED,TERMINATED,TERM" style="width:100%"/></div>
+    </div>
+  </div>
+  <button class="btn-run" onclick="saveSettings()">Save Settings</button>
+  <button class="btn-sec" style="margin-left:10px" onclick="resetSettings()">Reset Defaults</button>
+</div>
+
+</main>
+</div>
+
+<!-- EMPLOYEE 360 MODAL -->
+<div class="modal-bg" id="modal-360">
+  <div class="modal">
+    <div class="modal-hdr"><span class="modal-title" id="m360-title">Employee 360° Profile</span><span class="modal-close" onclick="closeModal('modal-360')">&times;</span></div>
+    <div class="modal-body" id="m360-body"></div>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS BACKDROP -->
+<div style="display:none;position:fixed;inset:0;z-index:299" id="notif-bg" onclick="closeNotif()"></div>
+
+
+<script>
+// =====================================================================
+// ENTERPRISE GOVERNANCE PLATFORM v3
+// Modular Architecture: Config → Import → Normalize → Match → Validate
+//                    → RootCause → Quality → Analytics → UI → Export
+// =====================================================================
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: CONFIG
+// ──────────────────────────────────────────────────────────────────
+const CFG = {
+  weights: { name:40, program:15, lob:15, site:10, manager:10, hireDate:10 },
+  t5min: 70,
+  maxTLHeadcount: 20,
+  maxManagerSpan: 10,
+  requiredFields: ['GlobalEmployeeID','OldEmployeeID','FullName','LOB','Program','Manager','TeamLeader','Status','HireDate','Site'],
+  businessRules: [],
+  statusMap: {
+    active: ['ACTIVE','A','YES','1','ACTV'],
+    inactive: ['INACTIVE','I','NO','0','INACTV','DEACTIVATED'],
+    separated: ['SEPARATED','SEP','RESIGNED','TERMINATED','TERM','RES'],
+    leave: ['LEAVE','LOA','ONLEAVE','ML','SL'],
+    transferred: ['TRANSFERRED','TRANSFER','TRANS','TRF']
+  }
+};
+
+function loadSettings(){
+  try {
+    const t5=parseInt(document.getElementById('s-t5min').value)||70;
+    const wn=parseInt(document.getElementById('s-wname').value)||40;
+    const wp=parseInt(document.getElementById('s-wprog').value)||15;
+    const wl=parseInt(document.getElementById('s-wlob').value)||15;
+    const ws=parseInt(document.getElementById('s-wsite').value)||10;
+    const wm=parseInt(document.getElementById('s-wmgr').value)||10;
+    const wh=parseInt(document.getElementById('s-whire').value)||10;
+    CFG.t5min=t5;
+    CFG.weights={name:wn,program:wp,lob:wl,site:ws,manager:wm,hireDate:wh};
+    CFG.maxTLHeadcount=parseInt(document.getElementById('s-maxtl').value)||20;
+    CFG.maxManagerSpan=parseInt(document.getElementById('s-maxmgr').value)||10;
+    CFG.requiredFields=document.getElementById('s-reqfields').value.split(',').map(s=>s.trim()).filter(Boolean);
+    try{ CFG.businessRules=JSON.parse(document.getElementById('s-rules').value)||[]; }catch(e){ CFG.businessRules=[]; }
+    const active=document.getElementById('s-active').value.toUpperCase().split(',').map(s=>s.trim());
+    const inactive=document.getElementById('s-inactive').value.toUpperCase().split(',').map(s=>s.trim());
+    const sep=document.getElementById('s-sep').value.toUpperCase().split(',').map(s=>s.trim());
+    CFG.statusMap={active,inactive,separated:sep,leave:['LEAVE','LOA','ONLEAVE','ML','SL'],transferred:['TRANSFERRED','TRANSFER','TRANS','TRF']};
+  }catch(e){}
+}
+function saveSettings(){ loadSettings(); addAudit('Settings updated','User modified matching weights and business rules','info'); showNotif('Settings saved','Configuration applied to next processing run'); }
+function resetSettings(){
+  document.getElementById('s-t5min').value=70; document.getElementById('s-wname').value=40;
+  document.getElementById('s-wprog').value=15; document.getElementById('s-wlob').value=15;
+  document.getElementById('s-wsite').value=10; document.getElementById('s-wmgr').value=10;
+  document.getElementById('s-whire').value=10; document.getElementById('s-maxtl').value=20;
+  document.getElementById('s-maxmgr').value=10;
+  loadSettings();
+}
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: STATE
+// ──────────────────────────────────────────────────────────────────
+const S = {
+  files:{wfm:[],ops:[],lob:[]},
+  master:[], reports:{}, lobNames:[], charts:{},
+  exceptions:[], auditLog:[], notifications:[],
+  filterState:{}
+};
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: FIELD MAPPING
+// ──────────────────────────────────────────────────────────────────
+const FMAP = {
+  GlobalEmployeeID:['global id','global emp id','sg emp id','sg id','global employee id','globalid','globalempid','sge id','sgempid'],
+  OldEmployeeID:['emp id','employee id','localempid','local id','local employee id','empid','employeeid','employee no','emp no','agent id','agentid'],
+  FirstName:['first name','firstname','fname','given name','first'],
+  LastName:['last name','lastname','lname','surname','family name','last'],
+  FullName:['full name','fullname','name','employee name','agent name','complete name','agent','employeename'],
+  Email:['email','email address','e-mail','emailaddress','work email','corporate email'],
+  Program:['program','program name','segment','program (sub-process display)','account','client program'],
+  LOB:['lob','line of business','segment','lob name','line of biz'],
+  Subprocess:['subprocess','sub process','sub-process','subprocess name','process'],
+  Manager:['manager','operations manager','department head','group head','ops manager','om'],
+  ShiftManager:['shift manager','shift mgr','sm','shift am'],
+  TeamLeader:['team lead','team leader','tl','teamlead','teamleader','lead','tl name'],
+  Site:['site','location','office location','site location','office','base'],
+  WorkSetup:['wah/b&m status','work setup','wfh/b&m','work arrangement','wah b&m','work mode','work type','wfh status'],
+  Status:['status','employee status','active/inactive','empstatus','employment status'],
+  ProductionStatus:['prod status','production status','prodstatus'],
+  HireDate:['hire date','hiredate','ft start date','start date','date hired','dateofhire','date of hire'],
+  LiveDate:['live date','livedate','go live date','live','production date'],
+  Wave:['wave','batch','wave number','wave no','cohort'],
+  CountingStatus:['counting status','countingstatus','headcount status','billable status']
+};
+function nk(s){return(s||'').toLowerCase().replace(/[\s_\-\/\(\)\.\&\#\,\'\"]+/g,'').trim();}
+function mapCol(c){ const k=nk(c); for(const[std,v] of Object.entries(FMAP)){ if(v.some(x=>nk(x)===k))return std; } return c; }
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: NORMALIZATION ENGINE
+// ──────────────────────────────────────────────────────────────────
+const N = {
+  clean(v){ if(v==null||v==='')return null; return String(v).trim().replace(/\s+/g,' '); },
+  upper(v){ const s=N.clean(v); return s?s.toUpperCase():null; },
+  norm(v){ const s=N.clean(v); return s?s.toUpperCase().replace(/[^A-Z0-9]/g,''):null; },
+  title(v){ const s=N.clean(v); if(!s)return null; return s.replace(/\b\w+/g,w=>w[0].toUpperCase()+w.slice(1).toLowerCase()); },
+  date(v){
+    if(!v)return null;
+    if(typeof v==='number'){ const d=new Date(Math.round((v-25569)*86400*1000)); return d.toISOString().split('T')[0]; }
+    const s=String(v).trim(); if(!s)return null;
+    const d=new Date(s); return isNaN(d)?s:d.toISOString().split('T')[0];
+  },
+  workSetup(v){
+    if(!v)return null;
+    const k=v.toUpperCase().replace(/[\s\-_&\/]/g,'');
+    if(['WFH','WAH','WORKFROMHOME','REMOTE','WFHWAH'].some(x=>k===x||k.includes(x)))return 'WFH';
+    if(['BM','ONSITE','OFFICE','ONSITEBM'].some(x=>k===x||k.includes(x)))return 'B&M';
+    if(k.includes('HYBRID'))return 'Hybrid';
+    return N.clean(v);
+  },
+  status(v){
+    if(!v)return null;
+    const k=v.toUpperCase().replace(/[\s_\-]/g,'');
+    if(CFG.statusMap.active.includes(k))return 'Active';
+    if(CFG.statusMap.inactive.includes(k))return 'Inactive';
+    if(CFG.statusMap.separated.includes(k))return 'Separated';
+    if(CFG.statusMap.leave.includes(k))return 'Leave';
+    if(CFG.statusMap.transferred.includes(k))return 'Transferred';
+    return N.title(v);
+  },
+  nameStrip(n){
+    if(!n)return '';
+    return n.toUpperCase().replace(/\b(JR|SR|II|III|IV|MR|MS|MRS|DR|PROF)\b\.?/g,'').replace(/[^A-Z0-9\s]/g,'').replace(/\s+/g,' ').trim();
+  },
+  nameTokens(full,first,last){
+    const p=[];
+    if(first)p.push(...N.nameStrip(first).split(' ').filter(Boolean));
+    if(last)p.push(...N.nameStrip(last).split(' ').filter(Boolean));
+    if(!p.length&&full)p.push(...N.nameStrip(full).split(' ').filter(Boolean));
+    return[...new Set(p)].sort();
+  },
+  row(row,source){
+    const fn=N.title(row.FirstName), ln=N.title(row.LastName);
+    let full=N.title(row.FullName);
+    if(!full&&(fn||ln))full=([fn,ln]).filter(Boolean).join(' ');
+    const gid=N.upper(row.GlobalEmployeeID), oid=N.upper(row.OldEmployeeID);
+    return{
+      _source:source, GlobalEmployeeID:gid, OldEmployeeID:oid,
+      FirstName:fn, LastName:ln, FullName:full,
+      Email:N.clean(row.Email)?N.clean(row.Email).toLowerCase():null,
+      Program:N.clean(row.Program), LOB:N.clean(row.LOB), Subprocess:N.clean(row.Subprocess),
+      Manager:N.title(row.Manager), ShiftManager:N.title(row.ShiftManager), TeamLeader:N.title(row.TeamLeader),
+      Site:N.clean(row.Site), WorkSetup:N.workSetup(N.clean(row.WorkSetup)),
+      Status:N.status(N.clean(row.Status)), ProductionStatus:N.clean(row.ProductionStatus),
+      HireDate:N.date(row.HireDate), LiveDate:N.date(row.LiveDate),
+      Wave:N.clean(row.Wave), CountingStatus:N.clean(row.CountingStatus),
+      _normGID:N.norm(gid), _normOID:N.norm(oid),
+      _nameTokens:N.nameTokens(full,fn,ln)
+    };
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: MATCHING ENGINE (6-tier weighted)
+// ──────────────────────────────────────────────────────────────────
+const M = {
+  buildIdx(master){
+    const g={},o={},e={};
+    master.forEach((r,i)=>{
+      if(r._normGID)g[r._normGID]=i;
+      if(r._normOID)o[r._normOID]=i;
+      if(r.Email)e[r.Email]=i;
+    });
+    return{g,o,e};
+  },
+  tokSim(a,b){
+    if(!a.length||!b.length)return 0;
+    const sa=new Set(a),sb=new Set(b);
+    const inter=[...sa].filter(x=>sb.has(x)).length;
+    return inter/new Set([...sa,...sb]).size;
+  },
+  strSim(a,b){
+    // Normalized Levenshtein-inspired: jaccard on chars
+    if(!a||!b)return 0;
+    const na=N.norm(a)||'', nb=N.norm(b)||'';
+    if(na===nb)return 1;
+    if(!na||!nb)return 0;
+    // Bigrams
+    const bg=s=>{const r=new Set();for(let i=0;i<s.length-1;i++)r.add(s.slice(i,i+2));return r;};
+    const bga=bg(na),bgb=bg(nb);
+    const inter=[...bga].filter(x=>bgb.has(x)).length;
+    const union=new Set([...bga,...bgb]).size;
+    return union===0?0:inter/union;
+  },
+  lobSim(a,b){
+    if(!a||!b)return 0;
+    const na=a.toUpperCase().replace(/[^A-Z0-9\s]/g,'').trim();
+    const nb=b.toUpperCase().replace(/[^A-Z0-9\s]/g,'').trim();
+    if(na===nb)return 1;
+    if(na.includes(nb)||nb.includes(na))return 0.7;
+    return M.tokSim(na.split(/\s+/),nb.split(/\s+/));
+  },
+  // Weighted T5 confidence: returns 0-100
+  weightedConf(row, cand){
+    const w=CFG.weights;
+    const total=w.name+w.program+w.lob+w.site+w.manager+w.hireDate;
+    let score=0;
+    // Name
+    const nameSim=M.tokSim(row._nameTokens,cand._nameTokens);
+    score+=nameSim*(w.name/total)*100;
+    // Program
+    const progSim=M.lobSim(row.Program,cand.Program);
+    score+=progSim*(w.program/total)*100;
+    // LOB
+    const lobSim=M.lobSim(row.LOB,cand.LOB);
+    score+=lobSim*(w.lob/total)*100;
+    // Site
+    const siteSim=N.norm(row.Site)===N.norm(cand.Site)?1:M.strSim(row.Site,cand.Site);
+    score+=siteSim*(w.site/total)*100;
+    // Manager
+    const mgrSim=M.tokSim((row.Manager||'').toUpperCase().split(/\s+/).filter(Boolean),(cand.Manager||'').toUpperCase().split(/\s+/).filter(Boolean));
+    score+=mgrSim*(w.manager/total)*100;
+    // Hire Date
+    const hireSim=(row.HireDate&&cand.HireDate&&row.HireDate===cand.HireDate)?1:0;
+    score+=hireSim*(w.hireDate/total)*100;
+    return Math.round(score);
+  },
+  find(master,row,idx){
+    const{g,o,e}=idx;
+    // T1
+    if(row._normGID&&g[row._normGID]!==undefined)
+      return{rec:master[g[row._normGID]],tier:1,conf:100,matchedOn:'GlobalID (T1)'};
+    // T2
+    if(row._normOID&&o[row._normOID]!==undefined)
+      return{rec:master[o[row._normOID]],tier:2,conf:99,matchedOn:'OldID (T2)'};
+    // T3
+    if(row.Email&&e[row.Email]!==undefined)
+      return{rec:master[e[row.Email]],tier:3,conf:98,matchedOn:'Email (T3)'};
+    // T4: Exact name
+    if(row.FullName){
+      const nf=N.nameStrip(row.FullName);
+      for(const m of master){
+        if(m.FullName&&N.nameStrip(m.FullName)===nf)
+          return{rec:m,tier:4,conf:95,matchedOn:'FullName Exact (T4)'};
+      }
+    }
+    // T5: Weighted multi-field
+    if(row._nameTokens.length>=2){
+      let best=null,bestConf=0;
+      for(const cand of master){
+        if(cand._nameTokens.length<2)continue;
+        const nameSim=M.tokSim(row._nameTokens,cand._nameTokens);
+        if(nameSim<0.6)continue; // pre-filter
+        const conf=M.weightedConf(row,cand);
+        if(conf>bestConf&&conf>=CFG.t5min){bestConf=conf;best=cand;}
+      }
+      if(best)return{rec:best,tier:5,conf:bestConf,matchedOn:`Weighted 6-field (T5 ${bestConf}%)`};
+    }
+    return null;
+  },
+  // AI Candidates: top 5 possible matches for unmatched rows
+  getCandidates(master,row){
+    if(!row._nameTokens.length)return[];
+    return master.map(cand=>{
+      const nameSim=M.tokSim(row._nameTokens,cand._nameTokens);
+      if(nameSim<0.4)return null;
+      const conf=M.weightedConf(row,cand);
+      if(conf<40)return null;
+      const matchFields=[];
+      if(nameSim>0.7)matchFields.push('Name');
+      if(row.HireDate&&cand.HireDate&&row.HireDate===cand.HireDate)matchFields.push('HireDate');
+      if(row.Program&&cand.Program&&M.lobSim(row.Program,cand.Program)>0.8)matchFields.push('Program');
+      if(row.LOB&&cand.LOB&&M.lobSim(row.LOB,cand.LOB)>0.8)matchFields.push('LOB');
+      if(row.Site&&cand.Site&&N.norm(row.Site)===N.norm(cand.Site))matchFields.push('Site');
+      const diffs=[];
+      if(nameSim<1&&nameSim>0.4)diffs.push(`Name ~${Math.round(nameSim*100)}%`);
+      if(row.Program&&cand.Program&&M.lobSim(row.Program,cand.Program)<0.9)diffs.push(`Program differs`);
+      if(row.Status&&cand.Status&&N.norm(row.Status)!==N.norm(cand.Status))diffs.push(`Status: ${row.Status}vs${cand.Status}`);
+      return{cand,conf,matchFields:matchFields.join('+'),diffs:diffs.join(', ')};
+    }).filter(Boolean).sort((a,b)=>b.conf-a.conf).slice(0,5);
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: ROOT CAUSE ENGINE
+// ──────────────────────────────────────────────────────────────────
+const RCA = {
+  analyze(discrepancies, master){
+    const results=[];
+    discrepancies.forEach(d=>{
+      const emp=master.find(r=>r.GlobalEmployeeID===d.GlobalEmployeeID||r.OldEmployeeID===d.OldEmployeeID)||{};
+      let cause='Unknown', conf=60, action='Review manually', causeConf='Medium';
+      const v1=d.WFM_Value||'', v2=d.Ops_LOB_Value||'';
+      if(d.Field==='LOB'||d.Field==='Program'){
+        if(v1.toLowerCase().includes(v2.toLowerCase().slice(0,5))||v2.toLowerCase().includes(v1.toLowerCase().slice(0,5))){
+          cause='Program/LOB renaming or migration'; conf=85; action='Sync LOB name to WFM standard'; causeConf='High';
+        }else if(emp.Status==='Transferred'||emp.Status==='Inactive'){
+          cause='Employee transferred to different program'; conf=80; action='Verify transfer date and update Ops record'; causeConf='High';
+        }else{
+          cause='Data entry discrepancy or outdated workbook'; conf=70; action='Validate source workbook date and re-export'; causeConf='Medium';
+        }
+      } else if(d.Field==='Status'){
+        if(v1==='Active'&&(v2==='Inactive'||v2==='Separated')){
+          cause='Employee separation not updated in WFM'; conf=88; action='Update WFM status to match Ops — verify with HR'; causeConf='High';
+        } else if(v1==='Inactive'&&v2==='Active'){
+          cause='Employee re-hired or re-activated — WFM not yet updated'; conf=82; action='Confirm re-hire date and update WFM'; causeConf='High';
+        } else {
+          cause='Status sync lag between systems'; conf=72; action='Cross-reference with HRIS master record'; causeConf='Medium';
+        }
+      } else if(d.Field==='Site'){
+        cause='Site transfer or remote work arrangement not synchronized'; conf=75; action='Confirm current site assignment with manager'; causeConf='Medium';
+      } else if(d.Field==='WorkSetup'){
+        cause='Work setup policy change not propagated to all sources'; conf=78; action='Update all sources to reflect current arrangement'; causeConf='Medium';
+      } else if(d.Field==='Manager'){
+        cause='Manager change or org restructuring not synced'; conf=80; action='Verify current reporting line and update Ops'; causeConf='High';
+      } else if(d.Field==='HireDate'){
+        cause='Data entry error or different date definition (offer vs start)'; conf=70; action='Verify against HRIS official hire date'; causeConf='Medium';
+      }
+      results.push({
+        GlobalEmployeeID:d.GlobalEmployeeID, FullName:d.FullName,
+        Field:d.Field, WFM_Value:v1, Ops_LOB_Value:v2,
+        ProbableCause:cause, CauseConfidence:causeConf,
+        RecommendedAction:action, Priority:conf>=85?'High':conf>=70?'Medium':'Low'
+      });
+    });
+    return results;
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: VALIDATION ENGINE
+// ──────────────────────────────────────────────────────────────────
+const V = {
+  compareFields:['Program','LOB','Subprocess','Manager','ShiftManager','TeamLeader','Site','WorkSetup','Status','Wave','HireDate'],
+  eq(a,b,field){
+    if(!a&&!b)return true; if(!a||!b)return false;
+    if(['Program','LOB','Subprocess'].includes(field))return M.lobSim(a,b)>=0.9;
+    if(field.includes('Date'))return N.date(a)===N.date(b);
+    return N.norm(a)===N.norm(b);
+  },
+  runBusinessRules(r){
+    const violations=[];
+    CFG.businessRules.forEach(rule=>{
+      try{
+        let match=true;
+        for(const[k,v] of Object.entries(rule.if||{})){
+          if(N.norm(r[k])!==N.norm(v)){match=false;break;}
+        }
+        if(!match)return;
+        for(const[k,v] of Object.entries(rule.then||{})){
+          if(k.endsWith('_not')){ const fld=k.replace('_not',''); if(N.norm(r[fld])===N.norm(v))violations.push({rule:rule.msg,field:fld,value:r[fld]}); }
+          else if(k.endsWith('_must_contain')){ const fld=k.replace('_must_contain',''); if(r[fld]&&!r[fld].toUpperCase().includes(v.toUpperCase()))violations.push({rule:rule.msg,field:fld,value:r[fld]}); }
+          else if(N.norm(r[k])!==N.norm(v))violations.push({rule:rule.msg,field:k,value:r[k]});
+        }
+      }catch(e){}
+    });
+    return violations;
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: DUPLICATE ENGINE (smart)
+// ──────────────────────────────────────────────────────────────────
+const DUP = {
+  detect(master){
+    const dups=[];
+    const gidMap={},oidMap={},emailMap={},nameMap={};
+    master.forEach(r=>{
+      if(r.GlobalEmployeeID)(gidMap[r.GlobalEmployeeID]=gidMap[r.GlobalEmployeeID]||[]).push(r);
+      if(r.OldEmployeeID)(oidMap[r.OldEmployeeID]=oidMap[r.OldEmployeeID]||[]).push(r);
+      if(r.Email)(emailMap[r.Email]=emailMap[r.Email]||[]).push(r);
+      if(r.FullName)(nameMap[r.FullName.toLowerCase()]=nameMap[r.FullName.toLowerCase()]||[]).push(r);
+    });
+    Object.entries(gidMap).forEach(([id,recs])=>{
+      if(recs.length>1)dups.push({DupType:'GlobalID Collision',Severity:'Critical',Value:id,Count:recs.length,Names:recs.map(x=>x.FullName||'—').join(' / '),Sources:recs.map(x=>x._sources?.join('+')||'?').join(' | '),Description:'Same Global ID assigned to multiple records'});
+    });
+    Object.entries(oidMap).forEach(([id,recs])=>{
+      if(recs.length>1&&!recs.every(r=>r.GlobalEmployeeID&&recs[0].GlobalEmployeeID===r.GlobalEmployeeID))
+        dups.push({DupType:'OldID Collision',Severity:'High',Value:id,Count:recs.length,Names:recs.map(x=>x.FullName||'—').join(' / '),Sources:recs.map(x=>x._sources?.join('+')||'?').join(' | '),Description:'Same Old ID with different Global IDs'});
+    });
+    Object.entries(emailMap).forEach(([email,recs])=>{
+      if(recs.length>1&&!recs.every(r=>r.GlobalEmployeeID&&recs[0].GlobalEmployeeID===r.GlobalEmployeeID))
+        dups.push({DupType:'Email Collision',Severity:'High',Value:email,Count:recs.length,Names:recs.map(x=>x.FullName||'—').join(' / '),Sources:recs.map(x=>x._sources?.join('+')||'?').join(' | '),Description:'Same email used by multiple employee IDs'});
+    });
+    // Multiple active records: same name, different ID
+    Object.entries(nameMap).forEach(([name,recs])=>{
+      const activeRecs=recs.filter(r=>r.Status==='Active');
+      if(activeRecs.length>1&&new Set(activeRecs.map(r=>r.GlobalEmployeeID).filter(Boolean)).size>1)
+        dups.push({DupType:'Multiple Active Records',Severity:'Medium',Value:name,Count:activeRecs.length,Names:name,Sources:activeRecs.map(x=>x._sources?.join('+')||'?').join(' | '),Description:'Same name has multiple active records with different IDs'});
+    });
+    return dups;
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: QUALITY SCORING ENGINE
+// ──────────────────────────────────────────────────────────────────
+const QE = {
+  score(master,reports){
+    const t=master.length||1;
+    const matched=master.filter(r=>r.SourceCount>1).length;
+    const noGID=master.filter(r=>!r.GlobalEmployeeID).length;
+    const noName=master.filter(r=>!r.FullName).length;
+    const noStatus=master.filter(r=>!r.Status).length;
+    const scores={
+      matchAccuracy: Math.round(matched/t*100),
+      idCoverage: Math.round((1-noGID/t)*100),
+      nameCoverage: Math.round((1-noName/t)*100),
+      completeness: Math.round((1-(reports.missingFields||[]).length/t)*100),
+      duplicateRate: Math.max(0,100-Math.round((reports.dups||[]).length/t*200)),
+      hierarchyScore: Math.max(0,100-Math.round((reports.hierIssues||[]).length/t*300)),
+      statusConsistency: Math.max(0,100-Math.round((reports.statusIssues||[]).length/t*200)),
+      lobAccuracy: Math.max(0,100-Math.round((reports.lobIssues||[]).length/t*200))
+    };
+    const weights={matchAccuracy:20,idCoverage:15,nameCoverage:10,completeness:15,duplicateRate:10,hierarchyScore:10,statusConsistency:10,lobAccuracy:10};
+    let overall=0;
+    Object.entries(weights).forEach(([k,w])=>{ overall+=((scores[k]||0)*w/100); });
+    scores.overall=Math.round(overall);
+    scores.grade=scores.overall>=95?'A+':scores.overall>=90?'A':scores.overall>=85?'B+':scores.overall>=80?'B':scores.overall>=75?'C+':scores.overall>=70?'C':scores.overall>=60?'D':'F';
+    scores.gradeColor=scores.overall>=85?'var(--success)':scores.overall>=70?'var(--warning)':'var(--danger)';
+    return scores;
+  },
+  recommendations(scores,reports,master){
+    const recs=[];
+    const t=master.length||1;
+    const noGID=master.filter(r=>!r.GlobalEmployeeID).length;
+    if(noGID>0)recs.push({severity:'crit',title:`${noGID} records missing Global ID`,desc:'Global Employee ID is the primary unique identifier. Missing IDs prevent reliable cross-source matching.',action:'Populate GlobalEmployeeID from HR Master file',impact:`+${Math.round(noGID/t*15)}% match accuracy`});
+    const wfmOnly=master.filter(r=>r.Found_WFM&&!r.Found_Ops&&r.SourceCount===1).length;
+    if(wfmOnly>0)recs.push({severity:'high',title:`${wfmOnly} WFM employees not found in Ops`,desc:'These employees exist in WFM but have no corresponding Ops record. May indicate stale data or onboarding gaps.',action:'Request Ops team to validate and add missing records',impact:'+Match rate improvement'});
+    const hierCount=(reports.hierIssues||[]).length;
+    if(hierCount>0)recs.push({severity:'high',title:`${hierCount} hierarchy inconsistencies detected`,desc:'Manager/TL assignments differ between sources. May cause incorrect reporting chains.',action:'Align manager assignments in all source workbooks',impact:'Hierarchy accuracy improvement'});
+    const lobCount=(reports.lobIssues||[]).length;
+    if(lobCount>0)recs.push({severity:'med',title:`${lobCount} LOB/Program naming conflicts`,desc:'Same employees assigned to differently-named programs across sources. Standardize naming conventions.',action:'Enforce WFM LOB/Program naming as the standard',impact:'LOB accuracy improvement'});
+    const t5=((reports.matchLog)||[]).filter(x=>x.MatchTier==='T5').length;
+    if(t5>0)recs.push({severity:'med',title:`${t5} fuzzy-matched records need review`,desc:'These records were matched using weighted multi-field scoring. Manual validation recommended.',action:'Review T5 matches in Match Confidence Log and accept/reject',impact:'Data integrity improvement'});
+    return recs;
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: EXCEPTION ENGINE
+// ──────────────────────────────────────────────────────────────────
+const EXC = {
+  build(reports){
+    const exceptions=[];
+    let id=1;
+    (reports.dups||[]).forEach(d=>{ if(d.Severity==='Critical'||d.Severity==='High') exceptions.push({id:id++,type:'Duplicate',severity:d.Severity,description:d.Description,value:d.Value,affectedEmployees:d.Names,source:d.Sources,status:'Open',owner:'',date:new Date().toISOString().split('T')[0],comments:''}); });
+    (reports.missing||[]).filter(m=>m._severity==='High').forEach(m=>{ exceptions.push({id:id++,type:'Missing Employee',severity:'High',description:`Employee in Ops but not found in WFM`,value:m.FullName||m.GlobalEmployeeID||'—',affectedEmployees:m.FullName||'—',source:m._present_in,status:'Open',owner:'',date:new Date().toISOString().split('T')[0],comments:''}); });
+    (reports.hierIssues||[]).filter(h=>h.Issue==='Multiple managers across sources').forEach(h=>{ exceptions.push({id:id++,type:'Hierarchy',severity:'Medium',description:h.Issue,value:h.TeamLeader,affectedEmployees:h.TeamLeader,source:'Multiple',status:'Open',owner:'',date:new Date().toISOString().split('T')[0],comments:''}); });
+    return exceptions;
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: IMPORT ENGINE
+// ──────────────────────────────────────────────────────────────────
+function readWB(file){
+  return new Promise((res,rej)=>{
+    const rd=new FileReader();
+    rd.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'binary',cellDates:false});
+        const sheets=[];
+        wb.SheetNames.forEach(nm=>{
+          const ws=wb.Sheets[nm];
+          const raw=XLSX.utils.sheet_to_json(ws,{defval:null,raw:true,blankrows:false});
+          if(!raw.length)return;
+          const mapped=raw.map(row=>{
+            const out={};
+            for(const[col,val] of Object.entries(row)){
+              if(String(col).startsWith('__EMPTY'))continue;
+              const std=mapCol(String(col));
+              if(out[std]==null)out[std]=val;
+              else if(val!=null&&val!=='')out[std]=val;
+            }
+            return out;
+          }).filter(r=>Object.values(r).some(v=>v!=null&&v!==''));
+          sheets.push({sheetName:nm,rows:mapped});
+        });
+        res({fileName:file.name,sheets});
+      }catch(err){rej(err);}
+    };
+    rd.onerror=rej;
+    rd.readAsBinaryString(file);
+  });
+}
+function flatWB(wb){const r=[];wb.sheets.forEach(s=>r.push(...s.rows));return r;}
+function dedupSrc(rows,src,logFn){
+  const seen={g:{},o:{},n:{}};const out=[];let dropped=0;
+  rows.forEach(r=>{
+    let k=null,kt=null;
+    if(r._normGID){k=r._normGID;kt='g';}
+    else if(r._normOID){k=r._normOID;kt='o';}
+    else if(r.FullName){k=N.nameStrip(r.FullName);kt='n';}
+    if(k&&kt){if(seen[kt][k]!==undefined){dropped++;return;}seen[kt][k]=true;}
+    out.push(r);
+  });
+  if(dropped>0)logFn(`  ${src}: removed ${dropped} internal duplicates`,'dbg');
+  return out;
+}
+
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: MAIN PIPELINE
+// ──────────────────────────────────────────────────────────────────
+async function processAll(){
+  loadSettings();
+  const btn=document.getElementById('btn-proc');
+  btn.disabled=true;
+  document.getElementById('prog-wrap').style.display='block';
+  document.getElementById('log-box').style.display='block';
+  document.getElementById('log-body').innerHTML='';
+  const matchLog=[], candidateLog=[];
+
+  function log(msg,cls){ const d=document.createElement('div'); d.className='ll '+(cls||'info'); d.textContent=msg; document.getElementById('log-body').appendChild(d); document.getElementById('log-body').scrollTop=9999; }
+  function prog(pct,lbl){ document.getElementById('prog-fill').style.width=pct+'%'; document.getElementById('prog-lbl').textContent=lbl; }
+
+  addAudit('Processing started',`Files: WFM=${S.files.wfm.length} Ops=${S.files.ops.length} LOB=${S.files.lob.length}`,'info');
+  log('Enterprise Governance Platform v3 — starting pipeline...','info');
+  await sleep(30);
+
+  async function readSrc(files,src){
+    const rows=[];
+    for(const f of files){
+      try{ const wb=await readWB(f); flatWB(wb).forEach(r=>rows.push(N.row(r,src))); log(`Loaded ${src}: ${f.name} → ${rows.length} rows total`,'ok'); }
+      catch(e){log(`Error: ${f.name}: ${e.message}`,'err');}
+    }
+    return rows;
+  }
+
+  prog(5,'Reading WFM...');
+  let wfmRaw=await readSrc(S.files.wfm,'WFM');
+  prog(15,'Reading Ops...');
+  let opsRaw=await readSrc(S.files.ops,'Ops');
+  prog(20,'Reading LOB files...');
+  const lobRaw={};
+  S.lobNames=[];
+  for(const f of S.files.lob){
+    const key=f.name.replace(/\.(xlsx|xls|csv)$/i,'').replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
+    lobRaw[key]=[];
+    try{ const wb=await readWB(f); flatWB(wb).forEach(r=>lobRaw[key].push(N.row(r,key))); S.lobNames.push(key); log(`Loaded LOB: ${f.name} → ${lobRaw[key].length} rows`,'ok'); }
+    catch(e){log(`Error: ${f.name}: ${e.message}`,'err');}
+  }
+  await sleep(30);
+
+  prog(25,'Deduplicating sources...');
+  wfmRaw=dedupSrc(wfmRaw,'WFM',log);
+  opsRaw=dedupSrc(opsRaw,'Ops',log);
+  S.lobNames.forEach(k=>{lobRaw[k]=dedupSrc(lobRaw[k],k,log);});
+  log(`Post-dedup: WFM=${wfmRaw.length} Ops=${opsRaw.length} LOBs=${S.lobNames.reduce((a,k)=>a+lobRaw[k].length,0)}`,'info');
+
+  prog(30,'Building master from WFM (authoritative)...');
+  const master=[];
+  wfmRaw.forEach(r=>{
+    const rec={...r,_sources:['WFM'],_discrepancies:[],_matchLog:[],_bRuleViolations:[],Found_WFM:true,Found_Ops:false};
+    S.lobNames.forEach(k=>{rec['Found_'+k]=false;});
+    master.push(rec);
+    matchLog.push({FullName:r.FullName,GlobalEmployeeID:r.GlobalEmployeeID,OldEmployeeID:r.OldEmployeeID,Source:'WFM',MatchTier:'—',Confidence:'100',ConfidenceLabel:'Source',MatchedOn:'Primary Source'});
+  });
+  let idx=M.buildIdx(master);
+  await sleep(30);
+
+  prog(40,'Cross-matching Ops (6-tier engine)...');
+  let opsM=0,opsN=0;
+  for(const row of opsRaw){
+    const res=M.find(master,row,idx);
+    if(res){
+      const{rec,tier,conf,matchedOn}=res;
+      rec.Found_Ops=true;
+      if(!rec._sources.includes('Ops'))rec._sources.push('Ops');
+      V.compareFields.forEach(f=>{ if(rec[f]&&row[f]&&!V.eq(rec[f],row[f],f)) rec._discrepancies.push({field:f,wfmVal:rec[f],opsVal:row[f],lobVal:null,from:'Ops'}); });
+      V.compareFields.concat(['Email','ShiftManager','ProductionStatus']).forEach(f=>{if(!rec[f]&&row[f])rec[f]=row[f];});
+      if(!rec.GlobalEmployeeID&&row.GlobalEmployeeID){rec.GlobalEmployeeID=row.GlobalEmployeeID;rec._normGID=row._normGID;}
+      if(!rec.OldEmployeeID&&row.OldEmployeeID){rec.OldEmployeeID=row.OldEmployeeID;rec._normOID=row._normOID;}
+      rec._matchLog.push({src:'Ops',tier,conf,matchedOn});
+      matchLog.push({FullName:row.FullName,GlobalEmployeeID:row.GlobalEmployeeID||rec.GlobalEmployeeID,OldEmployeeID:row.OldEmployeeID||rec.OldEmployeeID,Source:'Ops',MatchTier:'T'+tier,Confidence:String(conf),ConfidenceLabel:conf>=90?'High':conf>=75?'Medium':'Low',MatchedOn:matchedOn});
+      opsM++;
+    }else{
+      // Check AI candidates
+      const cands=M.getCandidates(master,row);
+      if(cands.length){
+        candidateLog.push({unmatched:row,candidates:cands});
+        matchLog.push({FullName:row.FullName,GlobalEmployeeID:row.GlobalEmployeeID,OldEmployeeID:row.OldEmployeeID,Source:'Ops',MatchTier:'T6',Confidence:'AI',ConfidenceLabel:'AI-Candidate',MatchedOn:`${cands.length} candidates (top: ${cands[0].conf}%)`});
+      }else{
+        matchLog.push({FullName:row.FullName,GlobalEmployeeID:row.GlobalEmployeeID,OldEmployeeID:row.OldEmployeeID,Source:'Ops',MatchTier:'NEW',Confidence:'—',ConfidenceLabel:'—',MatchedOn:'No match found'});
+      }
+      const rec={...row,_sources:['Ops'],_discrepancies:[],_matchLog:[],_bRuleViolations:[],Found_WFM:false,Found_Ops:true};
+      S.lobNames.forEach(k=>{rec['Found_'+k]=false;});
+      master.push(rec);
+      opsN++;
+    }
+  }
+  idx=M.buildIdx(master);
+  log(`Ops: ${opsM} matched, ${opsN} new, ${candidateLog.filter(c=>c.unmatched._source==='Ops').length} AI candidates`,'ok');
+  await sleep(20);
+
+  prog(55,'Cross-matching LOB files...');
+  for(const lobKey of S.lobNames){
+    let lm=0,ln=0;
+    for(const row of lobRaw[lobKey]){
+      const res=M.find(master,row,idx);
+      if(res){
+        const{rec,tier,conf,matchedOn}=res;
+        rec['Found_'+lobKey]=true;
+        if(!rec._sources.includes(lobKey))rec._sources.push(lobKey);
+        V.compareFields.forEach(f=>{ if(rec[f]&&row[f]&&!V.eq(rec[f],row[f],f)){ const already=rec._discrepancies.find(d=>d.field===f&&d.from===lobKey); if(!already)rec._discrepancies.push({field:f,wfmVal:rec[f],opsVal:null,lobVal:row[f],from:lobKey}); } });
+        ['Email','ShiftManager','LiveDate','Wave','CountingStatus','ProductionStatus'].forEach(f=>{if(!rec[f]&&row[f])rec[f]=row[f];});
+        if(!rec.GlobalEmployeeID&&row.GlobalEmployeeID){rec.GlobalEmployeeID=row.GlobalEmployeeID;rec._normGID=row._normGID;}
+        rec._matchLog.push({src:lobKey,tier,conf,matchedOn});
+        matchLog.push({FullName:row.FullName,GlobalEmployeeID:row.GlobalEmployeeID||rec.GlobalEmployeeID,OldEmployeeID:row.OldEmployeeID||rec.OldEmployeeID,Source:lobKey,MatchTier:'T'+tier,Confidence:String(conf),ConfidenceLabel:conf>=90?'High':conf>=75?'Medium':'Low',MatchedOn:matchedOn});
+        lm++;
+      }else{
+        const cands=M.getCandidates(master,row);
+        if(cands.length) candidateLog.push({unmatched:row,candidates:cands});
+        const rec={...row,_sources:[lobKey],_discrepancies:[],_matchLog:[],_bRuleViolations:[],Found_WFM:false,Found_Ops:false};
+        S.lobNames.forEach(k=>{rec['Found_'+k]=k===lobKey;});
+        master.push(rec);
+        ln++;
+      }
+    }
+    idx=M.buildIdx(master);
+    log(`${lobKey}: ${lm} matched, ${ln} LOB-only`,'ok');
+    await sleep(10);
+  }
+
+  prog(65,'Running business rules...');
+  master.forEach(r=>{
+    r._bRuleViolations=V.runBusinessRules(r);
+    r._id=r._id||(master.indexOf(r)+1);
+    r.SourceCount=r._sources.length;
+    const tiers=r._matchLog.map(m=>m.tier);
+    r.MatchTier=tiers.length?'T'+Math.min(...tiers):'Source';
+    r.MatchConfidence=r._matchLog.length?Math.min(...r._matchLog.map(m=>m.conf)):100;
+    r.ConfidenceLabel=r.MatchConfidence>=90?'High':r.MatchConfidence>=75?'Medium':r.MatchConfidence>=CFG.t5min?'Low':'—';
+    if(!r.FullName&&(r.FirstName||r.LastName))r.FullName=([r.FirstName,r.LastName]).filter(Boolean).join(' ');
+    S.lobNames.forEach(k=>{if(r['Found_'+k]===undefined)r['Found_'+k]=false;});
+  });
+  S.master=master;
+  log(`Master: ${master.length} employees | ${master.filter(r=>r._bRuleViolations.length).length} business rule violations`,'ok');
+  await sleep(20);
+
+  prog(70,'Generating reports...');
+  // Missing
+  const missing=[],seenM=new Set();
+  master.forEach(r=>{
+    if(r.Found_WFM&&!r.Found_Ops){ const k='WO_'+(r.GlobalEmployeeID||r.OldEmployeeID||r.FullName); if(!seenM.has(k)){seenM.add(k);missing.push({...r,_missing_from:'Ops',_present_in:'WFM',_severity:'Medium'});} }
+    if(!r.Found_WFM&&r.Found_Ops){ const k='OW_'+(r.GlobalEmployeeID||r.OldEmployeeID||r.FullName); if(!seenM.has(k)){seenM.add(k);missing.push({...r,_missing_from:'WFM',_present_in:'Ops',_severity:'High'});} }
+    S.lobNames.forEach(k=>{ if(r['Found_'+k]&&!r.Found_WFM&&!r.Found_Ops){ const uk='LO_'+k+'_'+(r.GlobalEmployeeID||r.FullName); if(!seenM.has(uk)){seenM.add(uk);missing.push({...r,_missing_from:'WFM & Ops',_present_in:k,_severity:'Low (LOB-only)'}); } }});
+  });
+  // Discrepancies
+  const discrepancies=[];
+  master.forEach(r=>{ (r._discrepancies||[]).forEach(d=>{ discrepancies.push({GlobalEmployeeID:r.GlobalEmployeeID||'—',OldEmployeeID:r.OldEmployeeID||'—',FullName:r.FullName||'—',Field:d.field,WFM_Value:d.wfmVal||'—',Ops_LOB_Value:(d.opsVal||d.lobVal)||'—',ConflictSource:d.from,MatchTier:r.MatchTier,MatchConfidence:r.MatchConfidence}); }); });
+  const lobIssues=discrepancies.filter(d=>['Program','LOB','Subprocess'].includes(d.Field));
+  const statusIssues=discrepancies.filter(d=>d.Field==='Status');
+  const locIssues=discrepancies.filter(d=>['Site','WorkSetup'].includes(d.Field));
+  // Hierarchy
+  const hierIssues=[],tlMap={};
+  master.forEach(r=>{ if(!r.TeamLeader)return; const tl=N.nameStrip(r.TeamLeader); if(!tlMap[tl])tlMap[tl]={tl:r.TeamLeader,managers:new Set(),reports:0}; if(r.Manager)tlMap[tl].managers.add(N.nameStrip(r.Manager)); tlMap[tl].reports++; });
+  Object.values(tlMap).forEach(t=>{ if(t.managers.size>1)hierIssues.push({TeamLeader:t.tl,Issue:'Multiple managers across sources',Values:[...t.managers].join(' / '),Headcount:t.reports}); if(t.reports>CFG.maxTLHeadcount)hierIssues.push({TeamLeader:t.tl,Issue:`TL headcount exceeds limit (${t.reports}>${CFG.maxTLHeadcount})`,Values:String(t.reports),Headcount:t.reports}); });
+  master.forEach(r=>{ if(!r.TeamLeader&&r.Found_WFM)hierIssues.push({TeamLeader:'—',GlobalEmployeeID:r.GlobalEmployeeID,FullName:r.FullName,Issue:'No Team Lead assigned',Values:'—',Headcount:1}); });
+  // Missing fields
+  const missingFields=[];
+  master.forEach(r=>{ const mf=CFG.requiredFields.filter(f=>!r[f]); if(mf.length)missingFields.push({GlobalEmployeeID:r.GlobalEmployeeID||'—',OldEmployeeID:r.OldEmployeeID||'—',FullName:r.FullName||'—',MissingFields:mf.join(', '),MissingCount:mf.length,Sources:r._sources.join(', ')}); });
+  // B-Rule violations
+  const bRuleRows=[];
+  master.forEach(r=>{ (r._bRuleViolations||[]).forEach(v=>bRuleRows.push({GlobalEmployeeID:r.GlobalEmployeeID||'—',FullName:r.FullName||'—',Rule:v.rule,Field:v.field,Value:v.value||'—'})); });
+  const rcaResults=RCA.analyze(discrepancies,master);
+  const dups=DUP.detect(master);
+  S.reports={missing,discrepancies,lobIssues,statusIssues,locIssues,hierIssues,missingFields,matchLog,bRuleRows,rcaResults,dups,candidateLog};
+  S.reports.qualityScores=QE.score(master,S.reports);
+  S.reports.recommendations=QE.recommendations(S.reports.qualityScores,S.reports,master);
+  S.exceptions=EXC.build(S.reports);
+  prog(80,'Rendering reports...');
+  await sleep(20);
+  renderAll();
+  prog(95,'Updating audit log...');
+  updateBadges();
+  addAudit('Reconciliation complete',`${master.length} employees | ${discrepancies.length} conflicts | QS: ${S.reports.qualityScores.overall}% (${S.reports.qualityScores.grade})`,'ok');
+  pushNotif('Reconciliation complete',`${master.length} employees processed. Quality score: ${S.reports.qualityScores.overall}% (${S.reports.qualityScores.grade})`);
+  document.getElementById('hdr-stat').textContent=`${master.length} employees · QS ${S.reports.qualityScores.overall}% · ${new Date().toLocaleTimeString()}`;
+  document.getElementById('log-dot').style.animation='none';
+  document.getElementById('log-dot').style.background='#10B981';
+  prog(100,'Done');
+  log(`Complete. ${master.length} employees | Quality Score: ${S.reports.qualityScores.overall}% (${S.reports.qualityScores.grade}) | T5 fuzzy: ${matchLog.filter(x=>x.MatchTier==='T5').length} | AI candidates: ${candidateLog.length}`,'ok');
+  nav('r10');
+  btn.disabled=false;
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: RENDER ENGINE
+// ──────────────────────────────────────────────────────────────────
+function kpi(lbl,val,cls,det){cls=cls||'acc';return `<div class="kpi" onclick="kpiDrill('${lbl}')"><div class="kpi-lbl">${lbl}</div><div class="kpi-val ${cls}">${val}</div>${det?`<div class="kpi-det">${det}</div>`:''}</div>`;}
+function pct(n,d){return d===0?'0%':Math.round(n/d*100)+'%';}
+function srBar(lbl,n,tot,col){const p=tot>0?Math.round(n/tot*100):0;return `<div class="sr"><div class="sr-top"><span class="sr-lbl">${lbl}</span><span class="sr-val" style="color:${col||'var(--accent)'}">${p}%</span></div><div class="sr-bar"><div class="sr-fill" style="width:${p}%;background:${col||'var(--accent)'}"></div></div></div>`;}
+function srcBar(lbl,n,tot){const p=tot>0?Math.round(n/tot*100):0;return `<div class="sr"><div class="sr-top"><span class="sr-lbl">${lbl}</span><span class="sr-val" style="color:var(--accent)">${n} (${p}%)</span></div><div class="sr-bar"><div class="sr-fill" style="width:${p}%;background:var(--accent)"></div></div></div>`;}
+function confBdg(conf){if(conf>=90)return `<span class="bdg g">High ${conf}%</span>`;if(conf>=75)return `<span class="bdg y">Med ${conf}%</span>`;if(conf>=50)return `<span class="bdg r">Low ${conf}%</span>`;return `<span class="bdg n">${conf}%</span>`;}
+function sevBdg(s){if(!s)return'';if(s.includes('Critical'))return`<span class="bdg r">Critical</span>`;if(s.includes('High'))return`<span class="bdg r">High</span>`;if(s.includes('Medium'))return`<span class="bdg y">Med</span>`;return`<span class="bdg t">Low</span>`;}
+function tierBdg(t){if(t==='T1'||t==='T2'||t==='T3')return`<span class="bdg g">${t}</span>`;if(t==='T4')return`<span class="bdg b">${t}</span>`;if(t==='T5')return`<span class="bdg y">${t}</span>`;if(t==='T6')return`<span class="bdg p">T6-AI</span>`;if(t==='NEW')return`<span class="bdg r">NEW</span>`;return`<span class="bdg n">${t||'—'}</span>`;}
+function statusBdg(s){if(s==='Active')return`<span class="bdg g">Active</span>`;if(s==='Separated')return`<span class="bdg r">Separated</span>`;if(s==='Inactive')return`<span class="bdg y">Inactive</span>`;if(s==='Leave')return`<span class="bdg t">Leave</span>`;return s?`<span class="bdg n">${s}</span>`:'—';}
+
+function mkTable(id,cols,rows,opts){
+  opts=opts||{};
+  if(!rows||!rows.length)return'<div class="empty" style="padding:24px"><p>No records.</p></div>';
+  const tid='t'+Math.random().toString(36).slice(2);
+  let h=`<div class="tbl-wrap"><div class="tbl-bar"><span class="tbl-title">${rows.length} records</span>`;
+  h+=`<input class="srch" placeholder="Search…" oninput="ftbl('${tid}',this.value)"/>`;
+  if(opts.filterCol){const vals=[...new Set(rows.map(r=>r[opts.filterCol]).filter(Boolean))].sort();h+=`<select class="flt" onchange="fsel('${tid}','${opts.filterCol}',this.value)"><option value="">All ${opts.filterCol}</option>${vals.map(v=>`<option>${v}</option>`).join('')}</select>`;}
+  if(opts.exportFn)h+=`<button class="btn-exp" onclick="${opts.exportFn}()">Export</button>`;
+  h+=`<span class="tbl-cnt">${rows.length}</span></div><div class="tbl-scroll"><table class="dtbl" id="${tid}"><thead><tr>`;
+  cols.forEach(c=>h+=`<th>${Array.isArray(c)?c[0]:c}</th>`);
+  h+=`</tr></thead><tbody>`;
+  const display=rows.slice(0,1000);
+  display.forEach(r=>{
+    const click=opts.rowClick?`onclick="${opts.rowClick}('${r.GlobalEmployeeID||r.OldEmployeeID||''}')" class="clickable"`:'' ;
+    h+=`<tr ${click}>`;
+    cols.forEach(c=>{
+      const key=Array.isArray(c)?c[1]:c;
+      const v=r[key]!=null?String(r[key]):'—';
+      let cell=v;
+      if(key==='MatchTier')cell=tierBdg(v);
+      else if(key==='ConfidenceLabel'||key==='MatchConfidence'){const num=parseInt(v)||0;cell=num>0?confBdg(num):v;}
+      else if(key==='Status')cell=statusBdg(v);
+      else if(key==='Severity'||key==='_severity')cell=sevBdg(v);
+      else if(key==='Priority')cell=v==='High'?`<span class="bdg r">${v}</span>`:v==='Medium'?`<span class="bdg y">${v}</span>`:`<span class="bdg b">${v}</span>`;
+      else if(v.length>38)cell=`<span title="${v.replace(/"/g,"'")}">${v.slice(0,36)}…</span>`;
+      h+=`<td>${cell}</td>`;
+    });
+    h+='</tr>';
+  });
+  if(rows.length>1000)h+=`<tr><td colspan="${cols.length}" style="text-align:center;color:var(--text3);padding:8px;font-size:10px">Showing 1000/${rows.length} — export for full data</td></tr>`;
+  h+=`</tbody></table></div></div>`;
+  return h;
+}
+window.ftbl=function(id,q){const t=document.getElementById(id);if(!t)return;const lq=q.toLowerCase();[...t.querySelectorAll('tbody tr')].forEach(r=>{r.style.display=[...r.querySelectorAll('td')].some(td=>td.textContent.toLowerCase().includes(lq))?'':'none';});};
+window.fsel=function(id,col,val){const t=document.getElementById(id);if(!t)return;const ci=[...t.querySelectorAll('thead th')].findIndex(th=>th.textContent===col);if(ci<0)return;[...t.querySelectorAll('tbody tr')].forEach(r=>{const td=r.querySelectorAll('td')[ci];r.style.display=(!val||td&&td.textContent===val)?'':'none';});};
+
+function renderAll(){
+  const m=S.master, r=S.reports;
+  renderR1(); renderR2(); renderR3(); renderR4();
+  renderR5(); renderR6(); renderR7(); renderR8(); renderR9();
+  renderRCA(); renderR11(); renderCand();
+  renderR10(); renderExc(); renderAudit();
+}
+
+function renderR1(){
+  const m=S.master;
+  const cols=[['GlobalID','GlobalEmployeeID'],['OldID','OldEmployeeID'],'FullName','LOB','Program','Manager','TeamLeader','Site','WorkSetup',['Status','Status'],'HireDate',['#Src','SourceCount'],['Tier','MatchTier'],['Conf%','MatchConfidence']];
+  document.getElementById('c-r1').innerHTML=
+    `<div class="kpi-grid">${kpi('Total',m.length,'acc')}${kpi('In WFM',m.filter(x=>x.Found_WFM).length,'acc')}${kpi('In Ops',m.filter(x=>x.Found_Ops).length,'pur')}${kpi('Matched 2+',m.filter(x=>x.SourceCount>1).length,'suc',pct(m.filter(x=>x.SourceCount>1).length,m.length))}${kpi('WFM-Only',m.filter(x=>x.Found_WFM&&!x.Found_Ops&&x.SourceCount===1).length,'war')}${kpi('Ops-Only',m.filter(x=>!x.Found_WFM&&x.Found_Ops).length,'dan')}</div>`+
+    mkTable('r1',cols,m,{filterCol:'MatchTier',exportFn:'expMaster',rowClick:'open360'});
+}
+function renderR2(){
+  const rows=S.reports.missing;
+  const cols=[['FullName','FullName'],['GlobalID','GlobalEmployeeID'],['OldID','OldEmployeeID'],'Program','LOB',['Status','Status'],['Missing From','_missing_from'],['Present In','_present_in'],['Severity','_severity']];
+  const high=rows.filter(x=>x._severity==='High').length,med=rows.filter(x=>x._severity==='Medium').length;
+  document.getElementById('c-r2').innerHTML=
+    `<div class="alert warn"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0"><path d="M8 2L2 14h12L8 2z"/><path d="M8 7v3M8 12v.5"/></svg><span>High=in Ops not WFM (integrity risk). Medium=WFM not Ops. Low=LOB-only subsets (expected partial).</span></div>`+
+    `<div class="kpi-grid">${kpi('Total',rows.length,'dan')}${kpi('High (Ops→WFM)',high,'dan')}${kpi('Medium (WFM→Ops)',med,'war')}${kpi('Low (LOB-only)',rows.filter(x=>x._severity?.includes('Low')).length,'tea')}</div>`+
+    mkTable('r2',cols,rows,{filterCol:'_severity'});
+}
+function renderR3(){
+  const dups=S.reports.dups;
+  const cols=[['Type','DupType'],['Severity','Severity'],'Value','Count','Names','Sources','Description'];
+  document.getElementById('c-r3').innerHTML=
+    `<div class="kpi-grid">${kpi('Total Dup Groups',dups.length,dups.length>0?'dan':'suc')}${kpi('Critical',dups.filter(d=>d.Severity==='Critical').length,'dan')}${kpi('High',dups.filter(d=>d.Severity==='High').length,'war')}${kpi('Medium',dups.filter(d=>d.Severity==='Medium').length,'ora')}</div>`+
+    mkTable('r3',cols,dups,{filterCol:'Severity'});
+}
+function renderR4(){
+  const d=S.reports.discrepancies;
+  const cols=[['GlobalID','GlobalEmployeeID'],'FullName','Field',['WFM Value','WFM_Value'],['Ops/LOB Value','Ops_LOB_Value'],'ConflictSource',['Tier','MatchTier'],['Conf','MatchConfidence']];
+  const fields=[...new Set(d.map(x=>x.Field).filter(Boolean))].sort();
+  document.getElementById('c-r4').innerHTML=
+    `<div class="alert info"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0"><circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 11v.5"/></svg><span>Noise suppressed. LOB/Program ≥90% similarity ignored. Business rule violations tracked separately.</span></div>`+
+    `<div class="kpi-grid">${kpi('Total Conflicts',d.length,d.length>0?'dan':'suc')}${kpi('LOB/Program',S.reports.lobIssues.length,'war')}${kpi('Status',S.reports.statusIssues.length,'war')}${kpi('Location',S.reports.locIssues.length,'war')}${kpi('B-Rule Violations',S.reports.bRuleRows.length,'ora')}</div>`+
+    `<h2 class="sec">Field Discrepancies</h2>`+mkTable('r4',cols,d,{filterCol:'Field'})+
+    (S.reports.bRuleRows.length?`<h2 class="sec">Business Rule Violations</h2>`+mkTable('r4b',[['GlobalID','GlobalEmployeeID'],'FullName','Rule','Field','Value'],S.reports.bRuleRows,{}):'');
+}
+function renderR5(){
+  const h=S.reports.hierIssues;
+  document.getElementById('c-r5').innerHTML=
+    `<div class="kpi-grid">${kpi('Hierarchy Issues',h.length,h.length>0?'war':'suc')}</div>`+
+    mkTable('r5',[['TeamLeader','TeamLeader'],['GlobalID','GlobalEmployeeID'],'FullName','Issue','Values',['#Reports','Headcount']],h,{filterCol:'Issue'});
+}
+function renderR6(){document.getElementById('c-r6').innerHTML=`<div class="kpi-grid">${kpi('Location Conflicts',S.reports.locIssues.length,S.reports.locIssues.length>0?'war':'suc')}</div>`+mkTable('r6',[['GlobalID','GlobalEmployeeID'],'FullName','Field',['WFM','WFM_Value'],['Ops/LOB','Ops_LOB_Value'],'ConflictSource'],S.reports.locIssues,{});}
+function renderR7(){document.getElementById('c-r7').innerHTML=`<div class="kpi-grid">${kpi('Status Conflicts',S.reports.statusIssues.length,S.reports.statusIssues.length>0?'war':'suc')}</div>`+mkTable('r7',[['GlobalID','GlobalEmployeeID'],'FullName','Field',['WFM','WFM_Value'],['Ops/LOB','Ops_LOB_Value'],'ConflictSource'],S.reports.statusIssues,{});}
+function renderR8(){document.getElementById('c-r8').innerHTML=`<div class="kpi-grid">${kpi('LOB/Program Conflicts',S.reports.lobIssues.length,S.reports.lobIssues.length>0?'war':'suc')}</div>`+mkTable('r8',[['GlobalID','GlobalEmployeeID'],'FullName','Field',['WFM','WFM_Value'],['Ops/LOB','Ops_LOB_Value'],'ConflictSource'],S.reports.lobIssues,{});}
+function renderR9(){document.getElementById('c-r9').innerHTML=`<div class="kpi-grid">${kpi('Records w/ Missing Fields',S.reports.missingFields.length,S.reports.missingFields.length>0?'dan':'suc')}</div>`+mkTable('r9',[['GlobalID','GlobalEmployeeID'],['OldID','OldEmployeeID'],'FullName','MissingFields',['#Missing','MissingCount'],'Sources'],S.reports.missingFields,{});}
+function renderRCA(){
+  const rc=S.reports.rcaResults;
+  if(!rc||!rc.length){document.getElementById('c-rca').innerHTML='<div class="empty"><p>No discrepancies to analyze.</p></div>';return;}
+  const cols=[['GlobalID','GlobalEmployeeID'],'FullName','Field',['WFM','WFM_Value'],['Ops/LOB','Ops_LOB_Value'],'ProbableCause','CauseConfidence','RecommendedAction',['Priority','Priority']];
+  document.getElementById('c-rca').innerHTML=
+    `<div class="kpi-grid">${kpi('Analyzed',rc.length,'acc')}${kpi('High Priority',rc.filter(x=>x.Priority==='High').length,'dan')}${kpi('Medium Priority',rc.filter(x=>x.Priority==='Medium').length,'war')}${kpi('Low Priority',rc.filter(x=>x.Priority==='Low').length,'tea')}</div>`+
+    mkTable('rca',cols,rc,{filterCol:'Priority'});
+}
+function renderR11(){
+  const ml=S.reports.matchLog;
+  const tiers=[...new Set(ml.map(x=>x.MatchTier).filter(Boolean))].sort();
+  document.getElementById('c-r11').innerHTML=
+    `<div class="alert info"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0"><circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 11v.5"/></svg><span>T1-T3=ID/Email exact · T4=Name exact · T5=Weighted 6-field confidence · T6=AI candidate · NEW=unmatched. Review T5 and T6 rows for accuracy.</span></div>`+
+    `<div class="kpi-grid">${['T1','T2','T3','T4','T5','T6','NEW'].map(t=>kpi(t,ml.filter(x=>x.MatchTier===t).length,t==='T1'||t==='T2'||t==='T3'?'suc':t==='NEW'?'dan':t==='T5'||t==='T6'?'war':'acc')).join('')}</div>`+
+    mkTable('r11',['FullName',['GlobalID','GlobalEmployeeID'],['OldID','OldEmployeeID'],'Source',['Tier','MatchTier'],['Conf','Confidence'],'ConfidenceLabel','MatchedOn'],ml,{filterCol:'MatchTier'});
+}
+function renderCand(){
+  const cands=S.reports.candidateLog;
+  if(!cands||!cands.length){document.getElementById('c-cand').innerHTML='<div class="empty"><p>No AI candidate matches — all records matched via T1-T4.</p></div>';return;}
+  let h=`<div class="alert info"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0"><circle cx="8" cy="8" r="6"/><path d="M8 5v3M8 11v.5"/></svg><span>${cands.length} unmatched records have AI candidate suggestions. Accept correct matches to improve the master.</span></div>`;
+  h+=`<div class="kpi-grid">${kpi('Unmatched Records',cands.length,'dan')}${kpi('With Candidates',cands.filter(c=>c.candidates.length>0).length,'war')}</div>`;
+  cands.slice(0,50).forEach((item,idx)=>{
+    const u=item.unmatched;
+    h+=`<div class="rca-row"><div class="rca-hdr"><span class="bdg r">UNMATCHED</span><span class="rca-issue">${u.FullName||u.GlobalEmployeeID||'—'}</span><span style="font-size:10px;color:var(--text3);margin-left:auto">${u._source} · ${u.LOB||'—'}</span></div>`;
+    h+=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:6px;margin-top:8px">`;
+    item.candidates.forEach((c,ci)=>{
+      h+=`<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:8px">`;
+      h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">${confBdg(c.conf)}<span style="font-size:10px;color:var(--text3)">${c.matchFields}</span></div>`;
+      h+=`<div style="font-size:11px;font-weight:500;margin-bottom:2px">${c.cand.FullName||'—'}</div>`;
+      h+=`<div style="font-size:10px;color:var(--text3)">${c.cand.LOB||'—'} · ${c.cand.Site||'—'}</div>`;
+      if(c.diffs)h+=`<div style="font-size:10px;color:var(--warning);margin-top:3px">△ ${c.diffs}</div>`;
+      h+=`<div style="display:flex;gap:4px;margin-top:6px"><button class="btn-xs res" onclick="acceptCand(${idx},${ci})">Accept</button><button class="btn-xs ign" onclick="rejectCand(${idx},${ci})">Reject</button></div>`;
+      h+=`</div>`;
+    });
+    h+=`</div></div>`;
+  });
+  if(cands.length>50)h+=`<div style="text-align:center;color:var(--text3);font-size:11px;padding:12px">Showing 50 of ${cands.length} — export for full list</div>`;
+  document.getElementById('c-cand').innerHTML=h;
+}
+window.acceptCand=function(itemIdx,candIdx){
+  const item=S.reports.candidateLog[itemIdx];
+  const cand=item.candidates[candIdx];
+  // Merge unmatched into candidate master record
+  const rec=S.master.find(r=>r.FullName===cand.cand.FullName&&r.GlobalEmployeeID===cand.cand.GlobalEmployeeID);
+  if(rec){
+    rec._sources=[...new Set([...rec._sources,item.unmatched._source])];
+    if(!rec.Found_Ops&&item.unmatched._source==='Ops')rec.Found_Ops=true;
+    addAudit(`AI match accepted`,`${item.unmatched.FullName} → ${cand.cand.FullName} (${cand.conf}%)','info`);
+    showNotif('Match accepted',`${item.unmatched.FullName} merged into ${cand.cand.FullName}`);
+  }
+  item.candidates[candIdx].status='accepted';
+  renderCand();
+};
+window.rejectCand=function(i,ci){S.reports.candidateLog[i].candidates[ci].status='rejected';renderCand();};
+
+
+function renderR10(){
+  const m=S.master, r=S.reports, qs=r.qualityScores;
+  const t=m.length||1;
+  const wfmC=m.filter(x=>x.Found_WFM).length, opsC=m.filter(x=>x.Found_Ops).length;
+  const matched=m.filter(x=>x.SourceCount>1).length;
+  const noGID=m.filter(x=>!x.GlobalEmployeeID).length;
+
+  // Quality ring
+  const circumference=2*Math.PI*50;
+  const dash=circumference*(1-qs.overall/100);
+  const ringColor=qs.overall>=85?'#10B981':qs.overall>=70?'#F59E0B':'#EF4444';
+
+  let h=`<div class="kpi-grid">
+    ${kpi('Total Employees',t,'acc')}
+    ${kpi('In WFM',wfmC,'acc',pct(wfmC,t))}
+    ${kpi('In Ops',opsC,'pur',pct(opsC,t))}
+    ${kpi('LOB Files',S.lobNames.length,'tea','partial subsets')}
+    ${kpi('Matched 2+',matched,'suc',pct(matched,t)+' rate')}
+    ${kpi('Gaps (WFM↔Ops)',r.missing.filter(x=>!x._severity?.includes('Low')).length,'dan')}
+    ${kpi('Duplicates',r.dups.length,'war')}
+    ${kpi('Conflicts',r.discrepancies.length,'dan','real values')}
+    ${kpi('B-Rule Violations',r.bRuleRows.length,'ora')}
+    ${kpi('Hierarchy Issues',r.hierIssues.length,'war')}
+    ${kpi('No Global ID',noGID,'dan')}
+    ${kpi('AI Candidates',r.candidateLog.length,'pur','need review')}
+  </div>`;
+
+  // Quality Score Ring + Metrics
+  h+=`<div class="qs-wrap">
+    <div class="qs-ring">
+      <div class="qs-ring-wrap">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="var(--border)" stroke-width="8"/>
+          <circle cx="60" cy="60" r="50" fill="none" stroke="${ringColor}" stroke-width="8" stroke-dasharray="${circumference}" stroke-dashoffset="${dash}" stroke-linecap="round"/>
+        </svg>
+        <div class="qs-ring-label"><span class="qs-score" style="color:${ringColor}">${qs.overall}%</span><span class="qs-grade" style="color:${ringColor}">${qs.grade}</span></div>
+      </div>
+      <div style="font-size:10px;color:var(--text3);text-align:center;font-family:var(--mono)">DATA QUALITY SCORE</div>
+    </div>
+    <div class="qs-metrics">
+      <div class="ic-t">Category Scores</div>
+      ${srBar('Match Accuracy',qs.matchAccuracy,100)}
+      ${srBar('ID Coverage',qs.idCoverage,100)}
+      ${srBar('Name Coverage',qs.nameCoverage,100)}
+      ${srBar('Completeness',qs.completeness,100)}
+      ${srBar('Hierarchy',qs.hierarchyScore,100)}
+      ${srBar('Status Consistency',qs.statusConsistency,100)}
+      ${srBar('LOB Accuracy',qs.lobAccuracy,100)}
+      ${srBar('Duplicate Rate',qs.duplicateRate,100)}
+    </div>
+  </div>`;
+
+  // Charts row
+  h+=`<div class="chart-grid">
+    <div class="chart-card"><div class="chart-title">Employee Status Distribution</div><div class="chart-wrap"><canvas id="ch-status"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Work Setup Distribution</div><div class="chart-wrap"><canvas id="ch-setup"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Source Coverage</div><div class="chart-wrap"><canvas id="ch-src"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Match Tier Distribution</div><div class="chart-wrap"><canvas id="ch-tier"></canvas></div></div>
+  </div>`;
+
+  // Source breakdown
+  h+=`<h2 class="sec">Source Breakdown</h2><div class="ig">
+    <div class="ic"><div class="ic-t">Source Coverage</div>
+      ${srcBar('WFM',wfmC,t)}${srcBar('Ops',opsC,t)}
+      ${S.lobNames.map(k=>srcBar(k,m.filter(x=>x['Found_'+k]).length,t)).join('')}
+    </div>
+    <div class="ic"><div class="ic-t">Match Tier Distribution</div>
+      ${['T1','T2','T3','T4','T5','T6','NEW'].map(ti=>srcBar(`${ti} · ${{T1:'GlobalID',T2:'OldID',T3:'Email',T4:'Name-Exact',T5:'Weighted 6-field',T6:'AI Candidate',NEW:'Unmatched'}[ti]}`,r.matchLog.filter(x=>x.MatchTier===ti).length,r.matchLog.length)).join('')}
+    </div>
+  </div>`;
+
+  // Recommendations
+  h+=`<h2 class="sec">Actionable Recommendations</h2><div class="rec-list">`;
+  r.recommendations.forEach(rec=>{
+    h+=`<div class="rec-item"><div class="rec-icon ${rec.severity}"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L2 14h12L8 2z"/><path d="M8 7v3M8 12v.5"/></svg></div><div class="rec-body"><div class="rec-title">${rec.title}</div><div class="rec-desc">${rec.desc}</div><div class="rec-action">→ ${rec.action}</div>${rec.impact?`<div class="rec-imp">✦ ${rec.impact}</div>`:''}</div></div>`;
+  });
+  if(!r.recommendations.length)h+=`<div class="empty" style="padding:20px"><p>No critical recommendations — data quality is good.</p></div>`;
+  h+=`</div>`;
+
+  // Export
+  h+=`<h2 class="sec">Export</h2><div class="dl-bar">
+    <button class="btn-dl" onclick="exportXLSX()">Export Full Report (.xlsx 12 sheets)</button>
+    <button class="btn-dl" onclick="expCSV('master')">Master CSV</button>
+    <button class="btn-dl" onclick="expCSV('discrepancies')">Discrepancies CSV</button>
+    <button class="btn-dl" onclick="expCSV('missing')">Missing CSV</button>
+    <button class="btn-dl" onclick="expCSV('rca')">Root Cause CSV</button>
+    <button class="btn-dl" onclick="expCSV('matchlog')">Match Log CSV</button>
+  </div>`;
+
+  document.getElementById('c-r10').innerHTML=h;
+
+  // Render charts after DOM update
+  setTimeout(()=>{
+    renderCharts(m,r);
+  },100);
+}
+
+function renderCharts(m,r){
+  const COLORS=['#3B82F6','#10B981','#F59E0B','#EF4444','#8B5CF6','#06B6D4','#F97316','#EC4899'];
+  function mkChart(id,type,labels,data,colors){
+    const el=document.getElementById(id); if(!el)return;
+    if(S.charts[id])S.charts[id].destroy();
+    S.charts[id]=new Chart(el,{type,data:{labels,datasets:[{data,backgroundColor:colors||COLORS,borderColor:'transparent',borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#94A3B8',font:{size:10},boxWidth:10}}},scales:type==='bar'?{x:{ticks:{color:'#64748B',font:{size:9}},grid:{color:'#1E3050'}},y:{ticks:{color:'#64748B',font:{size:9}},grid:{color:'#1E3050'}}}:{}}});
+  }
+  // Status pie
+  const statusCounts={};m.forEach(r=>{const s=r.Status||'Unknown';statusCounts[s]=(statusCounts[s]||0)+1;});
+  mkChart('ch-status','doughnut',Object.keys(statusCounts),Object.values(statusCounts),['#10B981','#EF4444','#F59E0B','#06B6D4','#8B5CF6','#64748B']);
+  // WorkSetup pie
+  const wsCounts={};m.forEach(r=>{const s=r.WorkSetup||'Unknown';wsCounts[s]=(wsCounts[s]||0)+1;});
+  mkChart('ch-setup','doughnut',Object.keys(wsCounts),Object.values(wsCounts),['#3B82F6','#10B981','#F97316','#8B5CF6']);
+  // Source bar
+  const srcLabels=['WFM','Ops',...S.lobNames];
+  const srcData=[m.filter(x=>x.Found_WFM).length,m.filter(x=>x.Found_Ops).length,...S.lobNames.map(k=>m.filter(x=>x['Found_'+k]).length)];
+  mkChart('ch-src','bar',srcLabels,srcData,COLORS);
+  // Tier bar
+  const tierLabels=['T1','T2','T3','T4','T5','T6','NEW'];
+  const tierData=tierLabels.map(t=>r.matchLog.filter(x=>x.MatchTier===t).length);
+  mkChart('ch-tier','bar',tierLabels,tierData,['#10B981','#10B981','#10B981','#3B82F6','#F59E0B','#8B5CF6','#EF4444']);
+}
+
+function renderExc(){
+  const exc=S.exceptions;
+  if(!exc||!exc.length){document.getElementById('c-exc').innerHTML='<div class="empty"><p>No exceptions generated. Run reconciliation first.</p></div>';return;}
+  const open=exc.filter(e=>e.status==='Open').length;
+  let h=`<div class="kpi-grid">${kpi('Total',exc.length,'acc')}${kpi('Open',open,'dan')}${kpi('Resolved',exc.filter(e=>e.status==='Resolved').length,'suc')}${kpi('Ignored',exc.filter(e=>e.status==='Ignored').length,'tea')}</div>`;
+  h+=`<div class="tbl-wrap"><div class="tbl-bar"><span class="tbl-title">Exception Queue</span><input class="srch" placeholder="Search…" oninput="ftbl('exc-t',this.value)"/><button class="btn-exp" onclick="expCSV('exceptions')">Export</button></div><div class="tbl-scroll"><table class="dtbl" id="exc-t"><thead><tr><th>ID</th><th>Type</th><th>Severity</th><th>Description</th><th>Value</th><th>Status</th><th>Owner</th><th>Actions</th></tr></thead><tbody>`;
+  exc.forEach(e=>{
+    h+=`<tr><td>${e.id}</td><td>${e.type}</td><td>${sevBdg(e.severity)}</td><td title="${e.description}">${e.description.length>40?e.description.slice(0,38)+'…':e.description}</td><td title="${e.value}">${e.value.length>25?e.value.slice(0,23)+'…':e.value}</td><td>${e.status==='Open'?'<span class="bdg r">Open</span>':e.status==='Resolved'?'<span class="bdg g">Resolved</span>':'<span class="bdg n">Ignored</span>'}</td><td><input style="background:var(--navy);border:1px solid var(--border);border-radius:4px;padding:2px 5px;color:var(--text);font-size:10px;width:80px" placeholder="Assign to…" value="${e.owner}" onchange="excAssign(${e.id},this.value)"/></td><td><div class="exc-actions"><button class="btn-xs res" onclick="excResolve(${e.id})">Resolve</button><button class="btn-xs ign" onclick="excIgnore(${e.id})">Ignore</button></div></td></tr>`;
+  });
+  h+=`</tbody></table></div></div>`;
+  document.getElementById('c-exc').innerHTML=h;
+}
+window.excResolve=function(id){const e=S.exceptions.find(x=>x.id===id);if(e){e.status='Resolved';addAudit('Exception resolved',`Exception #${id}: ${e.description}`,'ok');}renderExc();};
+window.excIgnore=function(id){const e=S.exceptions.find(x=>x.id===id);if(e){e.status='Ignored';addAudit('Exception ignored',`Exception #${id}`,'warn');}renderExc();};
+window.excAssign=function(id,owner){const e=S.exceptions.find(x=>x.id===id);if(e){e.owner=owner;addAudit('Exception assigned',`Exception #${id} → ${owner}`,'info');}};
+
+function renderAudit(){
+  const log=S.auditLog;
+  if(!log.length){document.getElementById('c-audit').innerHTML='<div class="empty"><p>No audit entries yet.</p></div>';return;}
+  let h=`<div class="kpi-grid">${kpi('Total Events',log.length,'acc')}</div><div class="ic"><div class="ic-t">Activity Log</div>`;
+  const cols=['ok','info','warn','err'];
+  const colMap={ok:'var(--success)',info:'var(--accent)',warn:'var(--warning)',err:'var(--danger)',dbg:'var(--text3)'};
+  [...log].reverse().forEach(e=>{
+    h+=`<div class="aud-item"><div class="aud-dot" style="background:${colMap[e.type]||'var(--text3)'}"></div><div><div class="aud-t">${e.action}</div><div class="aud-s">${e.detail} · ${e.time}</div></div></div>`;
+  });
+  h+=`</div>`;
+  document.getElementById('c-audit').innerHTML=h;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: EMPLOYEE 360 MODAL
+// ──────────────────────────────────────────────────────────────────
+window.open360=function(gid){
+  if(!gid)return;
+  const r=S.master.find(x=>x.GlobalEmployeeID===gid||x.OldEmployeeID===gid);
+  if(!r)return;
+  const disc=S.reports.discrepancies.filter(d=>d.GlobalEmployeeID===r.GlobalEmployeeID||d.FullName===r.FullName);
+  const rca=S.reports.rcaResults.filter(d=>d.GlobalEmployeeID===r.GlobalEmployeeID);
+  const srcList=['WFM','Ops',...S.lobNames];
+  document.getElementById('m360-title').textContent=r.FullName||r.GlobalEmployeeID||'Employee Profile';
+  let b=`<div class="e360-grid">
+    <div class="e360-section"><div class="e360-sec-t">Identity</div>
+      ${row360('Global ID',r.GlobalEmployeeID)}${row360('Old ID',r.OldEmployeeID)}${row360('Email',r.Email)}${row360('Status',statusBdg(r.Status))}${row360('Match Tier',tierBdg(r.MatchTier))}${row360('Confidence',confBdg(r.MatchConfidence))}
+    </div>
+    <div class="e360-section"><div class="e360-sec-t">Assignment</div>
+      ${row360('Program',r.Program)}${row360('LOB',r.LOB)}${row360('Subprocess',r.Subprocess)}${row360('Wave',r.Wave)}${row360('Counting Status',r.CountingStatus)}${row360('Prod Status',r.ProductionStatus)}
+    </div>
+    <div class="e360-section"><div class="e360-sec-t">Location & Schedule</div>
+      ${row360('Site',r.Site)}${row360('Work Setup',r.WorkSetup)}${row360('Hire Date',r.HireDate)}${row360('Live Date',r.LiveDate)}
+    </div>
+    <div class="e360-section"><div class="e360-sec-t">Manager Chain</div>
+      ${row360('Manager',r.Manager)}${row360('Shift Manager',r.ShiftManager)}${row360('Team Leader',r.TeamLeader)}
+    </div>
+  </div>
+  <div class="e360-section" style="margin-top:12px"><div class="e360-sec-t">Source Presence (${r.SourceCount} source${r.SourceCount!==1?'s':''})</div>
+    <div class="src-timeline">`;
+  srcList.forEach(src=>{
+    const found=src==='WFM'?r.Found_WFM:src==='Ops'?r.Found_Ops:r['Found_'+src];
+    b+=`<div class="src-row"><div class="src-dot ${found?'hit':'miss'}"></div><span style="font-size:11px;color:${found?'var(--text)':'var(--text3)'}">${src}</span>${found?'<span style="font-size:10px;color:var(--success);margin-left:auto">✓ Found</span>':'<span style="font-size:10px;color:var(--text3);margin-left:auto">— Not found</span>'}</div>`;
+  });
+  b+=`</div></div>`;
+  if(disc.length){
+    b+=`<div class="e360-section" style="margin-top:12px"><div class="e360-sec-t">Discrepancies (${disc.length})</div>`;
+    disc.forEach(d=>{ b+=`<div style="display:flex;gap:8px;margin-bottom:4px;font-size:11px"><span style="color:var(--text3);width:80px;flex-shrink:0">${d.Field}</span><span style="color:var(--accent)">${d.WFM_Value}</span><span style="color:var(--text3)">→</span><span style="color:var(--danger)">${d.Ops_LOB_Value}</span><span style="color:var(--text3);font-size:10px">(${d.ConflictSource})</span></div>`; });
+    b+=`</div>`;
+  }
+  if(rca.length){
+    b+=`<div class="e360-section" style="margin-top:12px"><div class="e360-sec-t">Root Cause & Recommendations</div>`;
+    rca.forEach(d=>{ b+=`<div class="rca-row"><div class="rca-hdr">${sevBdg(d.Priority)}<span class="rca-issue">${d.Field}</span></div><div class="rca-cause">${d.ProbableCause}</div><div class="rca-action">→ ${d.RecommendedAction}</div></div>`; });
+    b+=`</div>`;
+  }
+  if(r._bRuleViolations?.length){
+    b+=`<div class="e360-section" style="margin-top:12px"><div class="e360-sec-t">Business Rule Violations</div>`;
+    r._bRuleViolations.forEach(v=>{ b+=`<div style="font-size:11px;color:var(--warning);margin-bottom:4px">⚠ ${v.rule}</div>`; });
+    b+=`</div>`;
+  }
+  document.getElementById('m360-body').innerHTML=b;
+  document.getElementById('modal-360').classList.add('open');
+  addAudit('Employee 360 viewed',`${r.FullName||r.GlobalEmployeeID}`,'info');
+};
+function row360(lbl,val){return `<div class="e360-row"><span class="e360-key">${lbl}</span><span class="e360-val">${val||'—'}</span></div>`;}
+window.closeModal=function(id){document.getElementById(id).classList.remove('open');};
+
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: EXPORT ENGINE
+// ──────────────────────────────────────────────────────────────────
+function sh(rows,cols){
+  if(!rows||!rows.length)return XLSX.utils.aoa_to_sheet([cols]);
+  return XLSX.utils.json_to_sheet(rows.map(r=>{const o={};cols.forEach(c=>o[c]=r[c]!=null?r[c]:null);return o;}),{header:cols});
+}
+function exportXLSX(){
+  if(!S.master.length)return alert('No data to export.');
+  const wb=XLSX.utils.book_new();
+  const m=S.master, r=S.reports;
+  const mc=['GlobalEmployeeID','OldEmployeeID','FirstName','LastName','FullName','Program','LOB','Subprocess','Manager','ShiftManager','TeamLeader','Site','WorkSetup','Status','ProductionStatus','HireDate','LiveDate','Wave','Email','CountingStatus','SourceCount','MatchTier','MatchConfidence','ConfidenceLabel','Found_WFM','Found_Ops',...S.lobNames.map(k=>'Found_'+k)];
+  XLSX.utils.book_append_sheet(wb,sh(m,mc),'1_MasterEmployee');
+  XLSX.utils.book_append_sheet(wb,sh(r.missing,['FullName','GlobalEmployeeID','OldEmployeeID','Program','LOB','Status','_missing_from','_present_in','_severity']),'2_MissingEmployees');
+  XLSX.utils.book_append_sheet(wb,sh(r.dups,['DupType','Severity','Value','Count','Names','Sources','Description']),'3_Duplicates');
+  XLSX.utils.book_append_sheet(wb,sh(r.discrepancies,['GlobalEmployeeID','FullName','Field','WFM_Value','Ops_LOB_Value','ConflictSource','MatchTier','MatchConfidence']),'4_FieldDiscrepancies');
+  XLSX.utils.book_append_sheet(wb,sh(r.rcaResults,['GlobalEmployeeID','FullName','Field','WFM_Value','Ops_LOB_Value','ProbableCause','CauseConfidence','RecommendedAction','Priority']),'5_RootCauseAnalysis');
+  XLSX.utils.book_append_sheet(wb,sh(r.hierIssues,['TeamLeader','GlobalEmployeeID','FullName','Issue','Values','Headcount']),'6_HierarchyValidation');
+  XLSX.utils.book_append_sheet(wb,sh(r.locIssues,['GlobalEmployeeID','FullName','Field','WFM_Value','Ops_LOB_Value','ConflictSource']),'7_LocationValidation');
+  XLSX.utils.book_append_sheet(wb,sh(r.statusIssues,['GlobalEmployeeID','FullName','Field','WFM_Value','Ops_LOB_Value','ConflictSource']),'8_StatusValidation');
+  XLSX.utils.book_append_sheet(wb,sh(r.lobIssues,['GlobalEmployeeID','FullName','Field','WFM_Value','Ops_LOB_Value','ConflictSource']),'9_LOBValidation');
+  XLSX.utils.book_append_sheet(wb,sh(r.missingFields,['GlobalEmployeeID','OldEmployeeID','FullName','MissingFields','MissingCount','Sources']),'10_MissingFields');
+  XLSX.utils.book_append_sheet(wb,sh(r.matchLog,['FullName','GlobalEmployeeID','OldEmployeeID','Source','MatchTier','Confidence','ConfidenceLabel','MatchedOn']),'11_MatchConfidence');
+  const qs=r.qualityScores;
+  const summary=[
+    {Metric:'Total Employees',Value:m.length},{Metric:'In WFM',Value:m.filter(x=>x.Found_WFM).length},
+    {Metric:'In Ops',Value:m.filter(x=>x.Found_Ops).length},{Metric:'Matched 2+ Sources',Value:m.filter(x=>x.SourceCount>1).length},
+    {Metric:'WFM-Ops Gaps',Value:r.missing.filter(x=>!x._severity?.includes('Low')).length},
+    {Metric:'Duplicates',Value:r.dups.length},{Metric:'Field Conflicts',Value:r.discrepancies.length},
+    {Metric:'B-Rule Violations',Value:r.bRuleRows.length},{Metric:'Hierarchy Issues',Value:r.hierIssues.length},
+    {Metric:'No Global ID',Value:m.filter(x=>!x.GlobalEmployeeID).length},
+    {Metric:'Quality Score',Value:qs.overall+'%'},{Metric:'Quality Grade',Value:qs.grade},
+    {Metric:'Match Accuracy',Value:qs.matchAccuracy+'%'},{Metric:'ID Coverage',Value:qs.idCoverage+'%'},
+    {Metric:'Completeness',Value:qs.completeness+'%'},{Metric:'Processing Date',Value:new Date().toISOString()},
+  ];
+  XLSX.utils.book_append_sheet(wb,sh(summary,['Metric','Value']),'12_ExecutiveSummary');
+  const ts=new Date().toISOString().replace(/[:.]/g,'-').slice(0,16);
+  XLSX.writeFile(wb,`WFM_Governance_v3_${ts}.xlsx`);
+  addAudit('Export generated',`Full XLSX report (12 sheets) exported`,'ok');
+}
+window.expMaster=function(){expCSV('master');};
+function expCSV(which){
+  const map={
+    master:S.master, discrepancies:S.reports.discrepancies,
+    missing:S.reports.missing, rca:S.reports.rcaResults,
+    matchlog:S.reports.matchLog, exceptions:S.exceptions
+  };
+  const rows=map[which]; if(!rows||!rows.length)return alert('No data.');
+  const clean=rows.map(r=>{const o={};Object.entries(r).filter(([k])=>!k.startsWith('_')).forEach(([k,v])=>o[k]=v);return o;});
+  const ws=XLSX.utils.json_to_sheet(clean);
+  const csv=XLSX.utils.sheet_to_csv(ws);
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`${which}_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+  addAudit('CSV exported',`${which}.csv`,'ok');
+}
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: AUDIT TRAIL
+// ──────────────────────────────────────────────────────────────────
+function addAudit(action,detail,type){
+  S.auditLog.push({action,detail,type:type||'info',time:new Date().toLocaleTimeString()});
+  const b=document.getElementById('b-aud');
+  if(b)b.textContent=S.auditLog.length;
+}
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: NOTIFICATIONS
+// ──────────────────────────────────────────────────────────────────
+function pushNotif(title,msg){
+  S.notifications.push({title,msg,time:new Date().toLocaleTimeString()});
+  document.getElementById('notif-dot').style.display='block';
+  const list=document.getElementById('notif-list');
+  list.innerHTML=S.notifications.slice(-5).reverse().map(n=>`<div class="notif-item"><div class="ni-title">${n.title}</div><div class="ni-sub">${n.msg} · ${n.time}</div></div>`).join('');
+}
+function showNotif(t,m){pushNotif(t,m);}
+window.toggleNotif=function(){
+  const p=document.getElementById('notif-panel'),bg=document.getElementById('notif-bg');
+  const open=p.classList.contains('open');
+  p.classList.toggle('open',!open);bg.style.display=open?'none':'block';
+  if(!open)document.getElementById('notif-dot').style.display='none';
+};
+window.closeNotif=function(){document.getElementById('notif-panel').classList.remove('open');document.getElementById('notif-bg').style.display='none';};
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: GLOBAL SEARCH
+// ──────────────────────────────────────────────────────────────────
+window.globalSearch=function(q){
+  if(!q||q.length<2)return;
+  if(!S.master.length)return;
+  const lq=q.toLowerCase();
+  const hits=S.master.filter(r=>(r.FullName||'').toLowerCase().includes(lq)||(r.GlobalEmployeeID||'').toLowerCase().includes(lq)||(r.OldEmployeeID||'').toLowerCase().includes(lq)||(r.Email||'').toLowerCase().includes(lq)).slice(0,10);
+  // Navigate to R1 with search pre-filled
+  if(hits.length){nav('r1');setTimeout(()=>{const srch=document.querySelector('#pg-r1 .srch');if(srch){srch.value=q;const tid=document.querySelector('#pg-r1 .dtbl')?.id;if(tid)ftbl(tid,q);}},200);}
+};
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: BADGES & FILE HANDLING
+// ──────────────────────────────────────────────────────────────────
+function updateBadges(){
+  const r=S.reports, m=S.master;
+  const bs={
+    'b-up':`${S.files.wfm.length+S.files.ops.length+S.files.lob.length} files`,
+    'b-r1':m.length,'b-r2':r.missing?.length,'b-r3':r.dups?.length,
+    'b-r4':r.discrepancies?.length,'b-rca':r.rcaResults?.length,
+    'b-r11':r.matchLog?.filter(x=>x.MatchTier==='T5'||x.MatchTier==='T6').length+' fuzzy/AI',
+    'b-cand':r.candidateLog?.length+' AI',
+    'b-r5':r.hierIssues?.length,'b-r6':r.locIssues?.length,'b-r7':r.statusIssues?.length,
+    'b-r8':r.lobIssues?.length,'b-r9':r.missingFields?.length,
+    'b-exc':S.exceptions?.filter(e=>e.status==='Open').length+' open',
+    'b-aud':S.auditLog?.length
+  };
+  Object.entries(bs).forEach(([id,val])=>{ const el=document.getElementById(id); if(el)el.textContent=val; });
+}
+function hf(e,type){addFiles([...e.target.files],type);}
+function drp(e,type){e.preventDefault();dlv('z-'+type);addFiles([...e.dataTransfer.files],type);}
+function dov(e,id){e.preventDefault();document.getElementById(id).classList.add('dragover');}
+function dlv(id){document.getElementById(id).classList.remove('dragover');}
+function addFiles(files,type){
+  S.files[type]=[...(S.files[type]||[]),...files];
+  const el=document.getElementById('fl-'+type);
+  if(el)el.innerHTML=S.files[type].map(f=>`<div class="fp"><span class="fp-dot"></span>${f.name}</div>`).join('');
+  document.getElementById('z-'+type).classList.add('done');
+  const tot=S.files.wfm.length+S.files.ops.length+S.files.lob.length;
+  const bu=document.getElementById('b-up');if(bu)bu.textContent=`${tot} files`;
+  document.getElementById('btn-proc').disabled=!(S.files.wfm.length||S.files.ops.length);
+}
+function clearAll(){
+  S.files={wfm:[],ops:[],lob:[]};S.master=[];S.reports={};S.lobNames=[];S.exceptions=[];
+  ['wfm','ops','lob'].forEach(t=>{const fl=document.getElementById('fl-'+t);if(fl)fl.innerHTML='';document.getElementById('z-'+t).classList.remove('done');});
+  document.getElementById('prog-wrap').style.display='none';
+  document.getElementById('log-box').style.display='none';
+  document.getElementById('log-body').innerHTML='';
+  document.getElementById('btn-proc').disabled=true;
+  nav('upload');
+}
+window.kpiDrill=function(lbl){
+  const drillMap={'Total':'r1','In WFM':'r1','In Ops':'r1','Matched 2+':'r1','WFM-Only':'r2','Ops-Only':'r2','Gaps (WFM↔Ops)':'r2','Duplicates':'r3','Conflicts':'r4','B-Rule Violations':'r4','Hierarchy Issues':'r5','No Global ID':'r9','AI Candidates':'cand','LOB Files':'r8'};
+  const dest=drillMap[lbl];if(dest)nav(dest);
+};
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: SAMPLE DATA
+// ──────────────────────────────────────────────────────────────────
+function loadSample(){
+  function mk(data,name){const ws=XLSX.utils.json_to_sheet(data);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Sheet1');const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});return new File([buf],name,{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});}
+  const wfm=[
+    {'SG Emp ID':'SG001','Emp ID':'L1001','First Name':'Maria','Last Name':'Santos','LOB':'Humana Clinical','Program':'Clinical Voice','Team Lead':'Jose Reyes','Manager':'Ana Cruz','Site':'Taguig','WAH/B&M Status':'B&M','Status':'Active','Hire Date':'2021-03-15','Wave':'Batch 1'},
+    {'SG Emp ID':'SG002','Emp ID':'L1002','First Name':'Juan','Last Name':'dela Cruz','LOB':'Humana Clinical','Program':'Clinical Voice','Team Lead':'Jose Reyes','Manager':'Ana Cruz','Site':'Taguig','WAH/B&M Status':'WFH','Status':'Active','Hire Date':'2021-04-01','Wave':'Batch 1'},
+    {'SG Emp ID':'SG003','Emp ID':'L1003','First Name':'Rosa','Last Name':'Mendoza','LOB':'Cigna','Program':'Medicare','Team Lead':'Lito Santos','Manager':'Bob Tan','Site':'Cebu','WAH/B&M Status':'B&M','Status':'Active','Hire Date':'2022-01-10','Wave':'Batch 2'},
+    {'SG Emp ID':'SG004','Emp ID':'L1004','First Name':'Pedro','Last Name':'Garcia','LOB':'Cigna','Program':'Medicare','Team Lead':'Lito Santos','Manager':'Bob Tan','Site':'Cebu','WAH/B&M Status':'WFH','Status':'Inactive','Hire Date':'2020-06-01','Wave':'Batch 1'},
+    {'SG Emp ID':'SG005','Emp ID':'L1005','First Name':'Ana','Last Name':'Reyes','LOB':'Bright Health','Program':'Enrollment','Team Lead':'Maria Lee','Manager':'Chris Gom','Site':'Makati','WAH/B&M Status':'Remote','Status':'Active','Hire Date':'2022-05-20','Wave':'Batch 3'},
+    {'Emp ID':'L1006','First Name':'Carlo','Last Name':'Navarro Jr.','LOB':'Humana Clinical','Program':'Clinical Voice','Team Lead':'Jose Reyes','Manager':'Ana Cruz','Site':'Taguig','WAH/B&M Status':'B&M','Status':'Active','Hire Date':'2023-01-05','Wave':'Batch 4'},
+    {'SG Emp ID':'SG008','Emp ID':'L1008','First Name':'Grace','Last Name':'Lim','LOB':'Cohere','Program':'Care Coordination','Team Lead':'Ray Tan','Manager':'Jen Sy','Site':'BGC','WAH/B&M Status':'WFH','Status':'Active','Hire Date':'2023-03-01','Wave':'Batch 4'},
+  ];
+  const ops=[
+    {'Global ID':'SG001','Local ID':'L1001','Employee Name':'Maria Santos','LOB':'Humana Clinical','Program':'Clinical Voice','TL':'Jose Reyes','Operations Manager':'Ana Cruz','Location':'Taguig','Work Setup':'Onsite','Status':'Active','Hire Date':'2021-03-15'},
+    {'Global ID':'SG002','Local ID':'L1002','Employee Name':'Juan dela Cruz','LOB':'Humana Clinical Voice','Program':'Clinical Voice','TL':'Jose Reyes','Operations Manager':'Ana Cruz','Location':'Taguig','Work Setup':'WFH','Status':'Active','Hire Date':'2021-04-01'},
+    {'Global ID':'SG003','Local ID':'L1003','Employee Name':'Rosa Mendoza','LOB':'Cigna','Program':'Medicare','TL':'Lito Santos','Operations Manager':'Bob Tan','Location':'Cebu','Work Setup':'Onsite','Status':'Active','Hire Date':'2022-01-10'},
+    {'Global ID':'SG004','Local ID':'L1004','Employee Name':'Pedro Garcia','LOB':'Cigna','Program':'Medicare','TL':'Lito Santos','Operations Manager':'Bob Tan','Location':'Cebu','Work Setup':'WFH','Status':'Separated','Hire Date':'2020-06-01'},
+    {'Global ID':'SG007','Local ID':'L1007','Employee Name':'Belle Santos','LOB':'Cohere','Program':'Care Coordination','TL':'Ray Tan','Operations Manager':'Jen Sy','Location':'BGC','Work Setup':'WFH','Status':'Active','Hire Date':'2023-05-01'},
+    {'Global ID':'SG006','Local ID':'L1006','Employee Name':'Carlo Navarro','LOB':'Humana Clinical','Program':'Clinical Voice','TL':'Jose Reyes','Operations Manager':'Ana Cruz','Location':'Taguig','Work Setup':'Onsite','Status':'Active','Hire Date':'2023-01-05'},
+  ];
+  const lob=[
+    {'Global EMP ID':'SG001','LocalEmpID':'L1001','First Name':'Maria','Last Name':'Santos','Segment':'Humana Clinical','Sub Process':'Clinical Voice','Team Leader':'Jose Reyes','Shift Manager':'Ana Cruz','Site':'Taguig','WFH/B&M':'B&M','Employee Status':'Active','Live Date':'2021-04-01','Wave':'Batch 1','Counting Status':'Billable'},
+    {'Global EMP ID':'SG002','LocalEmpID':'L1002','First Name':'Juan','Last Name':'Dela Cruz','Segment':'Humana Clinical','Sub Process':'Clinical Voice','Team Leader':'Jose Reyes','Shift Manager':'Ana Cruz','Site':'Taguig','WFH/B&M':'WFH','Employee Status':'Active','Live Date':'2021-04-15','Wave':'Batch 1','Counting Status':'Billable'},
+    {'Global EMP ID':'SG005','LocalEmpID':'L1005','First Name':'Ana','Last Name':'Reyes','Segment':'Bright Health','Sub Process':'Enrollment','Team Leader':'Maria Lee','Shift Manager':'Chris Gom','Site':'Makati','WFH/B&M':'WFH','Employee Status':'Active','Live Date':'2022-06-01','Wave':'Batch 3','Counting Status':'Billable'},
+    {'Global EMP ID':'SG009','LocalEmpID':'L1009','First Name':'Donna','Last Name':'Cruz','Segment':'Claims','Sub Process':'Processing','Team Leader':'Tony Lim','Shift Manager':'Donna Ko','Site':'Office','WFH/B&M':'B&M','Employee Status':'Active','Live Date':'2023-07-01','Wave':'Batch 5','Counting Status':'Billable'},
+  ];
+  addFiles([mk(wfm,'WFM_TeamCompo_Sample.xlsx')],'wfm');
+  addFiles([mk(ops,'Ops_TeamCompo_Sample.xlsx')],'ops');
+  addFiles([mk(lob,'Ops_LOBHumana_Sample.xlsx')],'lob');
+}
+
+// ──────────────────────────────────────────────────────────────────
+// MODULE: NAVIGATION
+// ──────────────────────────────────────────────────────────────────
+function nav(page){
+  document.querySelectorAll('.sb-item').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.pg').forEach(el=>el.classList.remove('active'));
+  const pe=document.getElementById('pg-'+page); if(pe)pe.classList.add('active');
+  const se=document.querySelector(`.sb-item[onclick="nav('${page}')"]`); if(se)se.classList.add('active');
+}
+
+// Init
+loadSettings();
+addAudit('Platform initialized','WFM·Ops·LOB Governance v3 loaded','info');
+</script>
+</body>
+</html>

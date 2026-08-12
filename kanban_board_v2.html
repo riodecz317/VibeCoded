@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project Kanban Board</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter','Segoe UI',sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; }
+
+/* ── Header ── */
+.header { background: #0A0F1E; border-bottom: 1px solid #1e2a45; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+.header-left { display: flex; align-items: center; gap: 12px; }
+.logo { width: 34px; height: 34px; background: linear-gradient(135deg,#10805A,#6366F1); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; color: #fff; }
+.proj-title { font-size: 15px; font-weight: 700; color: #f1f5f9; }
+.proj-sub { font-size: 11px; color: #64748b; margin-top: 1px; }
+.header-right { display: flex; gap: 8px; align-items: center; }
+.badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.badge-green { background: #0d3326; color: #34d399; }
+.badge-blue { background: #1e1b4b; color: #a5b4fc; }
+
+/* ── Stats bar ── */
+.stats-bar { background: #0d1322; border-bottom: 1px solid #1e2a45; padding: 9px 24px; display: flex; gap: 28px; flex-wrap: wrap; align-items: center; }
+.stat { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #94a3b8; }
+.stat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.stat-val { font-weight: 700; color: #e2e8f0; }
+
+/* ── Timeline ── */
+.timeline { background: #0d1322; border: 1px solid #1e2a45; border-radius: 12px; margin: 14px 18px 0; padding: 12px 16px; overflow-x: auto; }
+.tl-label { font-size: 10px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: .6px; margin-bottom: 10px; }
+.tl-track { display: flex; gap: 3px; min-width: max-content; }
+.tl-phase { flex: 1; padding: 8px 10px; border-radius: 7px; min-width: 120px; }
+.tl-name { font-size: 10px; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+.tl-date { font-size: 9px; color: #64748b; }
+.tl-bar { height: 5px; border-radius: 3px; margin-top: 6px; opacity: .55; }
+
+/* ── Paste zone ── */
+.paste-zone { background: #111827; border: 1px solid #1e2a45; border-radius: 12px; margin: 14px 18px; padding: 14px 16px; display: flex; gap: 12px; align-items: flex-start; }
+.paste-zone textarea { flex: 1; background: #0A0F1E; border: 1px solid #1e2a45; border-radius: 8px; color: #e2e8f0; font-size: 12px; padding: 10px 12px; resize: vertical; height: 88px; font-family: inherit; line-height: 1.6; transition: border-color .15s; }
+.paste-zone textarea:focus { outline: none; border-color: #6366F1; }
+.paste-zone textarea::placeholder { color: #2d3f5f; }
+.paste-right { display: flex; flex-direction: column; gap: 6px; flex-shrink: 0; }
+.parse-btn { background: linear-gradient(135deg,#10805A,#0d6b4d); color: #fff; border: none; padding: 10px 18px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: opacity .15s; }
+.parse-btn:hover { opacity: .85; }
+.clear-btn { background: #1e2a45; color: #94a3b8; border: none; padding: 7px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; transition: background .15s; }
+.clear-btn:hover { background: #243050; color: #cbd5e1; }
+.add-phase-btn { background: #1e1b4b; color: #a5b4fc; border: none; padding: 7px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; transition: background .15s; white-space: nowrap; }
+.add-phase-btn:hover { background: #2e2b6b; }
+
+/* ── Parse error ── */
+.parse-error { background: #2d1a1a; border: 1px solid #7f1d1d; border-radius: 8px; color: #fca5a5; font-size: 12px; padding: 10px 14px; margin: 0 18px 8px; display: none; }
+
+/* ── Board ── */
+.board-wrap { padding: 14px 18px 40px; overflow-x: auto; }
+.board { display: flex; gap: 14px; min-width: max-content; align-items: flex-start; }
+
+.column { width: 284px; background: #111827; border-radius: 12px; border: 1px solid #1e2a45; flex-shrink: 0; overflow: hidden; }
+.col-header { padding: 12px 14px 10px; border-bottom: 1px solid #1e2a45; display: flex; align-items: center; justify-content: space-between; }
+.col-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; }
+.col-count { background: #1e2a45; color: #94a3b8; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+.col-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 90px; }
+.empty-col { text-align: center; color: #2d3f5f; font-size: 11px; padding: 28px 0; border: 1.5px dashed #1e2a45; border-radius: 8px; margin: 4px 0; }
+
+.col-notstarted .col-header { border-top: 3px solid #475569; }
+.col-inprogress .col-header { border-top: 3px solid #6366F1; }
+.col-validation .col-header { border-top: 3px solid #f59e0b; }
+.col-done       .col-header { border-top: 3px solid #10805A; }
+.col-notstarted .col-title { color: #94a3b8; }
+.col-inprogress .col-title { color: #a5b4fc; }
+.col-validation .col-title { color: #fbbf24; }
+.col-done       .col-title { color: #34d399; }
+
+/* ── Cards ── */
+.card { background: #1a2235; border: 1px solid #243050; border-radius: 10px; padding: 13px 14px; transition: border-color .15s, transform .15s, box-shadow .15s; }
+.card:hover { border-color: #6366F1; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.45); }
+.card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.card-badge { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 6px; white-space: nowrap; flex-shrink: 0; }
+.card-move { background: #0A0F1E; color: #94a3b8; border: 1px solid #1e2a45; border-radius: 6px; font-size: 10px; padding: 2px 6px; cursor: pointer; transition: border-color .12s; }
+.card-move:hover { border-color: #6366F1; }
+.card-title { font-size: 13px; font-weight: 600; color: #f1f5f9; line-height: 1.4; margin-bottom: 6px; }
+.card-owner { font-size: 11px; color: #64748b; margin-bottom: 9px; display: flex; align-items: center; gap: 5px; }
+.card-owner span { color: #94a3b8; }
+.prog-wrap { margin-bottom: 9px; }
+.prog-bar { height: 3px; background: #1e2a45; border-radius: 2px; }
+.prog-fill { height: 100%; border-radius: 2px; transition: width .35s; }
+.prog-label { font-size: 10px; color: #475569; text-align: right; margin-top: 2px; }
+.tasks-list { margin-bottom: 8px; }
+.task-row { display: flex; align-items: flex-start; gap: 7px; font-size: 11px; color: #94a3b8; padding: 4px 0; border-bottom: 1px solid #1a2040; cursor: pointer; transition: color .1s; user-select: none; }
+.task-row:last-child { border-bottom: none; }
+.task-row:hover { color: #cbd5e1; }
+.task-row.done { color: #3d5070; text-decoration: line-through; }
+.task-cb { width: 14px; height: 14px; flex-shrink: 0; margin-top: 0px; border: 1.5px solid #334155; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; transition: all .12s; }
+.task-row.done .task-cb { background: #10805A; border-color: #10805A; color: #fff; }
+.card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+.card-date { font-size: 10px; color: #475569; display: flex; align-items: center; gap: 3px; }
+.card-date.urgent { color: #f97316; }
+.card-date.overdue { color: #ef4444; }
+.card-tally { font-size: 10px; color: #475569; }
+
+/* Phase badge colors */
+.pc0{background:#1a2e4a;color:#60a5fa} .pc1{background:#1f2937;color:#a78bfa}
+.pc2{background:#1a2a3a;color:#38bdf8} .pc3{background:#1a2e1a;color:#4ade80}
+.pc4{background:#2d1f1a;color:#fb923c} .pc5{background:#2a1a2a;color:#e879f9}
+.pc6{background:#1a2424;color:#2dd4bf} .pc7{background:#2a2410;color:#fbbf24}
+.pc8{background:#1e1a2e;color:#c4b5fd} .pc9{background:#1a1a2e;color:#818cf8}
+
+/* ── Toast ── */
+.toast { position: fixed; bottom: 22px; right: 22px; background: #10805A; color: #fff; padding: 9px 16px; border-radius: 9px; font-size: 12px; font-weight: 600; transform: translateY(60px); opacity: 0; transition: all .22s; z-index: 999; pointer-events: none; max-width: 300px; }
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── Search bar ── */
+.search-bar { display: flex; align-items: center; gap: 10px; padding: 10px 18px; background: #0d1322; border-bottom: 1px solid #1e2a45; }
+.search-input { background: #0A0F1E; border: 1px solid #1e2a45; border-radius: 8px; color: #e2e8f0; font-size: 12px; padding: 7px 12px; width: 240px; font-family: inherit; }
+.search-input:focus { outline: none; border-color: #6366F1; }
+.search-input::placeholder { color: #2d3f5f; }
+.filter-btns { display: flex; gap: 6px; }
+.fbtn { background: #1e2a45; color: #94a3b8; border: none; padding: 5px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: 600; transition: all .12s; }
+.fbtn.active { background: #6366F1; color: #fff; }
+.fbtn:hover:not(.active) { background: #243050; }
+.spacer { flex: 1; }
+.today-badge { font-size: 10px; color: #475569; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">K</div>
+    <div>
+      <div class="proj-title" id="hdrTitle">Project Kanban Board</div>
+      <div class="proj-sub">PMO Workflow Board · Sagility Philippines</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <span class="badge badge-green" id="hdrStatus">● Active</span>
+    <span class="badge badge-blue" id="hdrDate">–</span>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat"><span class="stat-dot" style="background:#6366F1"></span>Phases <span class="stat-val" id="st-phases">–</span></div>
+  <div class="stat"><span class="stat-dot" style="background:#60a5fa"></span>Tasks <span class="stat-val" id="st-tasks">–</span></div>
+  <div class="stat"><span class="stat-dot" style="background:#34d399"></span>Done <span class="stat-val" id="st-done">–</span></div>
+  <div class="stat"><span class="stat-dot" style="background:#f59e0b"></span>Progress <span class="stat-val" id="st-pct">–</span></div>
+  <div class="stat"><span class="stat-dot" style="background:#ef4444"></span>Overdue <span class="stat-val" id="st-overdue">–</span></div>
+</div>
+
+<!-- SEARCH + FILTER -->
+<div class="search-bar">
+  <input class="search-input" id="searchInput" placeholder="🔍  Search phases or tasks…" oninput="applySearch()">
+  <div class="filter-btns">
+    <button class="fbtn active" onclick="setFilter('all',this)">All</button>
+    <button class="fbtn" onclick="setFilter('0',this)">Not Started</button>
+    <button class="fbtn" onclick="setFilter('1',this)">In Progress</button>
+    <button class="fbtn" onclick="setFilter('2',this)">Validation</button>
+    <button class="fbtn" onclick="setFilter('3',this)">Done</button>
+  </div>
+  <div class="spacer"></div>
+  <div class="today-badge" id="todayBadge"></div>
+</div>
+
+<!-- TIMELINE -->
+<div class="timeline">
+  <div class="tl-label">📅 Workflow Timeline</div>
+  <div class="tl-track" id="tlTrack"></div>
+</div>
+
+<!-- PARSE ERROR -->
+<div class="parse-error" id="parseError"></div>
+
+<!-- PASTE ZONE -->
+<div class="paste-zone">
+  <div style="flex:1">
+    <div style="font-size:11px;font-weight:700;color:#475569;margin-bottom:6px;">📋  Paste structured deliverables, bullet lists, or free-form task descriptions — then click Convert</div>
+    <textarea id="pasteInput" placeholder="Examples:&#10;• Numbered: 1. Phase Title / Owner: Name / * Task / Target Date: July 22&#10;• Bullets: * Do this / * Do that&#10;• Prose: Weekly update of clinical masterfile for BCI, Cigna…"></textarea>
+  </div>
+  <div class="paste-right">
+    <button class="parse-btn" onclick="doConvert()">⚡ Convert</button>
+    <button class="clear-btn" onclick="clearInput()">✕ Clear</button>
+    <button class="add-phase-btn" onclick="addBlankPhase()">＋ Add Phase</button>
+  </div>
+</div>
+
+<!-- BOARD -->
+<div class="board-wrap">
+  <div class="board">
+    <div class="column col-notstarted">
+      <div class="col-header"><span class="col-title">Not Started</span><span class="col-count" id="cnt-0">0</span></div>
+      <div class="col-body" id="col-0"></div>
+    </div>
+    <div class="column col-inprogress">
+      <div class="col-header"><span class="col-title">In Progress</span><span class="col-count" id="cnt-1">0</span></div>
+      <div class="col-body" id="col-1"></div>
+    </div>
+    <div class="column col-validation">
+      <div class="col-header"><span class="col-title">Validation</span><span class="col-count" id="cnt-2">0</span></div>
+      <div class="col-body" id="col-2"></div>
+    </div>
+    <div class="column col-done">
+      <div class="col-header"><span class="col-title">Done</span><span class="col-count" id="cnt-3">0</span></div>
+      <div class="col-body" id="col-3"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  CONSTANTS & STATE
+// ════════════════════════════════════════════════════════════════
+const PC       = ['pc0','pc1','pc2','pc3','pc4','pc5','pc6','pc7','pc8','pc9'];
+const TL_BG    = ['#1a2e4a','#1f2937','#1a2a3a','#1a2e1a','#2d1f1a','#2a1a2a','#1a2424','#2a2410','#1e1a2e','#1a1a2e'];
+const TL_FILL  = ['#60a5fa','#a78bfa','#38bdf8','#4ade80','#fb923c','#e879f9','#2dd4bf','#fbbf24','#c4b5fd','#818cf8'];
+const MONTHS   = {january:0,february:1,march:2,april:3,may:4,june:5,july:6,august:7,september:8,october:9,november:10,december:11,jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11};
+const TODAY    = new Date(2026, 6, 21);
+const DOW_MAP  = {monday:1,tuesday:2,wednesday:3,thursday:4,friday:5,saturday:6,sunday:0,mon:1,tue:2,wed:3,thu:4,fri:5,sat:6,sun:0};
+
+let STATE      = { phases: [], doneMap: {}, projectTitle: 'Project Kanban Board', filter: 'all', search: '' };
+let nextId     = 100;
+
+// ════════════════════════════════════════════════════════════════
+//  SMART MULTI-FORMAT PARSER
+// ════════════════════════════════════════════════════════════════
+function smartParse(raw) {
+  const text = raw.trim();
+  if (!text) return null;
+
+  // ── Mode 1: Numbered blocks (1. Title / Owner / * tasks / Target Date) ──
+  const numbered = text.split(/\n(?=\d+[\.\)]\s)/).filter(b => /^\d+[\.\)]/.test(b.trim()));
+  if (numbered.length >= 2) return parseStructured(numbered, text);
+
+  // ── Mode 2: Bullet/dash list with optional header ──
+  const bulletLines = text.split('\n').filter(l => /^[\*\-•]\s+/.test(l.trim()));
+  if (bulletLines.length >= 2) return parseBullets(text, bulletLines);
+
+  // ── Mode 3: Free-form prose ──
+  return parseProse(text);
+}
+
+// ─── Mode 1 ──────────────────────────────────────────────────────
+function parseStructured(blocks, fullText) {
+  let projectTitle = 'Project Kanban Board';
+  const beforeFirst = fullText.split(/\n\s*\d+[\.\)]/)[0].trim();
+  if (beforeFirst && beforeFirst.length < 120 && !beforeFirst.includes('\n'))
+    projectTitle = beforeFirst.replace(/^#+\s*/, '').trim();
+
+  const phases = blocks.map((block, i) => {
+    const lines    = block.split('\n').map(l => l.trim()).filter(Boolean);
+    const title    = lines[0].replace(/^\d+[\.\)]\s*/, '').trim();
+    const ownerM   = block.match(/owner[:\-\s]+(.+)/i);
+    const dateM    = block.match(/target\s*date[:\s]+(.+)/i)
+                  || block.match(/deadline[:\s]+(.+)/i)
+                  || block.match(/due[:\s]+(.+)/i)
+                  || block.match(/date[:\s]+(.+)/i);
+    const tasks    = lines.filter(l => /^[\*\-•]\s+/.test(l))
+                         .map(l => ({ label: l.replace(/^[\*\-•]\s+/, ''), done: false }));
+    return {
+      id: nextId++, title,
+      owner:    ownerM ? ownerM[1].trim() : '',
+      tasks,
+      dateRaw:  dateM  ? dateM[1].trim()  : '',
+      colorClass: PC[i % PC.length],
+      status: 0
+    };
+  });
+  return { phases, projectTitle };
+}
+
+// ─── Mode 2 ──────────────────────────────────────────────────────
+function parseBullets(text, bulletLines) {
+  const allLines   = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const titleLine  = allLines.find(l => !/^[\*\-•]/.test(l)) || 'Tasks';
+  const ownerM     = text.match(/(?:owner|assigned\s*to)[:\s]+([^\n,]+)/i);
+  const dateM      = text.match(/(?:from|by|due|target\s*date|date)[:\s]+([^\n]{4,40})/i);
+  const owner      = ownerM ? ownerM[1].trim() : '';
+  const dateRaw    = dateM  ? dateM[1].trim()  : '';
+  const tasks      = bulletLines.map(l => ({ label: l.replace(/^[\*\-•]\s+/, '').trim(), done: false }));
+
+  if (/wed(nesday)?.*fri(day)?/i.test(text) && tasks.length >= 3) {
+    const mid = Math.ceil(tasks.length / 2);
+    return { projectTitle: titleLine, phases: [
+      { id: nextId++, title: titleLine + ' — Part 1', owner, tasks: tasks.slice(0, mid), dateRaw: 'Wednesday – Thursday', colorClass: PC[0], status: 0 },
+      { id: nextId++, title: titleLine + ' — Part 2', owner, tasks: tasks.slice(mid),   dateRaw: 'Friday EOD',            colorClass: PC[1], status: 0 }
+    ]};
+  }
+  return { projectTitle: titleLine, phases: [{ id: nextId++, title: titleLine, owner, tasks, dateRaw, colorClass: PC[0], status: 0 }] };
+}
+
+// ─── Mode 3: Free-form prose ──────────────────────────────────────
+function parseProse(text) {
+  const title    = inferTitle(text);
+  const owner    = /\bI\b.*(?:am|will|'m)\b/i.test(text) ? 'Self / Reporting Team' : '';
+  const accounts = extractAccounts(text);
+  const phases   = [];
+
+  if (accounts.length) {
+    phases.push({
+      id: nextId++,
+      title: 'Account Scope — ' + (accounts.length <= 3
+        ? accounts.join(', ')
+        : accounts.slice(0,3).join(', ') + ` +${accounts.length-3} more`),
+      owner,
+      tasks: accounts.map(a => ({ label: 'Verify ' + a + ' masterfile data', done: false })),
+      dateRaw: 'Wednesday', colorClass: PC[0], status: 0, _dow: 3
+    });
+  }
+
+  const phaseTemplates = [
+    {
+      test: /data|WFM|operations|department|sent by|receive/i,
+      title: 'Data Collection',
+      tasks: [
+        'Receive data files from WFM / Operations',
+        'Confirm all accounts are covered',
+        'Validate completeness of data received',
+        'Log receipt of data for audit trail'
+      ],
+      dateRaw: 'Wednesday', _dow: 3
+    },
+    {
+      test: /check|review|identify|validate|verify|latest addition|attrition|movement|promotion/i,
+      title: 'Data Review & Checking',
+      tasks: [
+        'Check data sent by WFM / Operations',
+        'Identify latest additions per account',
+        'Flag attrition records',
+        'Flag movement / transfer changes',
+        'Flag promotion updates',
+        'Cross-reference with previous masterfile'
+      ],
+      dateRaw: 'Wednesday – Thursday', _dow: 3
+    },
+    {
+      test: /update|masterfile|maintain|upload|sync|refresh|apply/i,
+      title: 'Masterfile Update',
+      tasks: [
+        'Apply attrition removals to masterfile',
+        'Apply movement / transfer changes',
+        'Apply promotion updates',
+        'Validate all updated records',
+        "Cross-check with previous week's masterfile"
+      ],
+      dateRaw: 'Thursday – Friday', _dow: 4
+    },
+    {
+      test: /publish|report|send|deploy|share|submit|EOD|end of day/i,
+      title: 'Report Publishing',
+      tasks: [
+        'Finalize weekly report',
+        'QA check before publishing',
+        'Publish report by EOD Friday',
+        'Distribute to stakeholders',
+        'Archive finalized report'
+      ],
+      dateRaw: 'Friday EOD', _dow: 5
+    }
+  ];
+
+  phaseTemplates.forEach((pt, i) => {
+    if (pt.test.test(text)) {
+      phases.push({
+        id: nextId++,
+        title: pt.title,
+        owner,
+        tasks: pt.tasks.map(l => ({ label: l, done: false })),
+        dateRaw: pt.dateRaw,
+        colorClass: PC[(accounts.length ? 1 : 0) + i % PC.length],
+        status: 0,
+        _dow: pt._dow
+      });
+    }
+  });
+
+  if (!phases.length) {
+    const sentences = text.split(/[.\n!]/).map(s => s.trim()).filter(s => s.length > 8).slice(0, 8);
+    phases.push({
+      id: nextId++, title, owner,
+      tasks: sentences.map(s => ({ label: s, done: false })),
+      dateRaw: '', colorClass: PC[0], status: 0
+    });
+  }
+
+  return { phases, projectTitle: title };
+}
+
+function extractAccounts(text) {
+  const m = text.match(/(?:for|update|check|covering|of)\s+((?:[A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+)?,?\s*(?:and\s+)?)+)/);
+  if (!m) return [];
+  return m[1]
+    .split(/,\s*|\s+and\s+/)
+    .map(a => a.trim().replace(/[,\.]$/, ''))
+    .filter(a => a.length > 1 && /^[A-Z]/.test(a) && !/^(I|The|A|An|This|That|Their|My)$/.test(a));
+}
+
+function inferTitle(text) {
+  const m = text.match(/(?:weekly|monthly|daily|annual)\s+(?:update\s+of\s+|update\s+for\s+)?([^,\.\n]{5,70})/i)
+           || text.match(/^(.{10,70})(?:\.|,|\n)/);
+  if (m) return m[1].trim();
+  return text.slice(0, 50).trim() + (text.length > 50 ? '…' : '');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  STATUS AUTO-ASSIGNMENT
+// ════════════════════════════════════════════════════════════════
+function assignStatuses(phases) {
+  const todayDow = TODAY.getDay(); // 1 = Monday (July 21 2026)
+
+  phases.forEach(p => {
+    const dr = (p.dateRaw || '').toLowerCase();
+
+    // Day-of-week override from prose parser
+    if (p._dow != null) {
+      if (p._dow < todayDow)      p.status = 0;
+      else if (p._dow === todayDow) p.status = 1;
+      else                          p.status = 0;
+      return;
+    }
+
+    // Detect day-of-week keywords in dateRaw
+    const dowFound = Object.keys(DOW_MAP).filter(k => dr.includes(k));
+    if (dowFound.length) {
+      const days = dowFound.map(k => DOW_MAP[k]);
+      const minD = Math.min(...days), maxD = Math.max(...days);
+      if (maxD < todayDow)                          p.status = 3;
+      else if (minD <= todayDow && maxD >= todayDow) p.status = 1;
+      else                                           p.status = 0;
+      return;
+    }
+
+    // Calendar date parsing
+    const rangeM  = dr.match(/(\w+)\s+(\d+)\s+to\s+(\w+\s+)?(\d+),?\s*(\d{4})?/i);
+    const orM     = dr.match(/(\w+)\s+(\d+)\s+or\s+(\w+\s+)?(\d+),?\s*(\d{4})?/i);
+    const singleM = dr.match(/(\w+)\s+(\d+),?\s*(\d{4})?/i);
+    let start = null, end = null;
+
+    if (rangeM && MONTHS[rangeM[1].toLowerCase()] !== undefined) {
+      const mo = MONTHS[rangeM[1].toLowerCase()], yr = +(rangeM[5] || 2026);
+      start = new Date(yr, mo, +rangeM[2]);
+      end   = new Date(yr, mo, +rangeM[4]);
+    } else if (orM && MONTHS[orM[1].toLowerCase()] !== undefined) {
+      const mo = MONTHS[orM[1].toLowerCase()];
+      start = new Date(2026, mo, +orM[2]);
+      end   = new Date(2026, mo, +orM[4]);
+    } else if (singleM && MONTHS[singleM[1].toLowerCase()] !== undefined) {
+      const mo = MONTHS[singleM[1].toLowerCase()];
+      end = start = new Date(2026, mo, +singleM[2]);
+    }
+
+    if (!end) { p.status = 0; return; }
+    const diff = (end - TODAY) / 86400000;
+    if (diff < -1)               { p.status = 3; if (diff > -8) p.overdue = true; }
+    else if (start && start <= TODAY && end >= TODAY) { p.status = 1; }
+    else if (diff >= 0 && diff <= 1) { p.status = 2; }
+    else if (diff > 1 && diff <= 5)  { p.status = 1; }
+    else                             { p.status = 0; }
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════════════════════════
+function renderAll() {
+  renderTimeline();
+  renderBoard();
+  updateStats();
+}
+
+function renderTimeline() {
+  const track = document.getElementById('tlTrack');
+  track.innerHTML = '';
+  STATE.phases.forEach((p, i) => {
+    const d = document.createElement('div');
+    d.className = 'tl-phase';
+    d.style.background = TL_BG[i % TL_BG.length];
+    const shortTitle = p.title.length > 22 ? p.title.slice(0,20) + '…' : p.title;
+    d.innerHTML = `<div class="tl-name" style="color:${TL_FILL[i%TL_FILL.length]}" title="${p.title}">Ph${p.id > 99 ? i+1 : p.id}: ${shortTitle}</div>
+      <div class="tl-date">${p.dateRaw || '—'}</div>
+      <div class="tl-bar" style="background:${TL_FILL[i%TL_FILL.length]}"></div>`;
+    track.appendChild(d);
+  });
+}
+
+function renderBoard() {
+  [0,1,2,3].forEach(ci => {
+    document.getElementById(`col-${ci}`).innerHTML = '';
+    document.getElementById(`cnt-${ci}`).textContent = '0';
+  });
+
+  const search = STATE.search.toLowerCase();
+  const filt   = STATE.filter;
+
+  let shown = 0;
+  STATE.phases.forEach(p => {
+    if (filt !== 'all' && String(p.status) !== filt) return;
+    if (search && !p.title.toLowerCase().includes(search)
+               && !p.owner.toLowerCase().includes(search)
+               && !p.tasks.some(t => t.label.toLowerCase().includes(search))) return;
+    document.getElementById(`col-${p.status}`).appendChild(buildCard(p));
+    shown++;
+  });
+
+  [0,1,2,3].forEach(ci => {
+    const col = document.getElementById(`col-${ci}`);
+    document.getElementById(`cnt-${ci}`).textContent = col.children.length;
+    if (!col.children.length) {
+      col.innerHTML = '<div class="empty-col">No cards here</div>';
+    }
+  });
+}
+
+function buildCard(p) {
+  const taskDone  = p.tasks.map((_, i) => !!STATE.doneMap[`${p.id}_${i}`]);
+  const doneCount = taskDone.filter(Boolean).length;
+  const pct       = p.tasks.length ? Math.round(doneCount / p.tasks.length * 100) : 0;
+  const fillClr   = pct === 100 ? '#10805A' : (pct > 50 ? '#6366F1' : '#3b82f6');
+  const dateClass = p.overdue ? 'card-date overdue' : (p.status === 2 ? 'card-date urgent' : 'card-date');
+
+  const search    = STATE.search.toLowerCase();
+  function hl(str) {
+    if (!search || !str.toLowerCase().includes(search)) return str;
+    const re = new RegExp(`(${search.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+    return str.replace(re, '<mark style="background:#fbbf24;color:#000;border-radius:2px">$1</mark>');
+  }
+
+  const taskHtml = p.tasks.map((t, i) => {
+    const done = taskDone[i];
+    return `<div class="task-row ${done?'done':''}" onclick="toggleTask(${p.id},${i})">
+      <div class="task-cb">${done ? '✓' : ''}</div>
+      <span>${hl(t.label)}</span></div>`;
+  }).join('');
+
+  const opts = ['Not Started','In Progress','Validation','Done']
+    .map((s,si) => `<option value="${si}" ${si===p.status?'selected':''}>${s}</option>`).join('');
+
+  const phaseNum = STATE.phases.indexOf(p) + 1;
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <div class="card-top">
+      <span class="card-badge ${p.colorClass}">Phase ${phaseNum}</span>
+      <select class="card-move" onchange="moveCard(${p.id},+this.value)">${opts}</select>
+    </div>
+    <div class="card-title">${hl(p.title)}</div>
+    ${p.owner ? `<div class="card-owner">👤 <span>${hl(p.owner)}</span></div>` : ''}
+    <div class="prog-wrap">
+      <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;background:${fillClr}"></div></div>
+      <div class="prog-label">${pct}% complete</div>
+    </div>
+    <div class="tasks-list">${taskHtml || '<div style="font-size:11px;color:#2d3f5f;padding:4px 0">No tasks — add via the paste zone</div>'}</div>
+    <div class="card-footer">
+      <div class="${dateClass}">📅 ${p.dateRaw || 'No date set'}</div>
+      <div class="card-tally">${doneCount}/${p.tasks.length} tasks</div>
+    </div>`;
+  return card;
+}
+
+function updateStats() {
+  let total = 0, done = 0, overdue = 0;
+  STATE.phases.forEach(p => {
+    total   += p.tasks.length;
+    if (p.overdue) overdue++;
+    p.tasks.forEach((_, i) => { if (STATE.doneMap[`${p.id}_${i}`]) done++; });
+  });
+  document.getElementById('st-phases').textContent  = STATE.phases.length;
+  document.getElementById('st-tasks').textContent   = total;
+  document.getElementById('st-done').textContent    = done;
+  document.getElementById('st-pct').textContent     = total ? Math.round(done/total*100)+'%' : '0%';
+  document.getElementById('st-overdue').textContent = overdue || '0';
+  document.getElementById('hdrTitle').textContent   = STATE.projectTitle || 'Project Kanban Board';
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ACTIONS
+// ════════════════════════════════════════════════════════════════
+function toggleTask(pid, idx) {
+  const key = `${pid}_${idx}`;
+  STATE.doneMap[key] = !STATE.doneMap[key];
+
+  // Auto-advance card if all tasks done
+  const p = STATE.phases.find(x => x.id === pid);
+  if (p) {
+    const allDone = p.tasks.every((_, i) => STATE.doneMap[`${pid}_${i}`]);
+    if (allDone && p.status < 3) { p.status = 3; toast('🎉 All tasks done — moved to Done!'); }
+    else if (!STATE.doneMap[key] && p.status === 3) { p.status = 1; }
+  }
+
+  save(); renderBoard(); updateStats();
+  if (STATE.doneMap[key]) toast('✓ Task complete');
+}
+
+function moveCard(pid, s) {
+  const p = STATE.phases.find(x => x.id === pid);
+  if (p) { p.status = +s; save(); renderBoard(); updateStats(); }
+}
+
+function addBlankPhase() {
+  const title = prompt('Phase title:');
+  if (!title) return;
+  STATE.phases.push({
+    id: nextId++, title: title.trim(), owner: '', tasks: [],
+    dateRaw: '', colorClass: PC[STATE.phases.length % PC.length], status: 0
+  });
+  save(); renderAll(); toast('✓ Phase added');
+}
+
+function doConvert() {
+  const input = document.getElementById('pasteInput').value.trim();
+  if (!input) { toast('⚠ Paste some text first'); return; }
+  hideErr();
+  const result = smartParse(input);
+  if (!result || !result.phases.length) {
+    showErr('Could not parse this input. Tips: Use numbered sections (1. Title / * Task / Target Date: …), bullet lists, or plain prose describing your workflow.');
+    return;
+  }
+  assignStatuses(result.phases);
+  STATE.phases        = result.phases;
+  STATE.doneMap       = {};
+  STATE.projectTitle  = result.projectTitle;
+
+  const dates = result.phases.map(p => p.dateRaw).filter(Boolean);
+  document.getElementById('hdrDate').textContent = dates.length
+    ? (dates[0] === dates[dates.length-1] ? dates[0] : `${dates[0]} – ${dates[dates.length-1]}`)
+    : '–';
+
+  save(); renderAll();
+  const total = result.phases.reduce((a,p) => a+p.tasks.length, 0);
+  toast(`✓ ${result.phases.length} phases · ${total} tasks loaded`);
+}
+
+function clearInput() {
+  document.getElementById('pasteInput').value = '';
+  hideErr();
+  document.getElementById('pasteInput').focus();
+}
+
+function setFilter(val, btn) {
+  STATE.filter = val;
+  document.querySelectorAll('.fbtn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderBoard();
+}
+
+function applySearch() {
+  STATE.search = document.getElementById('searchInput').value;
+  renderBoard();
+}
+
+function showErr(m) {
+  const e = document.getElementById('parseError');
+  e.textContent = '⚠ ' + m; e.style.display = 'block';
+}
+function hideErr() { document.getElementById('parseError').style.display = 'none'; }
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  PERSIST (localStorage)
+// ════════════════════════════════════════════════════════════════
+function save() {
+  try { localStorage.setItem('kb_pmo_v2', JSON.stringify({ phases: STATE.phases, doneMap: STATE.doneMap, projectTitle: STATE.projectTitle })); }
+  catch(e) { /* file:// origin isolation — silently ignore */ }
+}
+function load() {
+  try {
+    const s = localStorage.getItem('kb_pmo_v2');
+    if (s) { const d = JSON.parse(s); STATE.phases = d.phases || []; STATE.doneMap = d.doneMap || {}; STATE.projectTitle = d.projectTitle || 'Project Kanban Board'; }
+  } catch(e) {}
+}
+
+// ════════════════════════════════════════════════════════════════
+//  DEFAULT DATA (SSOT Reporting Initiative)
+// ════════════════════════════════════════════════════════════════
+const DEFAULT_TEXT = `SSOT Reporting Initiative
+1. Data Access & Requirements Gathering
+Owner: Lyn / Reporting Team
+* Finalize KPI Template (c/o Lyn)
+* Request access to Table F from BE
+* Coordinate with Dax for Table F access approval
+* Validate required fields and metrics from Table F
+* Document data definitions and business rules
+Target Date: July 22, 2026
+
+2. SSOT (Single Source of Truth) Mapping
+Owner: Reporting & Analytics
+* Review existing masterfile structure
+* Map employee, account, program, and hierarchy fields
+* Validate field alignment across reporting sources
+* Identify data gaps and transformation requirements
+* Create SSOT mapping document
+Target Date: July 22 to July 23, 2026
+
+3. Data Integration / Data Plug-in
+Owner: Reporting & Analytics / Technical Team
+* Connect Table F and other required data sources
+* Configure data ingestion process
+* Develop data model and relationships
+* Create validation checks and reconciliation process
+* Test data refresh and accuracy
+Target Date: July 22 to July 23, 2026
+
+4. KPI & Metrics Development
+Owner: Reporting & Analytics
+* Define KPI calculations
+* Develop financial metrics reporting
+* Develop operational performance metrics reporting
+* Validate KPI formulas with stakeholders
+* Document KPI calculations and assumptions
+Target Date: July 23 to July 24, 2026
+
+5. Operations Alignment & Validation
+Owner: Operations Leaders / Reporting Team
+* Present data mapping and KPI outputs
+* Validate account/program metrics
+* Review data accuracy with Operations
+* Address feedback and corrections
+* Obtain sign-off from stakeholders
+Target Date: July 24 or July 27, 2026
+
+6. Finalization & Deployment
+Owner: Reporting & Analytics
+* Implement approved revisions
+* Perform end-to-end testing
+* Validate dashboard/report outputs
+* Prepare user guide/documentation
+* Go-live readiness review
+Target Date: July 28 to July 30, 2026`;
+
+// ════════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════════
+document.getElementById('todayBadge').textContent =
+  'Today: ' + TODAY.toLocaleDateString('en-PH', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+
+load();
+if (STATE.phases && STATE.phases.length) {
+  // Recover nextId
+  STATE.phases.forEach(p => { if (p.id >= nextId) nextId = p.id + 1; });
+  renderAll();
+} else {
+  const r = smartParse(DEFAULT_TEXT);
+  assignStatuses(r.phases);
+  STATE.phases = r.phases;
+  STATE.projectTitle = r.projectTitle;
+  document.getElementById('hdrDate').textContent = 'Jul 22–30, 2026';
+  save(); renderAll();
+}
+</script>
+</body>
+</html>

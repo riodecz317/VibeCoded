@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CPL Allocation Report System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #171b26;
+    --surface2: #1e2335;
+    --border: #2a3050;
+    --accent: #4f7cff;
+    --accent2: #7c5cff;
+    --accent-soft: rgba(79,124,255,0.12);
+    --success: #22c993;
+    --warn: #f5a623;
+    --danger: #ff5c5c;
+    --text: #e8ecf4;
+    --text2: #8a93b0;
+    --text3: #545d7a;
+    --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --sans: 'Inter', system-ui, sans-serif;
+    --radius: 10px;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+
+  /* ── Header ── */
+  .app-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    display: flex; align-items: center; gap: 18px;
+    height: 56px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo-mark {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: grid; place-items: center; font-size: 14px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .app-title { font-size: 15px; font-weight: 600; color: var(--text); }
+  .app-sub { font-size: 11px; color: var(--text3); margin-left: 4px; }
+  .header-right { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  .badge { background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(79,124,255,0.25); border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; }
+
+  /* ── Nav Tabs ── */
+  .nav-tabs {
+    display: flex; gap: 2px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    overflow-x: auto;
+  }
+  .nav-tab {
+    padding: 12px 18px; font-size: 13px; font-weight: 500; color: var(--text2);
+    border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent;
+    white-space: nowrap; transition: color .15s, border-color .15s;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── Layout ── */
+  .main { padding: 24px 28px; max-width: 1400px; margin: 0 auto; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+  }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 14px; }
+
+  /* ── KPI row ── */
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; position: relative; overflow: hidden; }
+  .kpi::after { content:''; position:absolute; top:0; left:0; width:3px; height:100%; background: var(--accent); }
+  .kpi-val { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; }
+  .kpi-label { font-size: 11px; color: var(--text3); margin-top: 5px; font-weight: 500; text-transform: uppercase; letter-spacing:.05em; }
+  .kpi-sub { font-size: 12px; color: var(--text2); margin-top: 3px; }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    background: var(--surface2); color: var(--text2); font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em; padding: 10px 14px;
+    border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background .1s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--accent-soft); }
+  tbody td { padding: 10px 14px; color: var(--text); vertical-align: middle; }
+  .td-mono { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  .alloc-bar { display: flex; align-items: center; gap: 8px; }
+  .alloc-track { flex: 1; height: 4px; background: var(--border); border-radius: 2px; }
+  .alloc-fill { height: 4px; border-radius: 2px; background: var(--accent); }
+  .alloc-pct { font-size: 12px; color: var(--text2); min-width: 44px; text-align: right; }
+  .pill {
+    display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  }
+  .pill-blue { background: rgba(79,124,255,.15); color: var(--accent); }
+  .pill-green { background: rgba(34,201,147,.15); color: var(--success); }
+  .pill-warn { background: rgba(245,166,35,.15); color: var(--warn); }
+  .pill-gray { background: rgba(138,147,176,.1); color: var(--text2); }
+
+  /* ── Upload Zone ── */
+  .upload-zone {
+    border: 2px dashed var(--border); border-radius: var(--radius);
+    padding: 32px; text-align: center; cursor: pointer; transition: border-color .2s, background .2s;
+    background: var(--surface);
+  }
+  .upload-zone:hover, .upload-zone.dragover { border-color: var(--accent); background: var(--accent-soft); }
+  .upload-icon { font-size: 32px; margin-bottom: 10px; }
+  .upload-text { color: var(--text2); font-size: 13px; }
+  .upload-text b { color: var(--accent); }
+
+  /* ── Forms ── */
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing:.05em; }
+  input, select, textarea {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 7px;
+    padding: 8px 12px; color: var(--text); font-size: 13px; font-family: var(--sans);
+    outline: none; transition: border-color .15s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  select option { background: var(--surface2); }
+
+  /* ── Buttons ── */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 7px; font-size: 13px; font-weight: 600; border: none; cursor: pointer; transition: opacity .15s, transform .08s; }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { opacity: .9; }
+  .btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-success { background: var(--success); color: #0a1a14; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+
+  /* ── Section header ── */
+  .section-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .section-head h2 { font-size: 16px; font-weight: 700; color: var(--text); }
+  .section-head p { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* ── Grid helpers ── */
+  .row { display: flex; gap: 16px; margin-bottom: 16px; }
+  .col-6 { flex: 1; min-width: 0; }
+  .col-4 { flex: 0 0 33%; min-width: 0; }
+  .mb16 { margin-bottom: 16px; }
+  .mb24 { margin-bottom: 24px; }
+  .flex-end { justify-content: flex-end; display: flex; gap: 8px; }
+
+  /* ── Template builder ── */
+  .template-line {
+    display: grid; grid-template-columns: 1fr 1fr 1fr 100px auto; gap: 8px; align-items: center;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+  }
+  .template-line:last-child { border-bottom: none; }
+  .del-btn { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 16px; padding: 4px; opacity: .5; }
+  .del-btn:hover { opacity: 1; }
+
+  /* ── Alloc Employee Table ── */
+  #empAllocTable td input, #empAllocTable td select {
+    padding: 5px 8px; font-size: 12px; width: 100%;
+  }
+
+  /* ── Toast ── */
+  #toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px; font-size: 13px; color: var(--text); z-index: 999; display: none; box-shadow: 0 8px 32px rgba(0,0,0,.4); }
+  #toast.show { display: block; animation: fadeUp .3s ease; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── Responsive ── */
+  @media(max-width:700px) {
+    .main { padding: 16px; }
+    .kpi-row { grid-template-columns: 1fr 1fr; }
+    .row { flex-direction: column; }
+    .template-line { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ── Empty state ── */
+  .empty { text-align:center; padding: 48px 20px; color: var(--text3); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty p { font-size: 13px; }
+
+  /* ── Search bar ── */
+  .search-bar { position:relative; }
+  .search-bar input { padding-left: 34px; width: 220px; }
+  .search-bar::before { content:'🔍'; position:absolute; left:10px; top:50%; transform:translateY(-50%); font-size:12px; }
+
+  /* ── Allocation visual ── */
+  .alloc-summary { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .alloc-tag { padding:4px 10px; border-radius:6px; font-size:11px; font-weight:600; background:var(--accent-soft); color:var(--accent); border:1px solid rgba(79,124,255,.2); }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo-mark">CO</div>
+  <div>
+    <span class="app-title">CPL Allocation Report System</span>
+    <span class="app-sub">Clinical Operations · PMO</span>
+  </div>
+  <div class="header-right">
+    <span class="badge" id="totalHCBadge">0 HC</span>
+    <span class="badge" id="budgetBadge">Budget 500</span>
+  </div>
+</header>
+
+<nav class="nav-tabs">
+  <button class="nav-tab active" onclick="showPage('dashboard')">📊 Dashboard</button>
+  <button class="nav-tab" onclick="showPage('upload')">📤 Upload Roster</button>
+  <button class="nav-tab" onclick="showPage('employees')">👥 Employee Allocations</button>
+  <button class="nav-tab" onclick="showPage('template')">📋 Allocation Templates</button>
+  <button class="nav-tab" onclick="showPage('run')">⚡ Run Allocation</button>
+  <button class="nav-tab" onclick="showPage('report')">📄 Reports</button>
+</nav>
+
+<main class="main">
+
+  <!-- ════════════════════════════════════════
+       PAGE: DASHBOARD
+  ═══════════════════════════════════════════ -->
+  <section id="page-dashboard" class="page active">
+    <div class="section-head mb24">
+      <div>
+        <h2>Allocation Dashboard</h2>
+        <p>Live view of CO/PMO headcount allocation across all accounts</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="loadSampleData()">Load Sample Data</button>
+        <button class="btn btn-primary btn-sm" onclick="exportReport()">↓ Export</button>
+      </div>
+    </div>
+
+    <div class="kpi-row" id="kpiRow">
+      <div class="kpi"><div class="kpi-val" id="kpi-employees">—</div><div class="kpi-label">Employees</div></div>
+      <div class="kpi"><div class="kpi-val" id="kpi-accounts">—</div><div class="kpi-label">Accounts</div></div>
+      <div class="kpi"><div class="kpi-val" id="kpi-hc">—</div><div class="kpi-label">Total HC</div></div>
+      <div class="kpi" style="--accent:var(--success)"><div class="kpi-val" id="kpi-budget">—</div><div class="kpi-label">Budget Used</div></div>
+      <div class="kpi" style="--accent:var(--warn)"><div class="kpi-val" id="kpi-profiles">—</div><div class="kpi-label">Profiles</div></div>
+      <div class="kpi" style="--accent:var(--accent2)"><div class="kpi-val" id="kpi-sites">—</div><div class="kpi-label">Office Sites</div></div>
+    </div>
+
+    <div class="row">
+      <div class="col-6">
+        <div class="card mb16">
+          <div class="section-head">
+            <div class="card-title">HC by Account</div>
+            <div class="search-bar"><input type="text" placeholder="Filter..." oninput="filterTable('hcAccountTable',this.value)"></div>
+          </div>
+          <div class="table-wrap">
+            <table id="hcAccountTable">
+              <thead><tr><th>Account</th><th>HC</th><th>% Share</th><th>Allocation</th></tr></thead>
+              <tbody id="hcAccountBody">
+                <tr><td colspan="4"><div class="empty"><div class="empty-icon">📂</div><p>No data loaded. Upload a roster or load sample data.</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="card mb16">
+          <div class="section-head">
+            <div class="card-title">HC by Profile</div>
+            <div class="search-bar"><input type="text" placeholder="Filter..." oninput="filterTable('hcProfileTable',this.value)"></div>
+          </div>
+          <div class="table-wrap">
+            <table id="hcProfileTable">
+              <thead><tr><th>Account</th><th>Profile</th><th>HC</th></tr></thead>
+              <tbody id="hcProfileBody">
+                <tr><td colspan="3"><div class="empty"><div class="empty-icon">📂</div><p>No data loaded.</p></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-head">
+        <div class="card-title">HC by Account & Site</div>
+      </div>
+      <div class="table-wrap">
+        <table id="hcSiteTable">
+          <thead><tr><th>Account</th><th>Site</th><th>HC</th><th>% Allocation</th></tr></thead>
+          <tbody id="hcSiteBody">
+            <tr><td colspan="4"><div class="empty"><div class="empty-icon">📂</div><p>No data loaded.</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       PAGE: UPLOAD ROSTER
+  ═══════════════════════════════════════════ -->
+  <section id="page-upload" class="page">
+    <div class="section-head mb24">
+      <div><h2>Upload Roster</h2><p>Import employee allocation data from Excel or CSV</p></div>
+    </div>
+
+    <div class="row">
+      <div class="col-6">
+        <div class="card mb16">
+          <div class="card-title">Employee Roster File</div>
+          <div class="upload-zone" id="rosterZone" ondragover="dragOver(event,'rosterZone')" ondragleave="dragLeave('rosterZone')" ondrop="dropFile(event,'rosterZone','roster')">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">Drag & drop <b>.xlsx</b> or <b>.csv</b><br>or <b onclick="document.getElementById('rosterInput').click()" style="cursor:pointer">click to browse</b></div>
+            <input type="file" id="rosterInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(this,'roster')">
+          </div>
+          <div id="rosterStatus" style="margin-top:12px;font-size:12px;color:var(--text2);"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Expected Columns</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Column</th><th>Required</th><th>Notes</th></tr></thead>
+              <tbody>
+                <tr><td>Global ID</td><td><span class="pill pill-blue">Required</span></td><td class="td-mono">SG0XXXXX</td></tr>
+                <tr><td>Given Name</td><td><span class="pill pill-blue">Required</span></td><td></td></tr>
+                <tr><td>Last Name</td><td><span class="pill pill-blue">Required</span></td><td></td></tr>
+                <tr><td>Account</td><td><span class="pill pill-blue">Required</span></td><td>Multi-account rows ok</td></tr>
+                <tr><td>Department</td><td><span class="pill pill-blue">Required</span></td><td>Compliance / PMO</td></tr>
+                <tr><td>Cost Center</td><td><span class="pill pill-green">Optional</span></td><td></td></tr>
+                <tr><td>Profile</td><td><span class="pill pill-green">Optional</span></td><td>PHRN / USRN / Non-RN</td></tr>
+                <tr><td>Site</td><td><span class="pill pill-green">Optional</span></td><td>BT / ALA / ILO / RMC</td></tr>
+                <tr><td>Allocation</td><td><span class="pill pill-green">Optional</span></td><td>Decimal 0–1</td></tr>
+                <tr><td>Remarks</td><td><span class="pill pill-green">Optional</span></td><td>Free text</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-6">
+        <div class="card mb16">
+          <div class="card-title">HC Reference Data (Optional)</div>
+          <div class="upload-zone" id="hcZone" ondragover="dragOver(event,'hcZone')" ondragleave="dragLeave('hcZone')" ondrop="dropFile(event,'hcZone','hcRef')">
+            <div class="upload-icon">📊</div>
+            <div class="upload-text">Upload HC reference file<br><b onclick="document.getElementById('hcInput').click()" style="cursor:pointer">click to browse</b></div>
+            <input type="file" id="hcInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFile(this,'hcRef')">
+          </div>
+          <div id="hcStatus" style="margin-top:12px;font-size:12px;color:var(--text2);"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Preview</div>
+          <div id="uploadPreview">
+            <div class="empty"><div class="empty-icon">👆</div><p>Upload a file to see a preview here.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-end mt16">
+      <button class="btn btn-ghost" onclick="clearAllData()">✕ Clear All</button>
+      <button class="btn btn-primary" onclick="commitData(); showPage('dashboard')">✓ Commit & View Dashboard</button>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       PAGE: EMPLOYEE ALLOCATIONS
+  ═══════════════════════════════════════════ -->
+  <section id="page-employees" class="page">
+    <div class="section-head mb24">
+      <div><h2>Employee Allocations</h2><p>View and edit individual employee cross-account allocations</p></div>
+      <div style="display:flex;gap:8px">
+        <div class="search-bar"><input type="text" id="empSearch" placeholder="Search name / ID..." oninput="renderEmployeeTable()" style="width:200px"></div>
+        <button class="btn btn-ghost btn-sm" onclick="addEmployeeRow()">+ Add Row</button>
+        <button class="btn btn-primary btn-sm" onclick="saveEmployeeEdits()">Save</button>
+      </div>
+    </div>
+
+    <div class="table-wrap mb16">
+      <table id="empAllocTable">
+        <thead>
+          <tr>
+            <th>Global ID</th><th>Full Name</th><th>Dept</th>
+            <th>Account</th><th>Cost Center</th><th>Profile</th><th>Site</th>
+            <th>Allocation %</th><th>Budget</th><th>Remarks</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="empAllocBody">
+          <tr><td colspan="11"><div class="empty"><div class="empty-icon">👥</div><p>No employees loaded. Upload a roster or load sample data.</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Allocation Summary per Employee</div>
+      <div id="empSummaryCards" class="alloc-summary">
+        <div style="color:var(--text3);font-size:12px;padding:10px 0">No data yet.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       PAGE: ALLOCATION TEMPLATES
+  ═══════════════════════════════════════════ -->
+  <section id="page-template" class="page">
+    <div class="section-head mb24">
+      <div><h2>Allocation Templates</h2><p>Create reusable allocation patterns for special employee types</p></div>
+      <button class="btn btn-primary btn-sm" onclick="addTemplate()">+ New Template</button>
+    </div>
+
+    <div id="templateList" class="mb24">
+      <!-- templates rendered here -->
+    </div>
+
+    <div class="card">
+      <div class="card-title">Apply Template to Employees</div>
+      <div class="form-grid mb16">
+        <div class="field">
+          <label>Select Template</label>
+          <select id="applyTemplateSel"></select>
+        </div>
+        <div class="field">
+          <label>Target Employee</label>
+          <select id="applyEmpSel"><option value="">— select employee —</option></select>
+        </div>
+        <div class="field" style="align-self:flex-end">
+          <button class="btn btn-success" onclick="applyTemplate()">Apply Template</button>
+        </div>
+      </div>
+      <div id="templatePreview"></div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       PAGE: RUN ALLOCATION
+  ═══════════════════════════════════════════ -->
+  <section id="page-run" class="page">
+    <div class="section-head mb24">
+      <div><h2>Run Allocation</h2><p>Compute and validate allocation for a selected group of employees</p></div>
+    </div>
+
+    <div class="row">
+      <div class="col-4">
+        <div class="card">
+          <div class="card-title">Filter Employees</div>
+          <div class="field mb16">
+            <label>Department</label>
+            <select id="runDept" onchange="refreshRunList()">
+              <option value="">All</option>
+              <option>Compliance</option>
+              <option>PMO</option>
+            </select>
+          </div>
+          <div class="field mb16">
+            <label>Account</label>
+            <select id="runAccount" onchange="refreshRunList()">
+              <option value="">All</option>
+            </select>
+          </div>
+          <div class="field mb16">
+            <label>Profile</label>
+            <select id="runProfile" onchange="refreshRunList()">
+              <option value="">All</option>
+              <option>PHRN</option><option>USRN</option><option>Non-RN</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" style="width:100%" onclick="runAllocation()">⚡ Run Allocation</button>
+        </div>
+      </div>
+
+      <div class="col-6">
+        <div class="card mb16">
+          <div class="card-title">Employees in Scope</div>
+          <div id="runEmpList" class="table-wrap" style="max-height:320px;overflow-y:auto">
+            <div class="empty"><div class="empty-icon">🎯</div><p>Set filters and click Run Allocation.</p></div>
+          </div>
+        </div>
+        <div class="card" id="runResults" style="display:none">
+          <div class="card-title">Allocation Results</div>
+          <div id="runResultsBody"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════
+       PAGE: REPORTS
+  ═══════════════════════════════════════════ -->
+  <section id="page-report" class="page">
+    <div class="section-head mb24">
+      <div><h2>Reports</h2><p>Generate formatted allocation reports for distribution</p></div>
+    </div>
+
+    <div class="row">
+      <div class="col-6">
+        <div class="card mb16">
+          <div class="card-title">Report Configuration</div>
+          <div class="form-grid mb16">
+            <div class="field">
+              <label>Report Type</label>
+              <select id="reportType">
+                <option value="full">Full Allocation Report</option>
+                <option value="account">By Account</option>
+                <option value="employee">By Employee</option>
+                <option value="hc">HC Summary</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Filter Account</label>
+              <select id="reportAccount"><option value="">All Accounts</option></select>
+            </div>
+            <div class="field">
+              <label>Filter Dept</label>
+              <select id="reportDept">
+                <option value="">All</option><option>Compliance</option><option>PMO</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Period Label</label>
+              <input type="text" id="reportPeriod" placeholder="e.g. Q3 2025">
+            </div>
+          </div>
+          <div class="flex-end">
+            <button class="btn btn-ghost" onclick="previewReport()">Preview</button>
+            <button class="btn btn-primary" onclick="exportReport()">↓ Export Excel</button>
+          </div>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="card">
+          <div class="card-title">Quick Stats</div>
+          <div id="reportQuickStats">
+            <div class="empty"><div class="empty-icon">📄</div><p>Preview a report to see stats here.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="reportPreviewCard" style="display:none">
+      <div class="card-title" id="reportPreviewTitle">Report Preview</div>
+      <div id="reportPreviewBody" class="table-wrap"></div>
+    </div>
+  </section>
+
+</main>
+
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════
+const STATE = {
+  roster: [],       // raw allocation rows
+  hcAccount: [],    // {account, hc, pct}
+  hcProfile: [],    // {account, costCenter, profile, hc}
+  hcSite: [],       // {account, site, hc, pctAlloc}
+  templates: [],    // [{id, name, lines:[{account,costCenter,profile,alloc}]}]
+  budget: 500
+};
+
+// Pre-load sample data extracted from uploaded file
+function loadSampleData() {
+  STATE.roster = [
+    {globalId:'SG011897',givenName:'Sheena Katrina',lastName:'Jimenez',fullName:'Jimenez, Sheena Katrina',dept:'Compliance',account:'Blue Cross Idaho',costCenter:'',profile:'',site:'',allocation:0.006852,budget:3.43,remarks:''},
+    {globalId:'SG011897',givenName:'Sheena Katrina',lastName:'Jimenez',fullName:'Jimenez, Sheena Katrina',dept:'Compliance',account:'Cigna Clinical',costCenter:'',profile:'',site:'',allocation:0.190578,budget:95.29,remarks:''},
+    {globalId:'SG011897',givenName:'Sheena Katrina',lastName:'Jimenez',fullName:'Jimenez, Sheena Katrina',dept:'Compliance',account:'Cohere',costCenter:'',profile:'',site:'',allocation:0.067666,budget:33.83,remarks:''},
+    {globalId:'SG011897',givenName:'Sheena Katrina',lastName:'Jimenez',fullName:'Jimenez, Sheena Katrina',dept:'Compliance',account:'Enlyte Clinical',costCenter:'',profile:'',site:'',allocation:0.059529,budget:29.76,remarks:''},
+    {globalId:'SG011897',givenName:'Sheena Katrina',lastName:'Jimenez',fullName:'Jimenez, Sheena Katrina',dept:'Compliance',account:'Flatiron',costCenter:'',profile:'',site:'',allocation:0.131049,budget:65.52,remarks:''},
+    {globalId:'SG011897',givenName:'Sheena Katrina',lastName:'Jimenez',fullName:'Jimenez, Sheena Katrina',dept:'Compliance',account:'Humana Clinical',costCenter:'',profile:'',site:'',allocation:0.544325,budget:272.16,remarks:''},
+    {globalId:'SG011325',givenName:'Lorraine Anne',lastName:'Balis',fullName:'Balis, Lorraine Anne',dept:'Compliance',account:'Flatiron',costCenter:'Flatiron Clinical Abstraction',profile:'PHRN',site:'',allocation:1,budget:500,remarks:''},
+    {globalId:'SG011297',givenName:'Regeene',lastName:'Quinajon',fullName:'Quinajon, Regeene',dept:'Compliance',account:'Humana Clinical',costCenter:'PHL_HUMANA CIT',profile:'Non-RN',site:'ALA',allocation:1,budget:500,remarks:'Humana ALA'},
+    {globalId:'SG011978',givenName:'Janine',lastName:'Buenaventura',fullName:'Buenaventura, Janine',dept:'Compliance',account:'Cigna Clinical',costCenter:'Cigna Medical Case_PHRN BT',profile:'PHRN',site:'BT',allocation:1,budget:500,remarks:''},
+    {globalId:'SG007619',givenName:'Raymart',lastName:'De Mateo',fullName:'De Mateo, Raymart',dept:'Compliance',account:'Cohere',costCenter:'Cohere Clinical',profile:'USRN',site:'BT',allocation:0.847195,budget:423.60,remarks:''},
+    {globalId:'SG007619',givenName:'Raymart',lastName:'De Mateo',fullName:'De Mateo, Raymart',dept:'Compliance',account:'Humana Clinical',costCenter:'PHL_HRA - BT',profile:'Non-RN',site:'BT',allocation:0.152805,budget:76.40,remarks:'Humana BT'},
+    {globalId:'SG003710',givenName:'Maricel',lastName:'Tupas',fullName:'Tupas, Maricel',dept:'Compliance',account:'Humana Clinical',costCenter:'PHL_HUMANA CIT VOICE ILO',profile:'Non-RN',site:'ILO',allocation:0.809375,budget:404.69,remarks:'Humana ILO'},
+    {globalId:'SG003710',givenName:'Maricel',lastName:'Tupas',fullName:'Tupas, Maricel',dept:'Compliance',account:'Enlyte Clinical',costCenter:'TCM ILO',profile:'Non-RN',site:'ILO',allocation:0.190625,budget:95.31,remarks:'Enlyte ILO'},
+    {globalId:'SG012617',givenName:'Maria Isabel',lastName:'Dizon',fullName:'Dizon, Maria Isabel',dept:'PMO',account:'Blue Cross Idaho',costCenter:'',profile:'',site:'',allocation:0.006852,budget:3.43,remarks:''},
+    {globalId:'SG012617',givenName:'Maria Isabel',lastName:'Dizon',fullName:'Dizon, Maria Isabel',dept:'PMO',account:'Cigna Clinical',costCenter:'',profile:'',site:'',allocation:0.190578,budget:95.29,remarks:''},
+    {globalId:'SG012617',givenName:'Maria Isabel',lastName:'Dizon',fullName:'Dizon, Maria Isabel',dept:'PMO',account:'Cohere',costCenter:'',profile:'',site:'',allocation:0.067666,budget:33.83,remarks:''},
+    {globalId:'SG012617',givenName:'Maria Isabel',lastName:'Dizon',fullName:'Dizon, Maria Isabel',dept:'PMO',account:'Enlyte Clinical',costCenter:'',profile:'',site:'',allocation:0.059529,budget:29.76,remarks:''},
+    {globalId:'SG012617',givenName:'Maria Isabel',lastName:'Dizon',fullName:'Dizon, Maria Isabel',dept:'PMO',account:'Flatiron',costCenter:'',profile:'',site:'',allocation:0.131049,budget:65.52,remarks:''},
+    {globalId:'SG012617',givenName:'Maria Isabel',lastName:'Dizon',fullName:'Dizon, Maria Isabel',dept:'PMO',account:'Humana Clinical',costCenter:'',profile:'',site:'',allocation:0.544325,budget:272.16,remarks:''},
+    {globalId:'SG009748',givenName:'Ricky',lastName:'Dela Torre',fullName:'Dela Torre, Ricky',dept:'PMO',account:'Blue Cross Idaho',costCenter:'',profile:'',site:'',allocation:0.006852,budget:3.43,remarks:''},
+    {globalId:'SG009748',givenName:'Ricky',lastName:'Dela Torre',fullName:'Dela Torre, Ricky',dept:'PMO',account:'Cigna Clinical',costCenter:'',profile:'',site:'',allocation:0.190578,budget:95.29,remarks:''},
+    {globalId:'SG009748',givenName:'Ricky',lastName:'Dela Torre',fullName:'Dela Torre, Ricky',dept:'PMO',account:'Cohere',costCenter:'',profile:'',site:'',allocation:0.067666,budget:33.83,remarks:''},
+    {globalId:'SG009748',givenName:'Ricky',lastName:'Dela Torre',fullName:'Dela Torre, Ricky',dept:'PMO',account:'Enlyte Clinical',costCenter:'',profile:'',site:'',allocation:0.059529,budget:29.76,remarks:''},
+    {globalId:'SG009748',givenName:'Ricky',lastName:'Dela Torre',fullName:'Dela Torre, Ricky',dept:'PMO',account:'Flatiron',costCenter:'',profile:'',site:'',allocation:0.131049,budget:65.52,remarks:''},
+    {globalId:'SG009748',givenName:'Ricky',lastName:'Dela Torre',fullName:'Dela Torre, Ricky',dept:'PMO',account:'Humana Clinical',costCenter:'',profile:'',site:'',allocation:0.544325,budget:272.16,remarks:''},
+    {globalId:'SG011665',givenName:'Rodilyn',lastName:'Olitres',fullName:'Olitres, Rodilyn',dept:'PMO',account:'Cigna Clinical',costCenter:'Cigna THN BT',profile:'PHRN',site:'BT',allocation:0.55,budget:275,remarks:''},
+    {globalId:'SG011665',givenName:'Rodilyn',lastName:'Olitres',fullName:'Olitres, Rodilyn',dept:'PMO',account:'Flatiron',costCenter:'Flatiron Clinical Abstraction',profile:'PHRN',site:'',allocation:0.45,budget:225,remarks:''},
+    {globalId:'SG033743',givenName:'Allan',lastName:'Kubo',fullName:'Kubo, Allan',dept:'PMO',account:'Blue Cross Idaho',costCenter:'PHL_BCI G&A Clinical Review',profile:'USRN',site:'',allocation:0.020050,budget:10.03,remarks:''},
+    {globalId:'SG033743',givenName:'Allan',lastName:'Kubo',fullName:'Kubo, Allan',dept:'PMO',account:'Cigna Clinical',costCenter:'Cigna Medical Case_USRN BT',profile:'USRN',site:'BT',allocation:0.303258,budget:151.63,remarks:''},
+    {globalId:'SG033743',givenName:'Allan',lastName:'Kubo',fullName:'Kubo, Allan',dept:'PMO',account:'Cohere',costCenter:'Cohere Clinical',profile:'USRN',site:'BT',allocation:0.185464,budget:92.73,remarks:''},
+    {globalId:'SG033743',givenName:'Allan',lastName:'Kubo',fullName:'Kubo, Allan',dept:'PMO',account:'Enlyte Clinical',costCenter:'PHL_Clinical Care 24 (USRN)',profile:'USRN',site:'',allocation:0.105263,budget:52.63,remarks:''},
+    {globalId:'SG033743',givenName:'Allan',lastName:'Kubo',fullName:'Kubo, Allan',dept:'PMO',account:'Humana Clinical',costCenter:'PHL_HUMANA CIT CLINICAL',profile:'USRN',site:'BT',allocation:0.385965,budget:192.98,remarks:''},
+  ];
+  STATE.hcAccount = [
+    {account:'Blue Cross Idaho',hc:16,pct:0.006852},
+    {account:'Cigna Clinical',hc:445,pct:0.190578},
+    {account:'Cohere',hc:158,pct:0.067666},
+    {account:'Enlyte Clinical',hc:139,pct:0.059529},
+    {account:'Flatiron',hc:306,pct:0.131049},
+    {account:'Humana Clinical',hc:1271,pct:0.544325},
+  ];
+  STATE.hcProfile = [
+    {account:'Flatiron',costCenter:'Flatiron Clinical Abstraction',profile:'PHRN',hc:306},
+    {account:'Cigna Clinical',costCenter:'Cigna Medical Case_PHRN BT',profile:'PHRN',hc:65},
+    {account:'Cigna Clinical',costCenter:'Cigna Medical Case_USRN BT',profile:'USRN',hc:107},
+    {account:'Cigna Clinical',costCenter:'Cigna Personal Advocate BT',profile:'PHRN',hc:37},
+    {account:'Cigna Clinical',costCenter:'Cigna THN BT',profile:'PHRN',hc:107},
+    {account:'Cigna Clinical',costCenter:'Cigna THN ALA',profile:'PHRN',hc:84},
+    {account:'Cigna Clinical',costCenter:'Cigna THN RMC',profile:'Non-RN',hc:23},
+    {account:'Cohere',costCenter:'Cohere Intake',profile:'Non-RN',hc:84},
+    {account:'Cohere',costCenter:'Cohere Clinical',profile:'USRN',hc:74},
+    {account:'Humana Clinical',costCenter:'PHL_HRA - BT',profile:'Non-RN',hc:168},
+    {account:'Humana Clinical',costCenter:'PHL_HRA - ILO',profile:'Non-RN',hc:104},
+    {account:'Humana Clinical',costCenter:'PHL_HUMANA AEC',profile:'Non-RN',hc:46},
+    {account:'Humana Clinical',costCenter:'PHL_Humana Clinical SNP Care Coach',profile:'Non-RN',hc:335},
+    {account:'Humana Clinical',costCenter:'PHL_HUMANA CIT CLINICAL',profile:'USRN',hc:154},
+    {account:'Humana Clinical',costCenter:'PHL_HUMANA CIT CLINICAL PHRN',profile:'PHRN',hc:100},
+    {account:'Enlyte Clinical',costCenter:'PHL_Qual-Lynx Clinical QL 1',profile:'PHRN',hc:14},
+    {account:'Enlyte Clinical',costCenter:'PHL_Care Coordinator - MNL (Genex)',profile:'Non-RN',hc:48},
+    {account:'Enlyte Clinical',costCenter:'PHL_Clinical Care 24 (USRN)',profile:'USRN',hc:42},
+    {account:'Blue Cross Idaho',costCenter:'PHL_BCI G&A Clinical Review',profile:'USRN',hc:8},
+    {account:'Blue Cross Idaho',costCenter:'PHL_BCI G&A Intake',profile:'Non-RN',hc:8},
+  ];
+  STATE.hcSite = [
+    {account:'Humana Clinical',site:'ALA',hc:136,pctAlloc:0.107002},
+    {account:'Humana Clinical',site:'BT',hc:876,pctAlloc:0.689221},
+    {account:'Humana Clinical',site:'ILO',hc:259,pctAlloc:0.203777},
+    {account:'Cohere',site:'BT',hc:158,pctAlloc:1},
+    {account:'Enlyte Clinical',site:'ILO',hc:61,pctAlloc:0.19},
+    {account:'Enlyte Clinical',site:'BT/MNL',hc:78,pctAlloc:0.81},
+  ];
+  refreshDashboard();
+  refreshEmployeePage();
+  populateAccountDropdowns();
+  toast('✅ Sample data loaded — 10 employees, 6 accounts', 'success');
+}
+
+// ════════════════════════════════════════════════
+//  NAV
+// ════════════════════════════════════════════════
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if (id==='employees') refreshEmployeePage();
+  if (id==='run') refreshRunPage();
+  if (id==='template') refreshTemplatePage();
+}
+
+// ════════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════════
+function refreshDashboard() {
+  const empSet = new Set(STATE.roster.map(r=>r.globalId));
+  const accSet = new Set(STATE.roster.map(r=>r.account));
+  const totalHC = STATE.hcAccount.reduce((s,r)=>s+r.hc,0);
+  const totalBudget = [...empSet].reduce((sum,id)=>{
+    const rows = STATE.roster.filter(r=>r.globalId===id);
+    return sum + rows.reduce((s,r)=>s+r.budget,0);
+  },0);
+  const profSet = new Set(STATE.hcProfile.map(r=>r.profile));
+  const siteSet = new Set(STATE.hcSite.map(r=>r.site));
+
+  document.getElementById('kpi-employees').textContent = empSet.size || '—';
+  document.getElementById('kpi-accounts').textContent = accSet.size || '—';
+  document.getElementById('kpi-hc').textContent = totalHC ? totalHC.toLocaleString() : '—';
+  document.getElementById('kpi-budget').textContent = totalBudget ? totalBudget.toFixed(0) : '—';
+  document.getElementById('kpi-profiles').textContent = profSet.size || '—';
+  document.getElementById('kpi-sites').textContent = siteSet.size || '—';
+  document.getElementById('totalHCBadge').textContent = totalHC ? totalHC.toLocaleString()+' HC' : '0 HC';
+  document.getElementById('budgetBadge').textContent = 'Budget '+STATE.budget;
+
+  // HC by Account table
+  const hcABody = document.getElementById('hcAccountBody');
+  if (STATE.hcAccount.length) {
+    hcABody.innerHTML = STATE.hcAccount.map(r=>`
+      <tr data-search="${r.account.toLowerCase()}">
+        <td><strong>${r.account}</strong></td>
+        <td class="td-mono">${r.hc.toLocaleString()}</td>
+        <td>
+          <div class="alloc-bar">
+            <div class="alloc-track"><div class="alloc-fill" style="width:${(r.pct*100).toFixed(1)}%"></div></div>
+            <span class="alloc-pct">${(r.pct*100).toFixed(2)}%</span>
+          </div>
+        </td>
+        <td><span class="pill pill-blue">${(r.pct*STATE.budget).toFixed(1)}</span></td>
+      </tr>`).join('');
+  }
+
+  // HC by Profile table
+  const hcPBody = document.getElementById('hcProfileBody');
+  if (STATE.hcProfile.length) {
+    hcPBody.innerHTML = STATE.hcProfile.map(r=>`
+      <tr data-search="${(r.account+r.costCenter+r.profile).toLowerCase()}">
+        <td><span class="pill pill-gray">${r.account}</span></td>
+        <td style="font-size:12px;color:var(--text2)">${r.costCenter}</td>
+        <td><span class="pill ${profilePill(r.profile)}">${r.profile}</span>&nbsp;<span class="td-mono">${r.hc||'—'}</span></td>
+      </tr>`).join('');
+  }
+
+  // HC by Site
+  const hcSBody = document.getElementById('hcSiteBody');
+  if (STATE.hcSite.length) {
+    hcSBody.innerHTML = STATE.hcSite.map(r=>`
+      <tr>
+        <td>${r.account}</td>
+        <td><span class="pill pill-gray">${r.site}</span></td>
+        <td class="td-mono">${r.hc.toLocaleString()}</td>
+        <td>
+          <div class="alloc-bar">
+            <div class="alloc-track"><div class="alloc-fill" style="width:${(r.pctAlloc*100).toFixed(1)}%;background:var(--success)"></div></div>
+            <span class="alloc-pct">${(r.pctAlloc*100).toFixed(1)}%</span>
+          </div>
+        </td>
+      </tr>`).join('');
+  }
+}
+
+function profilePill(p) {
+  if (p==='PHRN') return 'pill-blue';
+  if (p==='USRN') return 'pill-green';
+  return 'pill-warn';
+}
+
+function filterTable(tableId, q) {
+  document.querySelectorAll(`#${tableId} tbody tr`).forEach(tr=>{
+    const s = tr.dataset.search||tr.textContent.toLowerCase();
+    tr.style.display = s.includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+// ════════════════════════════════════════════════
+//  FILE UPLOAD
+// ════════════════════════════════════════════════
+function dragOver(e, zoneId) { e.preventDefault(); document.getElementById(zoneId).classList.add('dragover'); }
+function dragLeave(zoneId) { document.getElementById(zoneId).classList.remove('dragover'); }
+function dropFile(e, zoneId, type) {
+  e.preventDefault(); dragLeave(zoneId);
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file, type);
+}
+function handleFile(input, type) { if (input.files[0]) processFile(input.files[0], type); }
+
+function processFile(file, type) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, {defval:''});
+
+      if (type==='roster') {
+        STATE.roster = raw.map(r => normalizeRosterRow(r));
+        document.getElementById('rosterStatus').innerHTML = `✅ <strong>${STATE.roster.length}</strong> rows loaded from <em>${file.name}</em>`;
+        showUploadPreview(STATE.roster.slice(0,5));
+      } else {
+        document.getElementById('hcStatus').innerHTML = `✅ HC reference loaded from <em>${file.name}</em>`;
+      }
+      toast('File loaded: '+file.name, 'success');
+    } catch(err) {
+      toast('Error reading file: '+err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function normalizeRosterRow(r) {
+  const keys = Object.keys(r).map(k=>k.trim());
+  const get = (...names) => { for (const n of names) { const k = keys.find(k=>k.toLowerCase()===n.toLowerCase()); if(k!==undefined) return String(r[k]||'').trim(); } return ''; };
+  const gname = get('Given Name','GivenName','First Name','firstname');
+  const lname = get('Last Name','LastName','Surname');
+  return {
+    globalId: get('Global ID','GlobalID','global_id','SG ID'),
+    givenName: gname,
+    lastName: lname,
+    fullName: get('Full Name','FullName') || (lname&&gname ? `${lname}, ${gname}` : gname+' '+lname),
+    dept: get('Department','Deparment','Dept'),
+    account: get('Account'),
+    costCenter: get('Cost Center','CostCenter','COST CENTER NAME','Cost Center Name'),
+    profile: get('Profile','PROFILE'),
+    site: get('Site','SITE','Office Site'),
+    allocation: parseFloat(get('Allocation','Alloc','allocation%','%Allocation'))||0,
+    budget: parseFloat(get('Budget','budget'))||0,
+    remarks: get('Remarks','Notes','remarks')
+  };
+}
+
+function showUploadPreview(rows) {
+  if (!rows.length) return;
+  const cols = ['globalId','fullName','dept','account','costCenter','profile','site','allocation','budget'];
+  const labels = ['Global ID','Full Name','Dept','Account','Cost Center','Profile','Site','Alloc%','Budget'];
+  document.getElementById('uploadPreview').innerHTML = `
+    <div class="table-wrap" style="max-height:220px;overflow-y:auto">
+      <table><thead><tr>${labels.map(l=>`<th>${l}</th>`).join('')}</tr></thead>
+      <tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td style="font-size:12px">${c==='allocation'?(r[c]*100).toFixed(2)+'%':r[c]||'—'}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table></div><p style="font-size:11px;color:var(--text3);margin-top:8px">Showing first 5 rows of ${STATE.roster.length}</p>`;
+}
+
+function commitData() { refreshDashboard(); refreshEmployeePage(); populateAccountDropdowns(); }
+function clearAllData() { STATE.roster=[]; STATE.hcAccount=[]; STATE.hcProfile=[]; STATE.hcSite=[]; refreshDashboard(); toast('Data cleared','warn'); }
+
+// ════════════════════════════════════════════════
+//  EMPLOYEE TABLE
+// ════════════════════════════════════════════════
+function refreshEmployeePage() {
+  const q = (document.getElementById('empSearch')?.value||'').toLowerCase();
+  const rows = STATE.roster.filter(r=>!q||(r.fullName+r.globalId+r.account).toLowerCase().includes(q));
+  const body = document.getElementById('empAllocBody');
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="11"><div class="empty"><div class="empty-icon">👥</div><p>No employees loaded.</p></div></td></tr>`;
+    return;
+  }
+
+  const accs = [...new Set(STATE.roster.map(r=>r.account))];
+  const profiles = ['PHRN','USRN','Non-RN'];
+  const sites = ['BT','ALA','ILO','RMC','MNL'];
+
+  body.innerHTML = rows.map((r,i)=>`
+    <tr data-idx="${i}">
+      <td class="td-mono">${r.globalId}</td>
+      <td><strong style="font-size:12px">${r.fullName}</strong></td>
+      <td><span class="pill pill-gray">${r.dept||'—'}</span></td>
+      <td>${r.account}</td>
+      <td style="font-size:11px;color:var(--text2);max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.costCenter||'—'}</td>
+      <td>${r.profile?`<span class="pill ${profilePill(r.profile)}">${r.profile}</span>`:'—'}</td>
+      <td>${r.site?`<span class="pill pill-gray">${r.site}</span>`:'—'}</td>
+      <td>
+        <div class="alloc-bar">
+          <div class="alloc-track"><div class="alloc-fill" style="width:${Math.min((r.allocation||0)*100,100)}%"></div></div>
+          <span class="alloc-pct">${((r.allocation||0)*100).toFixed(2)}%</span>
+        </div>
+      </td>
+      <td class="td-mono">${(r.budget||0).toFixed(2)}</td>
+      <td style="font-size:11px;color:var(--text2)">${r.remarks||''}</td>
+      <td><button class="del-btn" onclick="deleteRow(${STATE.roster.indexOf(r)})">✕</button></td>
+    </tr>`).join('');
+
+  // Summary cards per employee
+  const empGroups = {};
+  STATE.roster.forEach(r=>{ if(!empGroups[r.globalId]) empGroups[r.globalId]={name:r.fullName,total:0,accounts:[]}; empGroups[r.globalId].total+=r.allocation||0; empGroups[r.globalId].accounts.push(r.account); });
+  document.getElementById('empSummaryCards').innerHTML = Object.values(empGroups).map(g=>`
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;min-width:200px">
+      <div style="font-size:12px;font-weight:600;margin-bottom:5px">${g.name}</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:5px">${[...new Set(g.accounts)].join(' · ')}</div>
+      <div class="alloc-bar">
+        <div class="alloc-track" style="flex:1"><div class="alloc-fill" style="width:${Math.min(g.total*100,100)}%;background:${g.total>=0.99?'var(--success)':g.total>1?'var(--danger)':'var(--warn)'}"></div></div>
+        <span class="alloc-pct" style="color:${g.total>=0.99?'var(--success)':g.total>1?'var(--danger)':'var(--warn)'}">${(g.total*100).toFixed(1)}%</span>
+      </div>
+    </div>`).join('');
+}
+
+function deleteRow(idx) { STATE.roster.splice(idx,1); refreshEmployeePage(); toast('Row deleted','warn'); }
+function saveEmployeeEdits() { toast('Changes saved','success'); }
+function addEmployeeRow() {
+  STATE.roster.push({globalId:'',givenName:'',lastName:'',fullName:'New Employee',dept:'',account:'',costCenter:'',profile:'',site:'',allocation:0,budget:0,remarks:''});
+  refreshEmployeePage();
+}
+
+// ════════════════════════════════════════════════
+//  TEMPLATES
+// ════════════════════════════════════════════════
+function refreshTemplatePage() {
+  const container = document.getElementById('templateList');
+  if (!STATE.templates.length) {
+    container.innerHTML = `<div class="card"><div class="empty"><div class="empty-icon">📋</div><p>No templates yet. Click <strong>+ New Template</strong> to create one.</p></div></div>`;
+  } else {
+    container.innerHTML = STATE.templates.map((t,ti)=>`
+      <div class="card mb16">
+        <div class="section-head">
+          <div>
+            <div class="card-title">${t.name} <span class="pill pill-gray">${t.lines.length} allocations</span></div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="addTemplateLine(${ti})">+ Add Line</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteTemplate(${ti})">Delete</button>
+          </div>
+        </div>
+        <div class="template-line" style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;padding-bottom:4px;margin-bottom:4px;border-bottom:1px solid var(--border)">
+          <span>Account</span><span>Cost Center</span><span>Profile</span><span>Alloc %</span><span></span>
+        </div>
+        ${t.lines.map((l,li)=>`
+          <div class="template-line">
+            <input value="${l.account}" onchange="STATE.templates[${ti}].lines[${li}].account=this.value">
+            <input value="${l.costCenter}" onchange="STATE.templates[${ti}].lines[${li}].costCenter=this.value">
+            <select onchange="STATE.templates[${ti}].lines[${li}].profile=this.value">
+              ${['','PHRN','USRN','Non-RN'].map(p=>`<option ${p===l.profile?'selected':''}>${p}</option>`).join('')}
+            </select>
+            <input type="number" value="${(l.alloc*100).toFixed(2)}" step="0.01" style="width:90px"
+              onchange="STATE.templates[${ti}].lines[${li}].alloc=parseFloat(this.value)/100">
+            <button class="del-btn" onclick="STATE.templates[${ti}].lines.splice(${li},1);refreshTemplatePage()">✕</button>
+          </div>`).join('')}
+        <div style="font-size:12px;color:var(--text2);margin-top:8px;text-align:right">
+          Total: <strong>${(t.lines.reduce((s,l)=>s+l.alloc,0)*100).toFixed(2)}%</strong>
+        </div>
+      </div>`).join('');
+  }
+
+  // populate apply selects
+  const tSel = document.getElementById('applyTemplateSel');
+  tSel.innerHTML = STATE.templates.map((t,i)=>`<option value="${i}">${t.name}</option>`).join('') || '<option>No templates</option>';
+  const eSel = document.getElementById('applyEmpSel');
+  const emps = [...new Map(STATE.roster.map(r=>[r.globalId,r])).values()];
+  eSel.innerHTML = '<option value="">— select —</option>'+emps.map(e=>`<option value="${e.globalId}">${e.fullName} (${e.globalId})</option>`).join('');
+}
+
+function addTemplate() {
+  const name = prompt('Template name (e.g. "Multi-Account Split CO"):');
+  if (!name) return;
+  STATE.templates.push({id:Date.now(),name,lines:[{account:'',costCenter:'',profile:'',alloc:0}]});
+  refreshTemplatePage();
+}
+function deleteTemplate(i) { STATE.templates.splice(i,1); refreshTemplatePage(); }
+function addTemplateLine(ti) { STATE.templates[ti].lines.push({account:'',costCenter:'',profile:'',alloc:0}); refreshTemplatePage(); }
+
+function applyTemplate() {
+  const ti = parseInt(document.getElementById('applyTemplateSel').value);
+  const empId = document.getElementById('applyEmpSel').value;
+  if (!empId) { toast('Select an employee first','warn'); return; }
+  const t = STATE.templates[ti];
+  const empRows = STATE.roster.filter(r=>r.globalId===empId);
+  const emp = empRows[0];
+  // Remove old rows for this emp
+  STATE.roster = STATE.roster.filter(r=>r.globalId!==empId);
+  // Add template lines
+  t.lines.forEach(l=>{
+    STATE.roster.push({...emp,account:l.account,costCenter:l.costCenter,profile:l.profile,allocation:l.alloc,budget:l.alloc*STATE.budget});
+  });
+  document.getElementById('templatePreview').innerHTML = `<div class="alloc-summary">${t.lines.map(l=>`<div class="alloc-tag">${l.account||'—'} · ${(l.alloc*100).toFixed(1)}%</div>`).join('')}</div>`;
+  toast(`Template "${t.name}" applied to ${emp?.fullName||empId}`,'success');
+}
+
+// ════════════════════════════════════════════════
+//  RUN ALLOCATION
+// ════════════════════════════════════════════════
+function refreshRunPage() {
+  const accs = [...new Set(STATE.roster.map(r=>r.account))];
+  const runAcc = document.getElementById('runAccount');
+  const cur = runAcc.value;
+  runAcc.innerHTML = `<option value="">All</option>`+accs.map(a=>`<option ${a===cur?'selected':''}>${a}</option>`).join('');
+  refreshRunList();
+}
+
+function refreshRunList() {
+  const dept = document.getElementById('runDept').value;
+  const acc = document.getElementById('runAccount').value;
+  const prof = document.getElementById('runProfile').value;
+  const empSet = new Map();
+  STATE.roster.forEach(r=>{
+    if(dept&&r.dept!==dept) return;
+    if(acc&&r.account!==acc) return;
+    if(prof&&r.profile!==prof) return;
+    if(!empSet.has(r.globalId)) empSet.set(r.globalId,{...r,count:0,totalAlloc:0});
+    empSet.get(r.globalId).count++;
+    empSet.get(r.globalId).totalAlloc+=r.allocation||0;
+  });
+  const list = [...empSet.values()];
+  const container = document.getElementById('runEmpList');
+  if (!list.length) { container.innerHTML=`<div class="empty"><div class="empty-icon">🎯</div><p>No employees match filters.</p></div>`; return; }
+  container.innerHTML = `<table><thead><tr><th>Employee</th><th>ID</th><th>Dept</th><th>Accounts</th><th>Total Alloc</th></tr></thead>
+    <tbody>${list.map(e=>`<tr>
+      <td><strong style="font-size:12px">${e.fullName}</strong></td>
+      <td class="td-mono">${e.globalId}</td>
+      <td><span class="pill pill-gray">${e.dept}</span></td>
+      <td><span class="td-mono" style="font-size:11px">${e.count}</span></td>
+      <td><span style="color:${e.totalAlloc>=0.99?'var(--success)':'var(--warn)'};font-weight:700">${(e.totalAlloc*100).toFixed(1)}%</span></td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+function runAllocation() {
+  const dept = document.getElementById('runDept').value;
+  const acc = document.getElementById('runAccount').value;
+  const prof = document.getElementById('runProfile').value;
+  const filtered = STATE.roster.filter(r=>(!dept||r.dept===dept)&&(!acc||r.account===acc)&&(!prof||r.profile===prof));
+  const empMap = {};
+  filtered.forEach(r=>{ if(!empMap[r.globalId]) empMap[r.globalId]={name:r.fullName,id:r.globalId,rows:[],total:0,totalBudget:0}; empMap[r.globalId].rows.push(r); empMap[r.globalId].total+=r.allocation||0; empMap[r.globalId].totalBudget+=r.budget||0; });
+  const results = Object.values(empMap);
+  const resultsDiv = document.getElementById('runResultsBody');
+  const card = document.getElementById('runResults');
+  card.style.display='block';
+  resultsDiv.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Employee</th><th>Global ID</th><th>Account</th><th>Profile</th><th>Site</th><th>Alloc %</th><th>Budget</th><th>Status</th></tr></thead>
+    <tbody>${results.flatMap(e=>e.rows.map((r,i)=>`<tr>
+      ${i===0?`<td rowspan="${e.rows.length}"><strong style="font-size:12px">${r.fullName}</strong></td><td rowspan="${e.rows.length}" class="td-mono">${r.globalId}</td>`:''}
+      <td>${r.account}</td>
+      <td>${r.profile?`<span class="pill ${profilePill(r.profile)}">${r.profile}</span>`:'—'}</td>
+      <td>${r.site?`<span class="pill pill-gray">${r.site}</span>`:'—'}</td>
+      <td class="td-mono">${((r.allocation||0)*100).toFixed(2)}%</td>
+      <td class="td-mono">${(r.budget||0).toFixed(2)}</td>
+      ${i===0?`<td rowspan="${e.rows.length}"><span class="pill ${e.total>=0.99&&e.total<=1.001?'pill-green':e.total>1?'pill-danger':'pill-warn'}">${e.total>=0.99&&e.total<=1.001?'✓ Valid':e.total>1?'⚠ Over':'⚠ Under'}</span></td>`:''}
+    </tr>`)).join('')}
+    </tbody></table></div>
+    <div style="margin-top:12px;font-size:12px;color:var(--text2)">${results.length} employees · ${filtered.length} allocation rows</div>`;
+  toast(`Allocation run complete — ${results.length} employees`,'success');
+}
+
+// ════════════════════════════════════════════════
+//  REPORTS
+// ════════════════════════════════════════════════
+function populateAccountDropdowns() {
+  const accs = [...new Set(STATE.roster.map(r=>r.account))];
+  ['reportAccount','runAccount'].forEach(id=>{
+    const el = document.getElementById(id); if(!el) return;
+    el.innerHTML = `<option value="">All Accounts</option>`+accs.map(a=>`<option>${a}</option>`).join('');
+  });
+}
+
+function previewReport() {
+  const type = document.getElementById('reportType').value;
+  const acc = document.getElementById('reportAccount').value;
+  const dept = document.getElementById('reportDept').value;
+  const period = document.getElementById('reportPeriod').value;
+  let rows = STATE.roster.filter(r=>(!acc||r.account===acc)&&(!dept||r.dept===dept));
+  const card = document.getElementById('reportPreviewCard');
+  const title = document.getElementById('reportPreviewTitle');
+  const body = document.getElementById('reportPreviewBody');
+  card.style.display='block';
+  title.textContent = `${type==='full'?'Full Allocation Report':type==='hc'?'HC Summary':type==='account'?'By Account':'By Employee'}${period?' — '+period:''}`;
+
+  // Quick stats
+  const empCount = new Set(rows.map(r=>r.globalId)).size;
+  const totalBudget = rows.reduce((s,r)=>s+(r.budget||0),0);
+  document.getElementById('reportQuickStats').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      ${[['Employees',empCount],['Rows',rows.length],['Total Budget',totalBudget.toFixed(0)],['Accounts',[...new Set(rows.map(r=>r.account))].length]].map(([l,v])=>`
+        <div style="background:var(--surface2);border-radius:8px;padding:12px">
+          <div style="font-size:22px;font-weight:700">${v}</div>
+          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-top:3px">${l}</div>
+        </div>`).join('')}
+    </div>`;
+
+  body.innerHTML = `<table>
+    <thead><tr><th>Global ID</th><th>Full Name</th><th>Dept</th><th>Account</th><th>Cost Center</th><th>Profile</th><th>Site</th><th>Allocation %</th><th>Budget</th><th>Remarks</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr>
+      <td class="td-mono">${r.globalId}</td><td>${r.fullName}</td><td>${r.dept}</td>
+      <td>${r.account}</td><td style="font-size:11px;color:var(--text2)">${r.costCenter||'—'}</td>
+      <td>${r.profile?`<span class="pill ${profilePill(r.profile)}">${r.profile}</span>`:'—'}</td>
+      <td>${r.site||'—'}</td>
+      <td class="td-mono">${((r.allocation||0)*100).toFixed(2)}%</td>
+      <td class="td-mono">${(r.budget||0).toFixed(2)}</td>
+      <td style="font-size:11px;color:var(--text2)">${r.remarks||''}</td>
+    </tr>`).join('')}</tbody></table>`;
+}
+
+function exportReport() {
+  const acc = document.getElementById('reportAccount')?.value||'';
+  const dept = document.getElementById('reportDept')?.value||'';
+  const period = document.getElementById('reportPeriod')?.value||'';
+  const rows = STATE.roster.filter(r=>(!acc||r.account===acc)&&(!dept||r.dept===dept));
+  if (!rows.length) { toast('No data to export','warn'); return; }
+
+  // Sheet 1: Raw allocations
+  const ws1 = XLSX.utils.json_to_sheet(rows.map(r=>({
+    'Global ID':r.globalId,'Given Name':r.givenName,'Last Name':r.lastName,'Full Name':r.fullName,
+    'Department':r.dept,'Account':r.account,'Cost Center':r.costCenter,'Profile':r.profile,
+    'Site':r.site,'Allocation %':(r.allocation||0)*100,'Budget':r.budget||0,'Remarks':r.remarks
+  })));
+  // Sheet 2: HC by Account
+  const ws2 = XLSX.utils.json_to_sheet(STATE.hcAccount.map(r=>({'Account':r.account,'#HC':r.hc,'%HC':r.pct})));
+  // Sheet 3: HC by Profile
+  const ws3 = XLSX.utils.json_to_sheet(STATE.hcProfile.map(r=>({'Account':r.account,'Cost Center Name':r.costCenter,'Profile':r.profile,'#HC':r.hc})));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,'rawData_Allocation',ws1);
+  XLSX.utils.book_append_sheet(wb,'HC_by_Account',ws2);
+  XLSX.utils.book_append_sheet(wb,'HC_by_Profile',ws3);
+  const fname = `CPL_Allocation${period?'_'+period:''}_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  toast('✅ Exported: '+fname,'success');
+}
+
+// ════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════
+function toast(msg, type='info') {
+  const el = document.getElementById('toast');
+  const icons = {success:'✅',warn:'⚠️',error:'❌',info:'ℹ️'};
+  el.textContent = (icons[type]||'ℹ️')+' '+msg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 3000);
+}
+
+// ════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════
+// Pre-init sample templates
+STATE.templates = [
+  {id:1, name:'CO Standard Split (6-Account)', lines:[
+    {account:'Blue Cross Idaho',costCenter:'PHL_BCI G&A Clinical Review',profile:'USRN',alloc:0.006852},
+    {account:'Cigna Clinical',costCenter:'',profile:'',alloc:0.190578},
+    {account:'Cohere',costCenter:'Cohere Clinical',profile:'USRN',alloc:0.067666},
+    {account:'Enlyte Clinical',costCenter:'',profile:'',alloc:0.059529},
+    {account:'Flatiron',costCenter:'Flatiron Clinical Abstraction',profile:'PHRN',alloc:0.131049},
+    {account:'Humana Clinical',costCenter:'',profile:'',alloc:0.544325},
+  ]},
+  {id:2, name:'PMO Olitres Split (Cigna+Flatiron)', lines:[
+    {account:'Cigna Clinical',costCenter:'Cigna THN BT',profile:'PHRN',alloc:0.55},
+    {account:'Flatiron',costCenter:'Flatiron Clinical Abstraction',profile:'PHRN',alloc:0.45},
+  ]},
+];
+refreshTemplatePage();
+</script>
+</body>
+</html>
